@@ -2,7 +2,7 @@ name: Publish GraphQL to Docker
 on:
   push:
     tags:
-      - 'graphQL v*'
+      - 'graphQL_v*'
 jobs:
   build:
     runs-on: ubuntu-latest
