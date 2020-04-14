@@ -2,7 +2,7 @@ name: Publish API to Docker
 on:
   push:
     tags:
-      - api
+      - 'api v*'
 jobs:
   build:
     runs-on: ubuntu-latest
