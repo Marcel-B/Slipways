@@ -1,8 +1,8 @@
-name: Publish API to Docker
+name: Publish GraphQL to Docker
 on:
   push:
     tags:
-      - api
+      - graphQL
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -11,10 +11,10 @@ jobs:
     - name: Publish to Registry
       uses: elgohr/Publish-Docker-Github-Action@master
       with:
-        name: millegalb/slipways-api
+        name: millegalb/slipways-graphql
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
-        dockerfile: DockerfileAPI
+        dockerfile: DockerfileGraphQL
         source-url: https://nuget.pkg.github.com/Marcel-B/index.json
       env:
         NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
