@@ -1,0 +1,42 @@
+﻿
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                Name
+            </th>
+            <th>
+                Stadt / Ort
+            </th>
+            <th>
+                Kosten
+            </th>
+            <th>
+                <a class="btn btn-sm btn-success" href="/Admin/Slipway/Create"><img src="~/img/add-24.png" alt="neu" /></a>
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+
+        @foreach (var slipway in Model)
+        {
+            <tr>
+                <td>
+                    @slipway.Name
+                </td>
+                <td>
+                    @slipway.City
+                </td>
+                <td>
+                    @slipway.Costs
+                </td>
+                <td>
+                    <a class="btn btn-sm btn-success" asp-page="./Details" asp-route-id="@slipway.Id"><img src="~/img/info-24.png" alt="details" /></a>
+                    <a class="btn btn-sm btn-primary" asp-page="./Edit" asp-route-id="@slipway.Id"><img src="~/img/edit-24.png" alt="edit" /></a>
+                    <a class="btn btn-sm btn-danger" asp-page-handler="Delete" asp-route-id="@slipway.Id"><img src="~/img/delete-24.png" alt="delete" /></a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

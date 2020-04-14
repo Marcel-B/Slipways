@@ -1,0 +1,52 @@
+version: "3.7"
+
+services:
+  slipways-dataprovider:
+    image: millegalb/slipways.dataprovider:dev-latest
+    #healthcheck:
+    #  test: ["CMD", "curl", "-f", "http://localhost:5000/api/test"]
+    #  interval: 60s
+    #  timeout: 5s
+    #  retries: 3
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+
+        - "traefik.http.middlewares.https-only.redirectscheme.scheme=https"
+        - "traefik.http.routers.dev-slipwaysql-dapo-http.entrypoints=web"
+        - "traefik.http.routers.dev-slipwaysql-dapo-http.rule=Host(`dataprovider.dev.slipways.de`)"
+        - "traefik.http.routers.dev-slipwaysql-dapo-http.middlewares=https-only@docker"
+
+        - "traefik.http.routers.dev-slipwaysql-dapo-https.entrypoints=websecure"
+        - "traefik.http.routers.dev-slipwaysql-dapo-https.rule=Host(`dataprovider.dev.slipways.de`)"
+        - "traefik.http.routers.dev-slipwaysql-dapo-https.tls=true"
+        - "traefik.http.routers.dev-slipwaysql-dapo-https.tls.certresolver=sec"
+
+        - "traefik.http.services.dev-slipwaysqlservice-dapo.loadbalancer.server.port=80"
+    volumes:
+      - /home/marcel/dev-backUp:/app/backUp
+    depends_on:
+      - cache
+      - dev_slipway_db
+    networks:
+      - skynet
+    secrets:
+      - dev_slipway_db
+    environment:
+      SERVER: "dev_slipway_db"
+      DATABASE: "Slipways"
+      USER: "sa"
+      PORT: "1433"
+      ASPNETCORE_ENVIRONMENT: 'Staging'
+
+
+networks:
+  skynet:
+    external: true
+secrets:
+  dev_slipway_db:
+    external: true
+

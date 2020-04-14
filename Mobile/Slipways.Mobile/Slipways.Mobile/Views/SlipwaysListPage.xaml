@@ -1,0 +1,86 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="Slipways.Mobile.Views.SlipwaysListPage"
+    xmlns="http://xamarin.com/schemas/2014/forms"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:conv="clr-namespace:Slipways.Mobile.Converter"
+    xmlns:d="http://xamarin.com/schemas/2014/forms/design"
+    xmlns:local="clr-namespace:Slipways.Mobile.Views.Components;assembly=Slipways.Mobile"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:prism="http://prismlibrary.com"
+    Title="Slipanlagen"
+    mc:Ignorable="d">
+
+    <StackLayout>
+        <StackLayout.Resources>
+            <ResourceDictionary>
+                <conv:SlipwayPropsConverter x:Key="ToProps" />
+            </ResourceDictionary>
+        </StackLayout.Resources>
+
+        <SearchBar />
+        <ListView HasUnevenRows="true" ItemsSource="{Binding Data}">
+
+            <ListView.Behaviors>
+                <prism:EventToCommandBehavior
+                    Command="{Binding ItemTappedCommand}"
+                    EventArgsParameterPath="Item"
+                    EventName="ItemTapped" />
+            </ListView.Behaviors>
+
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <ViewCell>
+                        <StackLayout Margin="4,0,4,4" Orientation="Vertical">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="auto" />
+                                </Grid.ColumnDefinitions>
+                                <Label
+                                    Grid.Column="0"
+                                    FontSize="20"
+                                    Text="{Binding Name}" />
+                            </Grid>
+
+                            <StackLayout Orientation="Horizontal">
+                                <Image
+                                    Opacity="{Binding Converter={StaticResource ToProps}, ConverterParameter=camping}"
+                                    Scale="0.5"
+                                    Source="tent.png" />
+                                <Image
+                                    Opacity="{Binding Converter={StaticResource ToProps}, ConverterParameter=marina}"
+                                    Scale="0.5"
+                                    Source="anchor.png" />
+                                <Image
+                                    Opacity="{Binding Converter={StaticResource ToProps}, ConverterParameter=parking}"
+                                    Scale="0.5"
+                                    Source="parking.png" />
+                                <Image
+                                    Opacity="{Binding Converter={StaticResource ToProps}, ConverterParameter=pier}"
+                                    Scale="0.5"
+                                    Source="pier.png" />
+                            </StackLayout>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackLayout Orientation="Horizontal">
+                                    <Image
+                                        ScaleX=".5"
+                                        ScaleY=".5"
+                                        Source="pin.png" />
+                                    <Label Text="{Binding City}" VerticalOptions="Center" />
+                                </StackLayout>
+                                <Label Grid.Column="1" Text="{Binding Watername}" />
+                            </Grid>
+                        </StackLayout>
+                        <!--<Image Source="{Binding Image}" HorizontalOptions="End" AbsoluteLayout.LayoutBounds="250.25, 0.25, 50, 50 "/>-->
+                    </ViewCell>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+    </StackLayout>
+</ContentPage>

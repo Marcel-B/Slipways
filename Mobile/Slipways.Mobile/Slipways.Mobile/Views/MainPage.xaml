@@ -1,0 +1,79 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="Slipways.Mobile.MainPage"
+    xmlns="http://xamarin.com/schemas/2014/forms"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:d="http://xamarin.com/schemas/2014/forms/design"
+    xmlns:local="clr-namespace:Slipways.Mobile.Helpers"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    x:Name="View"
+    Title="{Binding Title}"
+    mc:Ignorable="d">
+
+    <StackLayout>
+        <ActivityIndicator IsRunning="{Binding Running}" Color="Red" />
+        <Grid
+            Margin="4"
+            HorizontalOptions="Center"
+            VerticalOptions="CenterAndExpand">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto" />
+                <RowDefinition Height="auto" />
+                <RowDefinition Height="auto" />
+                <RowDefinition Height="auto" />
+                <RowDefinition Height="auto" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Button
+                Grid.Row="0"
+                Grid.ColumnSpan="2"
+                Command="{Binding Navigate}"
+                CommandParameter="{x:Static local:CommandParameter.Slipways}"
+                Text="Slipanlagen" />
+
+            <Button
+                Grid.Row="1"
+                Command="{Binding Navigate}"
+                CommandParameter="{x:Static local:CommandParameter.Marinas}"
+                Text="Marinas" />
+
+            <Button
+                Grid.Row="1"
+                Grid.Column="1"
+                Command="{Binding Navigate}"
+                CommandParameter="{x:Static local:CommandParameter.Services}"
+                Text="Werkstätten" />
+
+            <Button
+                Grid.Row="2"
+                Command="{Binding Navigate}"
+                CommandParameter="{x:Static local:CommandParameter.Stations}"
+                Text="Pegel" />
+
+            <Button
+                Grid.Row="2"
+                Grid.Column="1"
+                Command="{Binding Navigate}"
+                CommandParameter="{x:Static local:CommandParameter.Waters}"
+                Text="Gewässer" />
+
+            <Button
+                Grid.Row="3"
+                Command="{Binding Navigate}"
+                CommandParameter="{x:Static local:CommandParameter.Map}"
+                Text="Karte" />
+
+            <Button
+                Grid.Row="3"
+                Grid.Column="1"
+                Command="{Binding Navigate}"
+                CommandParameter="{x:Static local:CommandParameter.Info}"
+                Text="Info" />
+
+        </Grid>
+    </StackLayout>
+</ContentPage>

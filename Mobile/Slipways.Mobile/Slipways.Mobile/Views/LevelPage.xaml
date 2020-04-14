@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="Slipways.Mobile.Views.LevelPage"
+    xmlns="http://xamarin.com/schemas/2014/forms"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:d="http://xamarin.com/schemas/2014/forms/design"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="{Binding Title}"
+    mc:Ignorable="d">
+    <ContentPage.Content>
+        <ListView ItemsSource="{Binding Data}">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <ViewCell>
+                        <Label
+                            Margin="4,4,4,0"
+                            FontSize="20"
+                            HorizontalOptions="CenterAndExpand"
+                            Text="{Binding Name}"
+                            VerticalOptions="CenterAndExpand" />
+                    </ViewCell>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+    </ContentPage.Content>
+</ContentPage>

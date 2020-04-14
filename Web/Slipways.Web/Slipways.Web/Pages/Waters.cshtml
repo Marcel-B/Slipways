@@ -1,0 +1,35 @@
+﻿@page
+@model WatersModel
+@{
+}
+@section AdditionalMeta
+{
+    <title>Gewässer</title>
+    <meta name="description" content="Auflistung aller relevanten Gewässer." />
+    <meta name="keywords" content="Gewässer, Flüsse, See, Fluss, Meer, Slipways, Slipway, Boote, Boot, Schlauchboot, Camping, Trailering, Sliprampe" />
+
+}
+
+
+<div class="container">
+    <h1 class="display-4">Gewässer</h1>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Kurzbezeichnung</th>
+                <th>Wiki Link</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var water in Model.Waters)
+            {
+                <tr>
+                    <td>@water.Longname</td>
+                    <td>@water.Shortname</td>
+                    <td><a href="https://de.wikipedia.org/wiki/@water.Longname" target="_blank"> <img src="~/img/wiki-24.png" alt="Wikipedia" /></a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

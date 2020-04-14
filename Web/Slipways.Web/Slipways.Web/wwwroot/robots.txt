@@ -1,0 +1,10 @@
+﻿# robots.txt zu https://slipways.de/
+
+User-agent: UniversalRobot/1.0
+User-agent: mein-Robot
+Disallow: /Admin/
+
+User-agent: *
+Allow: /
+Allow: /Details
+Allow: /Privacy/

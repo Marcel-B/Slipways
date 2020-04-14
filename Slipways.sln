@@ -1,0 +1,65 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BusinessLayer", "BusinessLayer", "{E75FE221-1635-4A97-9F5D-6CF25956D4E0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slipways.Data", "BussinessLayer\Slipways.Data\Slipways.Data\Slipways.Data.csproj", "{8D91C2EF-4D92-4FE6-B3CB-8F51FC5862B6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BackEnd", "BackEnd", "{C2AAA8CE-0DFF-41CC-91D6-5FC269B53265}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slipways.API", "BackEnd\Slipways.API\Slipways.API\Slipways.API.csproj", "{FC2CC885-DC47-40AE-B01D-235B2A624623}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slipways.GraphQL", "BackEnd\Slipways.GraphQL\Slipways.GraphQL\Slipways.GraphQL.csproj", "{C1A067E1-B20C-41C0-A99B-529BDB22135B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slipways.DataProvider", "BackEnd\Slipways.DataProvider\Slipways.DataProvider\Slipways.DataProvider.csproj", "{BC1D47E9-1365-4305-9D1D-DCFE52072F58}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "FrontEnd", "FrontEnd", "{CBC05499-E1D6-4410-850A-E5CF50C8B702}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slipways.Web", "Web\Slipways.Web\Slipways.Web\Slipways.Web.csproj", "{D88E85B7-32FC-4255-8242-7DA915B31400}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{1DF17C9D-A7FF-4FA8-B0EA-729A1ED3E9FA}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Dockerfiles", "Dockerfiles", "{3E36C42B-BC90-4C9B-A0F3-CA7B067A2988}"
+	ProjectSection(SolutionItems) = preProject
+		DockerfileAPI = DockerfileAPI
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DBF5D7CC-7F73-4F73-8195-BA79533540F0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DBF5D7CC-7F73-4F73-8195-BA79533540F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DBF5D7CC-7F73-4F73-8195-BA79533540F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DBF5D7CC-7F73-4F73-8195-BA79533540F0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8D91C2EF-4D92-4FE6-B3CB-8F51FC5862B6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8D91C2EF-4D92-4FE6-B3CB-8F51FC5862B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8D91C2EF-4D92-4FE6-B3CB-8F51FC5862B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8D91C2EF-4D92-4FE6-B3CB-8F51FC5862B6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FC2CC885-DC47-40AE-B01D-235B2A624623}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC2CC885-DC47-40AE-B01D-235B2A624623}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FC2CC885-DC47-40AE-B01D-235B2A624623}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FC2CC885-DC47-40AE-B01D-235B2A624623}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C1A067E1-B20C-41C0-A99B-529BDB22135B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C1A067E1-B20C-41C0-A99B-529BDB22135B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C1A067E1-B20C-41C0-A99B-529BDB22135B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C1A067E1-B20C-41C0-A99B-529BDB22135B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BC1D47E9-1365-4305-9D1D-DCFE52072F58}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BC1D47E9-1365-4305-9D1D-DCFE52072F58}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BC1D47E9-1365-4305-9D1D-DCFE52072F58}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BC1D47E9-1365-4305-9D1D-DCFE52072F58}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D88E85B7-32FC-4255-8242-7DA915B31400}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D88E85B7-32FC-4255-8242-7DA915B31400}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D88E85B7-32FC-4255-8242-7DA915B31400}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D88E85B7-32FC-4255-8242-7DA915B31400}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{8D91C2EF-4D92-4FE6-B3CB-8F51FC5862B6} = {E75FE221-1635-4A97-9F5D-6CF25956D4E0}
+		{FC2CC885-DC47-40AE-B01D-235B2A624623} = {C2AAA8CE-0DFF-41CC-91D6-5FC269B53265}
+		{C1A067E1-B20C-41C0-A99B-529BDB22135B} = {C2AAA8CE-0DFF-41CC-91D6-5FC269B53265}
+		{BC1D47E9-1365-4305-9D1D-DCFE52072F58} = {C2AAA8CE-0DFF-41CC-91D6-5FC269B53265}
+		{D88E85B7-32FC-4255-8242-7DA915B31400} = {CBC05499-E1D6-4410-850A-E5CF50C8B702}
+	EndGlobalSection
+EndGlobal

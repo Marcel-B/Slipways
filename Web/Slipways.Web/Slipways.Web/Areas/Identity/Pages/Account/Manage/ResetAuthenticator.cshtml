@@ -1,0 +1,24 @@
+﻿@page
+@model ResetAuthenticatorModel
+@{
+    ViewData["Title"] = "Authentifizierungsschlüssel zurücksetzen";
+    ViewData["ActivePage"] = ManageNavPages.TwoFactorAuthentication;
+}
+
+<partial name="_StatusMessage" for="StatusMessage" />
+<h4>@ViewData["Title"]</h4>
+<div class="alert alert-warning" role="alert">
+    <p>
+        <span class="glyphicon glyphicon-warning-sign"></span>
+        <strong>Wenn Sie Ihren Authentifizierungsschlüssel zurücksetzen, funktioniert Ihre Authentifizierungsanwendung erst, wenn Sie sie neu konfigurieren.</strong>
+    </p>
+    <p>
+        Dieser Prozess deaktiviert 2FA, bis Sie Ihre Authentifikator-Applikation verifiziert haben.
+        Wenn Sie Ihre Authenticator-App-Konfiguration nicht abschließen, können Sie den Zugriff auf Ihr Konto verlieren.
+    </p>
+</div>
+<div>
+    <form id="reset-authenticator-form" method="post" class="form-group">
+        <button id="reset-authenticator-button" class="btn btn-danger" type="submit">Authentifizierungsschlüssel zurücksetzen</button>
+    </form>
+</div>

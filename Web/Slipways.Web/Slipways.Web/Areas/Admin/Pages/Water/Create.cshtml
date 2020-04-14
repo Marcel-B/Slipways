@@ -1,0 +1,34 @@
+﻿@page
+@model com.b_velop.Slipways.Web.Areas.Admin.Pages.Water.CreateModel
+@{
+}
+
+<h1>Hinzufügen</h1>
+
+<div class="row">
+    @if (!String.IsNullOrWhiteSpace(Model.Message))
+    {
+        <div class="alert alert-primary" role="alert">
+            @Model.Message
+        </div>
+    }
+</div>
+
+<form method="post">
+    <div class="form-row">
+        <div class="form-group col-md-6">
+            <label asp-for="Water.Longname">@Html.DisplayNameFor(model => Model.Water.Longname)</label>
+            <input class="form-control" placeholder="Name" asp-for="Water.Longname">
+        </div>
+
+        <div class="form-group col-md-6">
+            <label asp-for="Water.Shortname">@Html.DisplayNameFor(model => Model.Water.Shortname)</label>
+            <input class="form-control" placeholder="Kurzbezeichnung" asp-for="Water.Shortname">
+        </div>
+    </div>
+
+    <span>
+        <button type="submit" class="btn btn-primary">Speichern</button>
+        <a class="btn btn-warning" asp-page="./Index">Zurück</a>
+    </span>
+</form>

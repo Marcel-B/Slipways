@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<ContentPage
+    x:Class="Slipways.Mobile.Views.MarinaDetails"
+    xmlns="http://xamarin.com/schemas/2014/forms"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:maps="clr-namespace:Xamarin.Forms.Maps;assembly=Xamarin.Forms.Maps"
+    Title="{Binding Title}">
+
+    <StackLayout Orientation="Vertical">
+        <StackLayout Margin="4" Orientation="Vertical">
+            <StackLayout Orientation="Horizontal">
+                <Label Text="Telefon:" />
+                <Label Text="{Binding Marina.Phone}" />
+            </StackLayout>
+            <StackLayout Orientation="Horizontal">
+                <Label Text="Mail:" />
+                <Label Text="{Binding Marina.Email}" />
+            </StackLayout>
+            <StackLayout Orientation="Horizontal">
+                <Label LineBreakMode="TailTruncation" Text="{Binding Marina.Url}" />
+            </StackLayout>
+        </StackLayout>
+        <ContentView Content="{Binding Map}" VerticalOptions="FillAndExpand" />
+
+        <StackLayout Margin="8" Orientation="Vertical">
+
+            <StackLayout Grid.Row="0" Orientation="Horizontal">
+                <Label Text="Straße:" />
+                <Label Text="{Binding Marina.Street}" />
+            </StackLayout>
+
+            <StackLayout Orientation="Horizontal">
+                <Label Text="Ort/Stadt:" />
+                <Label Text="{Binding Marina.City}" />
+            </StackLayout>
+
+            <StackLayout Orientation="Horizontal">
+                <Label Text="PLZ:" />
+                <Label Text="{Binding Marina.Postalcode}" />
+            </StackLayout>
+            <StackLayout Orientation="Horizontal">
+                <Label Text="Gewässer:" />
+                <Label Text="{Binding Marina.Water.Name}" />
+            </StackLayout>
+        </StackLayout>
+    </StackLayout>
+</ContentPage>

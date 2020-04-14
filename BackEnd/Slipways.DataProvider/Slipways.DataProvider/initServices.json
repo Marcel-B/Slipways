@@ -1,0 +1,44 @@
+﻿[
+  {
+    "Id": "4437507E-9681-4FAE-9587-2952E00D9F20",
+    "Created": "2019-12-16T11:30:00Z",
+    "Updated": null,
+    "Latitude": 51.21744339635928,
+    "Longitude": 6.793138174721548,
+    "Name": "Schalhorn Claus Bootsmotorenservice",
+    "Url": "https:\/\/claus-schalhorn.de\/",
+    "Street": "Corneliusstraße 91",
+    "Postalcode": "40215 ",
+    "City": "Düsseldorf",
+    "Phone": "0211-336420",
+    "Email": "bootsmotoren@claus-schalhorn.de"
+  },
+  {
+    "Id": "E94B015F-C950-47AE-B880-5FE816568FA4",
+    "Created": "2019-12-18T06:42:58Z",
+    "Updated": null,
+    "Latitude": 51.663558,
+    "Longitude": 6.644034,
+    "Name": "Schrörs Bootsmotoren-Center",
+    "Url": "https:\/\/www.schroers-marine.de\/",
+    "Street": "Am Schepersfeld 31",
+    "Postalcode": "46485",
+    "City": "Wesel",
+    "Phone": "0281-2063677",
+    "Email": "info@schroers-marine.de"
+  },
+  {
+    "Id": "F0EA5A2D-AC1E-4D5C-ADFF-C3A20F7EBFC1",
+    "Created": "2019-12-17T15:54:00Z",
+    "Updated": null,
+    "Latitude": 51.517781,
+    "Longitude": 7.254167,
+    "Name": "Bootswelt Bochum",
+    "Url": "http:\/\/www.bootswelt-bochum.de\/index.html",
+    "Street": "Heiksfeld 1-3",
+    "Postalcode": "44805",
+    "City": "Bochum",
+    "Phone": "0234-36927187",
+    "Email": "info@bootswelt-bochum.de"
+  }
+]

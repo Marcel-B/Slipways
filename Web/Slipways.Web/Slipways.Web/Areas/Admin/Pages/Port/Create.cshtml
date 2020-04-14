@@ -1,0 +1,125 @@
+﻿@page
+@model CreateModel
+@{
+}
+<h1>Hinzufügen</h1>
+
+<div class="row">
+    @if (!String.IsNullOrWhiteSpace(Model.Message))
+    {
+        <div class="alert alert-primary" role="alert">
+            @Model.Message
+        </div>
+    }
+</div>
+
+<form method="post">
+    <div class="form-row">
+        <div class="form-group col-md-6">
+            <label asp-for="Port.Name">@Html.DisplayNameFor(model => Model.Port.Name)</label>
+            <input class="form-control" placeholder="Name" asp-for="Port.Name">
+        </div>
+        <div class="form-group col-md-6">
+            <label asp-for="Port.City">@Html.DisplayNameFor(model => Model.Port.City)</label>
+            <input class="form-control" placeholder="Stadt / Ort" asp-for="Port.City">
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group col-md-6">
+            <label asp-for="Port.Street">@Html.DisplayNameFor(model => Model.Port.Street)</label>
+            <input class="form-control" placeholder="Straße" asp-for="Port.Street">
+        </div>
+        <div class="form-group col-md-6">
+            <label asp-for="Port.Postalcode">@Html.DisplayNameFor(model => Model.Port.Postalcode)</label>
+            <input class="form-control" placeholder="Postleitzahl" asp-for="Port.Postalcode">
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group col-md-6">
+            <label asp-for="Port.Longitude">@Html.DisplayNameFor(model => Model.Port.Longitude)</label>
+            <input class="form-control" placeholder="Längengrad" asp-for="Port.Longitude">
+        </div>
+        <div class="form-group col-md-6">
+            <label asp-for="Port.Latitude">@Html.DisplayNameFor(model => Model.Port.Latitude)</label>
+            <input class="form-control" placeholder="Breitengrad" asp-for="Port.Latitude">
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group col-md-3">
+            <label asp-for="Port.Phone">@Html.DisplayNameFor(model => Model.Port.Phone)</label>
+            <input class="form-control" placeholder="Telefon" asp-for="Port.Phone">
+        </div>
+        <div class="form-group col-md-3">
+            <label asp-for="Port.Email">@Html.DisplayNameFor(model => Model.Port.Email)</label>
+            <input class="form-control" placeholder="Email" asp-for="Port.Email">
+        </div>
+        <div class="form-group col-md-6">
+            <label asp-for="Port.Url">@Html.DisplayNameFor(model => Model.Port.Url)</label>
+            <input class="form-control" placeholder="Hompage" asp-for="Port.Url">
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group col-md-6">
+            <div class="form-group dropdown">
+                <label>Slipanlage</label>
+                <select asp-for="@Model.SlipwayId"
+                        class="control-label"
+                        id="slipDropBox"
+                        asp-items="@Model.Slipways">
+
+                    <option value="">Slipanlage wählen</option>
+
+                </select>
+            </div>
+        </div>
+        <div class="form-group col-md-6">
+            <div class="form-group dropdown">
+                <label>Gewässer</label>
+                <select asp-for="@Model.WaterId"
+                        class="control-label"
+                        id="waterDropDown"
+                        asp-items="@Model.Waters">
+                    <option id="waterSelection" value="">Gewässer wählen</option>
+                </select>
+            </div>
+        </div>
+
+    </div>
+
+    <span>
+        <button type="submit" class="btn btn-primary">Speichern</button>
+        <a class="btn btn-warning" asp-page="./Index">Zurück</a>
+    </span>
+
+</form>
+
+@section Scripts{
+    <script>
+        let slipDropBox = document.getElementById('slipDropBox');
+        slipDropBox.addEventListener("change", function () {
+            console.log(this.value);
+            getSlipway(this.value)
+        });
+        const getSlipway = (id) => {
+            const xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+
+                    const waterInfo = JSON.parse(xhttp.responseText);
+
+                    var waterSelection = document.getElementById("waterSelection");
+                    var waterDropDown = document.getElementById("waterDropDown");
+
+                    waterSelection.value = waterInfo.longname;
+                    waterDropDown.value = waterInfo.id;
+                }
+            };
+            xhttp.open("GET", `/Admin/Port/Create?handler=WaterBySlipwayId&id=${id}`, true);
+            xhttp.send();
+        };
+    </script>
+}

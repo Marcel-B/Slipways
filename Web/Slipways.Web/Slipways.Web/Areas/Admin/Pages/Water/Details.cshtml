@@ -1,0 +1,20 @@
+﻿@page
+@model com.b_velop.Slipways.Web.Areas.Admin.Pages.Water.DetailsModel
+@{
+}
+
+<div class="form-row">
+    <div class="col-md-6 form-group">
+        <label asp-for="Water.Longname">@Html.DisplayNameFor(model => Model.Water.Longname)</label>
+        <input asp-for="Water.Longname" disabled class="form-control" value="@Model.Water.Longname">
+    </div>
+
+    <div class="col-md-6 form-group">
+        <label asp-for="Water.Shortname">@Html.DisplayNameFor(_ => Model.Water.Shortname)</label>
+        <input disabled class="form-control" asp-for="Water.Shortname" value="@Model.Water.Shortname">
+    </div>
+
+</div>
+<div class="form-row">
+    <a asp-page="./Index" class="btn btn-primary">Zurück</a>
+</div>

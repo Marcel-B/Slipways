@@ -1,0 +1,730 @@
+﻿[
+  {
+    "Id": "BAC6F0B5-34E1-4425-A1D6-05624AA72FDD",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "OSTE",
+    "Longname": "OSTE"
+  },
+  {
+    "Id": "87724DC3-A0E4-4FE3-AF64-0C174951D58E",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "STÖR",
+    "Longname": "STÖR"
+  },
+  {
+    "Id": "529FC755-8B44-44BE-A56F-0D751B82E76A",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "Orlice",
+    "Longname": "ORLICE"
+  },
+  {
+    "Id": "DE958AA1-AA8C-482B-8D76-11C9B8C68C47",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "MGS",
+    "Longname": "MÜGGELSPREE"
+  },
+  {
+    "Id": "1A23B4AB-DB97-4F74-BCE9-151DB100B0B0",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "PVK",
+    "Longname": "PAREYER VERBINDUNGSKANAL"
+  },
+  {
+    "Id": "C64F3DA2-F392-4FB3-8A70-170B5A52B54F",
+    "Created": "2019-12-16T22:01:11Z",
+    "Updated": null,
+    "Shortname": "BLÖMER",
+    "Longname": "BLÖMER"
+  },
+  {
+    "Id": "808AF9BE-2074-40A7-96B1-17973BD59449",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "WERRA",
+    "Longname": "WERRA"
+  },
+  {
+    "Id": "F5D543C2-B584-40E4-AFA0-19435627E3FF",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "ESK",
+    "Longname": "ELBESEITENKANAL"
+  },
+  {
+    "Id": "FB88F5B1-2248-45CA-BD47-1A2213B82FD3",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "PEENE",
+    "Longname": "PEENE"
+  },
+  {
+    "Id": "9E207D14-F5A8-43B0-B7B0-1D4C484E5444",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "NSK",
+    "Longname": "NEUHAUSER SPEISEKANAL"
+  },
+  {
+    "Id": "A88EA916-5E6C-4D83-83A9-1D4FDFEF25EC",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "RHEIN",
+    "Longname": "RHEIN"
+  },
+  {
+    "Id": "3883DE67-AB59-458A-9DE1-1E1026E27BF0",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "ORKE",
+    "Longname": "ORKE"
+  },
+  {
+    "Id": "63E486CF-7366-4C56-8D33-1F5F1874434B",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "WARNOW",
+    "Longname": "WARNOW"
+  },
+  {
+    "Id": "03265328-4FD2-4F94-A3C8-1F9BBBB1D7DA",
+    "Created": "2019-12-14T17:30:00Z",
+    "Updated": null,
+    "Shortname": "HENNE",
+    "Longname": "HENNE"
+  },
+  {
+    "Id": "821630FC-D361-458F-B69C-2115A1C10B24",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "LEINE",
+    "Longname": "LEINE"
+  },
+  {
+    "Id": "BE09D030-9C00-4A2D-83CF-222A469B317A",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "BSK",
+    "Longname": "BERLIN-SPANDAUER-SCHIFFFAHRTSKANAL"
+  },
+  {
+    "Id": "2E1A8E9D-983F-445B-8F31-270510396D90",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "KRÜCKAU",
+    "Longname": "KRÜCKAU"
+  },
+  {
+    "Id": "2F14FF08-2C57-4DA3-9C69-2978EFD4AC6E",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "MAIN",
+    "Longname": "MAIN"
+  },
+  {
+    "Id": "C821C96D-EEBC-4F9C-8BD8-2AA4A304FB23",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "RÜG",
+    "Longname": "RÜDERSDORFER GEWÄSSER"
+  },
+  {
+    "Id": "2063F11B-3B00-41A6-BAEA-2DE71E34E5DA",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "ITTER EDER",
+    "Longname": "ITTER ZUR EDER"
+  },
+  {
+    "Id": "7EEF13F6-E9BE-4CA4-8F03-30C4AA75E493",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "ELBE-LÜBECK-KANAL",
+    "Longname": "ELK"
+  },
+  {
+    "Id": "450A71CF-F2DB-4932-96D9-33AFCB7E1272",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "SKH",
+    "Longname": "STICHKANAL HILDESHEIM"
+  },
+  {
+    "Id": "8C8C8518-D59B-4512-B75C-36A67F95C260",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "MHW",
+    "Longname": "MÜRITZ-HAVEL-WASSERSTRASSE"
+  },
+  {
+    "Id": "E9B9CD69-3073-4002-A0F6-37C2153C53EC",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "HAMME",
+    "Longname": "HAMME"
+  },
+  {
+    "Id": "A8ACA94C-FE23-43E0-93A7-39A6614B5D87",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "MZK",
+    "Longname": "MALZER KANAL"
+  },
+  {
+    "Id": "FEA68B1B-7080-428D-9180-3A2FABF95D71",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "Freiburger Hafenpriel",
+    "Longname": "FREIBURGER HAFENPRIEL"
+  },
+  {
+    "Id": "90398D4A-B576-431D-AD9A-3A632A333DAA",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "ILM",
+    "Longname": "ILM"
+  },
+  {
+    "Id": "B61E88E8-9C3E-4FFA-8265-3C1053DF076E",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "SAALE",
+    "Longname": "SAALE"
+  },
+  {
+    "Id": "0F4CEB73-146D-474E-8232-3CABBCCC27E7",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "ILMENAU",
+    "Longname": "ILMENAU"
+  },
+  {
+    "Id": "F965ECF6-2057-479D-A571-3F4E30C1E493",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "WESER",
+    "Longname": "WESER"
+  },
+  {
+    "Id": "283901D1-24A4-4E8E-94F6-3FA3DFB4720A",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "KÜSTENKANAL",
+    "Longname": "KÜSTENKANAL"
+  },
+  {
+    "Id": "3A2495F2-4581-43C1-8061-426525B1815A",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "BODENSEE",
+    "Longname": "BODENSEE"
+  },
+  {
+    "Id": "E2B58EA1-969F-4F72-A2A6-429C7FDD8F37",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "EIDER",
+    "Longname": "EIDER"
+  },
+  {
+    "Id": "09A03B1F-9ECE-4086-94D8-462F98985851",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "MLK",
+    "Longname": "MITTELLANDKANAL"
+  },
+  {
+    "Id": "30081C46-BBE9-4AC7-894C-4852476D66E5",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "RHK",
+    "Longname": "RHEIN-HERNE-KANAL"
+  },
+  {
+    "Id": "C656DEBB-F595-41AF-8234-48F3C4C19A51",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "Wischhafener Süderelbe",
+    "Longname": "WISCHHAFENER SÜDERELBE"
+  },
+  {
+    "Id": "B22C66A1-FEDC-4822-83C7-5918EF35D35D",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "Jizera",
+    "Longname": "JIZERA"
+  },
+  {
+    "Id": "89658AF6-0DF5-42BF-B550-5923FADC6F33",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "OHW",
+    "Longname": "OBERE HAVEL-WASSERSTRASSE"
+  },
+  {
+    "Id": "B1E19997-22AD-4413-89C0-5ADDCDD6E96A",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "APER TIEF",
+    "Longname": "APER TIEF"
+  },
+  {
+    "Id": "FB9B6F64-A7A6-4744-A12F-5BDF31E6F0AF",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "HOW",
+    "Longname": "HAVEL-ODER-WASSERSTRASSE"
+  },
+  {
+    "Id": "7BD20795-FA24-4A48-AC2A-5C5C8510EA97",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "VKH",
+    "Longname": "VERBINDUNGSKANAL HOHENSAATEN"
+  },
+  {
+    "Id": "FADEB941-FE23-40F4-B1CD-5C949DC8372F",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "Bützflether Süderelbe",
+    "Longname": "BÜTZFLETHER SÜDERELBE"
+  },
+  {
+    "Id": "10415159-E774-4431-8DE1-5CE83324718F",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "STW",
+    "Longname": "STÖR-WASSERSTRASSE"
+  },
+  {
+    "Id": "5980613C-07DA-44B7-BDA4-5DE17F9C20E5",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "LÜHE",
+    "Longname": "LÜHE"
+  },
+  {
+    "Id": "FFA035BD-4C18-4A12-9BC7-5E66FC29E149",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "ALLER",
+    "Longname": "ALLER"
+  },
+  {
+    "Id": "9752610E-8CF8-4EF9-B820-666DF89A720A",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "RBG",
+    "Longname": "RHEINSBERGER GEWÄSSER"
+  },
+  {
+    "Id": "FD74AE1F-78C3-4EFA-8449-6ECC1FB482AB",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "LAHN",
+    "Longname": "LAHN"
+  },
+  {
+    "Id": "FACFC1F6-5887-4F51-A455-6EE85D41AFCD",
+    "Created": "2019-12-18T09:23:04Z",
+    "Updated": null,
+    "Shortname": "HOHENWARTE-STAUSEE",
+    "Longname": "HOHENWARTE-STAUSEE"
+  },
+  {
+    "Id": "96423534-6B1A-4AF8-93D7-6F99AF296ECD",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "DEK",
+    "Longname": "DORTMUND-EMS-KANAL"
+  },
+  {
+    "Id": "B35AA52D-9188-4489-8189-73F4E6B9841E",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "EHK",
+    "Longname": "ELBE-HAVEL-KANAL"
+  },
+  {
+    "Id": "DEF28F4A-9A97-4659-85F4-7A0F47EC3309",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "TeK",
+    "Longname": "TELTOWKANAL"
+  },
+  {
+    "Id": "48052B97-14E6-43A6-B096-7E7B4E95EE66",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "LEDA",
+    "Longname": "LEDA"
+  },
+  {
+    "Id": "DCC5EB65-DEE4-4BD5-A61B-80D3DFA54C41",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "KLEINES HAFF",
+    "Longname": "KLEINES HAFF"
+  },
+  {
+    "Id": "28E2B1B8-E353-4174-99A5-816229C68BD1",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "RUHR",
+    "Longname": "RUHR"
+  },
+  {
+    "Id": "F68A87EB-4812-4075-A29C-82831687C30F",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "UHW",
+    "Longname": "UNTERE HAVEL-WASSERSTRASSE"
+  },
+  {
+    "Id": "2B224064-51D8-451C-806A-836F4D7E707A",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "MOLDAU",
+    "Longname": "VLATAVA"
+  },
+  {
+    "Id": "AABC9E69-6DAE-4F35-9250-8427EAEDF15C",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "OrK",
+    "Longname": "ORANIENBURGER KANAL"
+  },
+  {
+    "Id": "7314670D-020B-4C64-9870-84D5E2EB0BA4",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "Ruthenstrom",
+    "Longname": "RUTHENSTROM"
+  },
+  {
+    "Id": "D54F6551-D1F2-4856-A873-86A6E17EEBB4",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "HvK",
+    "Longname": "HAVELKANAL"
+  },
+  {
+    "Id": "E54E5839-5FC8-4494-9360-8989442A2242",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "MEW",
+    "Longname": "MÜRITZ-ELDE-WASSERSTRASSE"
+  },
+  {
+    "Id": "262436F8-2A32-434B-9D19-90D1922DAADC",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "SQF",
+    "Longname": "SCHWEDTER QUERFAHRT"
+  },
+  {
+    "Id": "AA74EBD7-E4B1-4EA4-83E2-989D94B90D6A",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "ITTER_DIEMEL",
+    "Longname": "ITTER ZUR DIEMEL"
+  },
+  {
+    "Id": "6CE9C61C-AB43-4084-BD62-9AD5E2AB6CF9",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "ODER",
+    "Longname": "ODER"
+  },
+  {
+    "Id": "28CDF699-E727-447B-B3EE-9D10F8B2A5B2",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "DHK",
+    "Longname": "DATTELN-HAMM-KANAL"
+  },
+  {
+    "Id": "5A32701A-3A43-40B3-ABFA-A35A6EE6E4C5",
+    "Created": "2019-12-18T09:37:57Z",
+    "Updated": null,
+    "Shortname": "BINNENMÜRITZ",
+    "Longname": "BINNENMÜRITZ"
+  },
+  {
+    "Id": "AFC18147-790A-4AF0-BFFA-A54156C6BA7C",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "NECKAR",
+    "Longname": "NECKAR"
+  },
+  {
+    "Id": "177835D3-9D2A-42EF-88FD-A572BA3DF9CA",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "TlG",
+    "Longname": "TEMPLINER GEWÄSSER"
+  },
+  {
+    "Id": "85189101-4FD6-466A-B1D1-A598BD85C591",
+    "Created": "2019-12-18T07:34:45Z",
+    "Updated": null,
+    "Shortname": "ELDE",
+    "Longname": "ELDE"
+  },
+  {
+    "Id": "171DE910-9DBE-4B30-A4D7-A79E231FC411",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "LESUM",
+    "Longname": "LESUM"
+  },
+  {
+    "Id": "966076CC-19E7-4922-921D-AAD15D5164B1",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "FULDA",
+    "Longname": "FULDA"
+  },
+  {
+    "Id": "2F810727-4E7B-40AC-8356-AD1477D49150",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "SAAR",
+    "Longname": "SAAR"
+  },
+  {
+    "Id": "1A191392-64F3-408E-87F0-B91E10545B57",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "NORDSEE",
+    "Longname": "NORDSEE"
+  },
+  {
+    "Id": "1E045F5D-ABAB-4826-85EA-B9C3FCAFC271",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "WDK",
+    "Longname": "WESEL-DATTELN-KANAL"
+  },
+  {
+    "Id": "BA4AC402-5733-4608-ACD0-BC1EDFD1A157",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "DAW",
+    "Longname": "DAHME-WASSERSTRASSE"
+  },
+  {
+    "Id": "714B47C3-C63B-426F-ACCC-BCB7EBDDE0E3",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "Schwinge",
+    "Longname": "SCHWINGE"
+  },
+  {
+    "Id": "D30E6E98-5A25-40AF-A625-BE880EF69A9B",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "WtG",
+    "Longname": "WENTOW-GEWÄSSER"
+  },
+  {
+    "Id": "AFC35E3E-2400-4E4D-82D1-C11E3B3274D2",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "EDER",
+    "Longname": "EDER"
+  },
+  {
+    "Id": "ACB1B45D-4161-4C4A-A518-C508ED5A03B5",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "PHv",
+    "Longname": "POTSDAMER HAVEL"
+  },
+  {
+    "Id": "75A1D3E7-C6E7-4B50-85E9-C74CA31B0B5F",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "DIEMEL",
+    "Longname": "DIEMEL"
+  },
+  {
+    "Id": "F1C53A5E-5205-4F4B-8463-C9C074919477",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "WbG",
+    "Longname": "WERBELLINER GEWÄSSER"
+  },
+  {
+    "Id": "512A905C-FBD5-4E1F-AD61-CABA44D8B0F9",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "SOW",
+    "Longname": "SPREE-ODER-WASSERSTRASSE"
+  },
+  {
+    "Id": "D7818E64-186B-435F-A871-CDB9F75D4459",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "LWK",
+    "Longname": "LANDWEHRKANAL"
+  },
+  {
+    "Id": "637CBED8-F8A3-41A4-A649-CFED2613C6CB",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "FiK",
+    "Longname": "FINOWKANAL"
+  },
+  {
+    "Id": "0C5ECB8F-5C72-4E55-82C5-CFF6A068F5A4",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "OSTSEE",
+    "Longname": "OSTSEE"
+  },
+  {
+    "Id": "8EB3C12D-029C-48F7-8995-D04F2D76F815",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "PINNAU",
+    "Longname": "PINNAU"
+  },
+  {
+    "Id": "744E0BC7-0946-41EA-BC82-D0CEA5CBF4C1",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "WOD",
+    "Longname": "WESTODER"
+  },
+  {
+    "Id": "3A151FD0-81A0-4B01-A439-D2AA553B0B38",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "TREENE",
+    "Longname": "TREENE"
+  },
+  {
+    "Id": "E5C5D288-6A87-42EC-81C1-D58F1A6FCF1B",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "Nord-Ostsee-Kanal",
+    "Longname": "NORD-OSTSEE-KANAL"
+  },
+  {
+    "Id": "ED0E2086-7425-4D2D-B372-D9B219D5638B",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "EMS",
+    "Longname": "EMS"
+  },
+  {
+    "Id": "DE3724FD-80A8-46F9-8B5B-DB378A84048C",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "ELBE",
+    "Longname": "ELBE"
+  },
+  {
+    "Id": "AAE1F1D4-F79F-4C3A-83D5-DEBFFD711981",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "MOSEL",
+    "Longname": "MOSEL"
+  },
+  {
+    "Id": "1836BB37-423E-444B-BF2E-DF21FED87FB1",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "ESTE",
+    "Longname": "ESTE"
+  },
+  {
+    "Id": "4F626D5C-3E9D-4FE4-839A-DF9EB0262BA0",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "WÜMME",
+    "Longname": "WÜMME"
+  },
+  {
+    "Id": "5963233A-8E39-459E-931C-E27C057A49B6",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "NVK",
+    "Longname": "NIEGRIPPER VERBINDUNGSKANAL"
+  },
+  {
+    "Id": "C23322C5-AD2A-4050-9E64-E377341617A9",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "DYHRSSENMOOR",
+    "Longname": "DYHRSSENMOOR"
+  },
+  {
+    "Id": "D19708CA-AC42-4AD4-8D62-E85722F946F6",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "DONAU",
+    "Longname": "DONAU"
+  },
+  {
+    "Id": "40C51E0C-D21C-492A-BBAB-E9AF3ACC0187",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "LyG",
+    "Longname": "LYCHENER GEWÄSSER"
+  },
+  {
+    "Id": "A237B616-E51B-4C6C-8FE2-EF485B0A3879",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "JADE",
+    "Longname": "JADE"
+  },
+  {
+    "Id": "E47BBF30-F087-49DC-A85D-F097D829A39A",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "TRAVE",
+    "Longname": "TRAVE"
+  },
+  {
+    "Id": "5F6F4FCF-E1CB-472E-8FD3-F331875E5153",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "MDK",
+    "Longname": "MAIN-DONAU-KANAL"
+  },
+  {
+    "Id": "C309F510-67EC-4D13-912D-F703231458CC",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "SKG",
+    "Longname": "STORKOWER GEWAESSER"
+  },
+  {
+    "Id": "E9F60B79-5FDE-4026-B6A2-FB27112135E7",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "EGER",
+    "Longname": "OHRE"
+  },
+  {
+    "Id": "C486D5CB-772B-41B8-90F4-FC382CC8414B",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "RVK",
+    "Longname": "ROTHENSEER-VERBINDUNGSKANAL"
+  },
+  {
+    "Id": "0BC5BDB3-7E62-4C28-B4D3-FD4D3E7580C8",
+    "Created": "2019-12-10T09:02:42Z",
+    "Updated": null,
+    "Shortname": "HUNTE",
+    "Longname": "HUNTE"
+  }
+]

@@ -1,0 +1,47 @@
+﻿@page
+@model com.b_velop.Slipways.Web.Areas.Admin.Pages.Water.IndexModel
+@{
+}
+<div class="row">
+    @if (!String.IsNullOrWhiteSpace(Model.Message))
+    {
+        <div class="alert alert-primary" role="alert">
+            @Model.Message
+        </div>
+    }
+</div>
+
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>
+                Name
+            </th>
+            <th>
+                Kurzname
+            </th>
+            <th>
+                <a class="btn btn-sm btn-success" href="/Admin/Water/Create"><img src="~/img/add-24.png" alt="neu" /></a>
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+
+        @foreach (var water in Model.Waters)
+        {
+            <tr>
+                <td>
+                    @water.Longname
+                </td>
+                <td>
+                    @water.Shortname
+                </td>
+                <td>
+                    <a class="btn btn-sm btn-success" asp-page="./Details" asp-route-id="@water.Id.ToString()"><img src="~/img/info-24.png" alt="details" /></a>
+                    <a class="btn btn-sm btn-primary" asp-page="./Edit" , asp-route-id="@water.Id"><img src="~/img/edit-24.png" alt="bearbeiten" /></a>
+                    <a class="btn btn-sm btn-danger" asp-page-handler="Delete" asp-route-id="@water.Id"><img src="~/img/delete-24.png" alt="löschen" /></a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

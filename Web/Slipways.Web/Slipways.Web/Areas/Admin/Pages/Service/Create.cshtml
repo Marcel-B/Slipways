@@ -1,0 +1,81 @@
+﻿@page
+@model com.b_velop.Slipways.Web.Areas.Admin.Pages.Service.CreateModel
+@{
+}
+<h1>Hinzufügen</h1>
+
+<div class="row">
+    @if (!String.IsNullOrWhiteSpace(Model.Message))
+    {
+        <div class="alert alert-primary" role="alert">
+            @Model.Message
+        </div>
+    }
+</div>
+
+<form method="post">
+    <div class="form-row">
+        <div class="form-group col-md-6">
+            <label asp-for="Service.Name">@Html.DisplayNameFor(model => Model.Service.Name)</label>
+            <input class="form-control" placeholder="Name" asp-for="Service.Name">
+        </div>
+        <div class="form-group col-md-6">
+            <label asp-for="Service.City">@Html.DisplayNameFor(model => Model.Service.City)</label>
+            <input class="form-control" placeholder="Stadt / Ort" asp-for="Service.City">
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group col-md-6">
+            <label asp-for="Service.Street">@Html.DisplayNameFor(model => Model.Service.Street)</label>
+            <input class="form-control" placeholder="Straße" asp-for="Service.Street">
+        </div>
+        <div class="form-group col-md-6">
+            <label asp-for="Service.Postalcode">@Html.DisplayNameFor(model => Model.Service.Postalcode)</label>
+            <input class="form-control" placeholder="Postleitzahl" asp-for="Service.Postalcode">
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group col-md-3">
+            <label asp-for="Service.Phone">@Html.DisplayNameFor(model => Model.Service.Phone)</label>
+            <input class="form-control" placeholder="Telefon" asp-for="Service.Phone">
+        </div>
+        <div class="form-group col-md-3">
+            <label asp-for="Service.Email">@Html.DisplayNameFor(model => Model.Service.Email)</label>
+            <input class="form-control" placeholder="Email" asp-for="Service.Email">
+        </div>
+        <div class="form-group col-md-6">
+            <label asp-for="Service.Url">@Html.DisplayNameFor(model => Model.Service.Url)</label>
+            <input class="form-control" placeholder="Hompage" asp-for="Service.Url">
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group col-md-6">
+            <label asp-for="Service.Longitude">@Html.DisplayNameFor(model => Model.Service.Longitude)</label>
+            <input class="form-control" placeholder="Längengrad" asp-for="Service.Longitude">
+        </div>
+        <div class="form-group col-md-6">
+            <label asp-for="Service.Latitude">@Html.DisplayNameFor(model => Model.Service.Latitude)</label>
+            <input class="form-control" placeholder="Breitengrad" asp-for="Service.Latitude">
+        </div>
+    </div>
+
+    <div class="form-row">
+        <span>
+            <button type="submit" class="btn btn-primary">Speichern</button>
+            <a class="btn btn-warning" asp-page="./Index">Zurück</a>
+        </span>
+    </div>
+
+    <span>
+        @foreach (var manufacturer in Model.Manufacturers.Keys)
+        {
+            <input type="checkbox" class="form-check-input" asp-for="@Model.Manufacturers[manufacturer].Selected" id="@manufacturer">
+            <label class="form-check-label" asp-for="@Model.Manufacturers[manufacturer].Selected">@manufacturer</label>
+            <input type="hidden" asp-for="@Model.Manufacturers[manufacturer].Id" value="@Model.Manufacturers[manufacturer].Id" />
+        }
+    </span>
+</form>
+

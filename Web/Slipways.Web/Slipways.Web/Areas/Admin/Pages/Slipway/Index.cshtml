@@ -1,0 +1,20 @@
+﻿@page
+@model com.b_velop.Slipways.Web.Areas.Admin.Pages.Slipways.IndexModel
+@{
+}
+<div class="row">
+    @if (!String.IsNullOrWhiteSpace(Model.Message))
+    {
+        <div class="alert alert-primary" role="alert">
+            @Model.Message
+        </div>
+    }
+</div>
+
+<div id="slipwayTable">
+    <partial name="Shared/_SlipwayAdminTable" for="Slipways" />
+</div>
+
+@section Scripts{
+
+}

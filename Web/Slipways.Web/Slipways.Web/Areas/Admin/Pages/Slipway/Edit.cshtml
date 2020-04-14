@@ -1,0 +1,121 @@
+﻿@page
+@model com.b_velop.Slipways.Web.Areas.Admin.Pages.Slipway.EditModel
+@{
+}
+
+
+<h1>Bearbeiten</h1>
+
+<div class="row">
+    @if (!String.IsNullOrWhiteSpace(Model.Message))
+    {
+        <div class="alert alert-primary" role="alert">
+            @Model.Message
+        </div>
+    }
+</div>
+
+<form method="post">
+
+    <div class="form-row">
+        <div class="form-group col-md-6">
+            <label asp-for="Slipway.Name">@Html.DisplayNameFor(model => Model.Slipway.Name)</label>
+            <input class="form-control" placeholder="Name" asp-for="Slipway.Name">
+        </div>
+        <div class="form-group col-md-6">
+            <label asp-for="Slipway.City">@Html.DisplayNameFor(model => Model.Slipway.City)</label>
+            <input class="form-control" placeholder="Stadt / Ort" asp-for="Slipway.City">
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group col-md-6">
+            <label asp-for="Slipway.Street">@Html.DisplayNameFor(model => Model.Slipway.Street)</label>
+            <input class="form-control" placeholder="Straße" asp-for="Slipway.Street">
+        </div>
+        <div class="form-group col-md-6">
+            <label asp-for="Slipway.Postalcode">@Html.DisplayNameFor(model => Model.Slipway.Postalcode)</label>
+            <input class="form-control" placeholder="Postleitzahl" asp-for="Slipway.Postalcode">
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group col-md-6">
+            <label asp-for="Slipway.Longitude">@Html.DisplayNameFor(model => Model.Slipway.Longitude)</label>
+            <input class="form-control" placeholder="Längengrad" asp-for="Slipway.Longitude">
+        </div>
+        <div class="form-group col-md-6">
+            <label asp-for="Slipway.Latitude">@Html.DisplayNameFor(model => Model.Slipway.Latitude)</label>
+            <input class="form-control" placeholder="Breitengrad" asp-for="Slipway.Latitude">
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group col-md-12">
+            <label asp-for="Slipway.Comment">@Html.DisplayNameFor(model => Model.Slipway.Comment)</label>
+            <textarea class="form-control" placeholder="Kommentar" asp-for="Slipway.Comment"></textarea>
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group col-md-6">
+            <label asp-for="Slipway.Pro">@Html.DisplayNameFor(model => Model.Slipway.Pro)</label>
+            <input class="form-control" placeholder="Pro" asp-for="Slipway.Pro">
+        </div>
+        <div class="form-group col-md-6">
+            <label asp-for="Slipway.Contra">@Html.DisplayNameFor(model => Model.Slipway.Contra)</label>
+            <input class="form-control" placeholder="Kontra" asp-for="Slipway.Contra">
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group col-md-6">
+            <label asp-for="Slipway.Costs">@Html.DisplayNameFor(model => Model.Slipway.Costs)</label>
+            <input class="form-control" placeholder="Preis" asp-for="Slipway.Costs">
+        </div>
+        <div class="form-group col-md-6">
+            <label asp-for="Slipway.Rating">@Html.DisplayNameFor(model => Model.Slipway.Rating)</label>
+            <input class="form-control" placeholder="Bewertung (0 - 5)" asp-for="Slipway.Rating">
+        </div>
+    </div>
+
+    @*<div class="form-row">
+            <div class="form-check col">
+                <input type="checkbox" class="form-check-input" asp-for="Steg" id="exampleCheck1">
+                <label class="form-check-label" for="exampleCheck1">Steg</label>
+            </div>
+            <div class="form-check col">
+                <input type="checkbox" class="form-check-input" asp-for="CampingArea" id="exampleCheck2">
+                <label class="form-check-label" for="exampleCheck2">Campingplatz</label>
+            </div>
+            <div class="form-check col">
+                <input type="checkbox" class="form-check-input" asp-for="ParkingPlace" id="exampleCheck3">
+                <label class="form-check-label" for="exampleCheck3">Parkplatz</label>
+            </div>
+        </div>*@
+
+    <div class="form-row">
+        <div class="form-group dropdown">
+            <label>Gewässer</label>
+            <input type="hidden" asp-for="@Model.SelectedWaterId" />
+
+            <select asp-for="@Model.WaterId" class="control-label" asp-items="@Model.Waters">
+                <option value="@Model.Slipway.Water.Id">@Model.Slipway.Water.Longname</option>
+            </select>
+        </div>
+    </div>
+
+    <span>
+        @foreach (var extra in Model.Extras.Keys)
+        {
+            <input type="checkbox" class="form-check-input" asp-for="@Model.Extras[extra].Selected" id="@extra">
+            <label class="form-check-label" asp-for="@Model.Extras[extra].Selected">@extra</label>
+            <input type="hidden" asp-for="@Model.Extras[extra].Id" value="@Model.Extras[extra].Id" />
+        }
+    </span>
+
+    <div class="form-row">
+        <button type="submit" class="btn btn-primary">Speichern</button>
+    </div>
+</form>
+

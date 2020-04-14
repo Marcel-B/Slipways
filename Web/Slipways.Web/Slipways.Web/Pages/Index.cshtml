@@ -1,0 +1,54 @@
+﻿@page
+@model IndexModel
+
+@{
+    ViewData["Title"] = "";
+}
+
+@section AdditionalMeta
+{
+    <title>Slipanlagen</title>
+    <meta name="description" content="Eine kleine Sammlung von Slipanlagen die ständig erweitert wird." />
+    <meta name="keywords" content="Slipanlagen, Sliprampen, Slipstellen, Slipways, Slipway, Boote, Boot, Schlauchboot, Camping, Trailering, Sliprampe" />
+}
+
+
+<div class="container">
+    <h1 class="display-4">Slipanlagen</h1>
+    <div class="input-group mb-3">
+        <div class="input-group-prepend">
+            <span class="input-group-text" id="basic-addon1"><img src="~/img/search-24.png" alt="search icon" /></span>
+        </div>
+        <input type="search" id="searchField" class="form-control" placeholder="Name - Ort - Gewässer" aria-label="Suche" aria-describedby="basic-addon1" onkeyup="filterTable()">
+    </div>
+
+    <div id="slipwayTable">
+        <partial name="Shared/_SlipwayTable" for="Slipways" />
+    </div>
+</div>
+
+
+
+@section Scripts{
+    <script>
+        $(function () {
+            $('[data-toggle="popover"]').popover()
+        })
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        })
+
+        const filterTable = () => {
+            const searchField = document.getElementById("searchField").value;
+            const xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    const responseText = xhttp.responseText;
+                    let slipwayTable = document.getElementById("slipwayTable");
+                    slipwayTable.innerHTML = responseText;
+                }
+            };
+            xhttp.open("GET", `/?handler=Filter&search=${searchField}`, true);
+            xhttp.send();
+        };</script>
+}

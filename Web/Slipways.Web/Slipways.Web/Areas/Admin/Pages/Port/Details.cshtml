@@ -1,0 +1,79 @@
+﻿@page
+@model DetailsModel
+@{
+}
+
+<h1>Details</h1>
+
+<div class="row">
+    @if (!String.IsNullOrWhiteSpace(Model.Message))
+    {
+        <div class="alert alert-primary" role="alert">
+            @Model.Message
+        </div>
+    }
+</div>
+
+<form method="post">
+    <div class="form-row">
+        <div class="form-group col-md-6">
+            <label asp-for="Port.Name">@Html.DisplayNameFor(model => Model.Port.Name)</label>
+            <input disabled class="form-control" placeholder="Name" asp-for="Port.Name">
+        </div>
+        <div class="form-group col-md-6">
+            <label asp-for="Port.City">@Html.DisplayNameFor(model => Model.Port.City)</label>
+            <input disabled class="form-control" placeholder="Stadt / Ort" asp-for="Port.City">
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group col-md-6">
+            <label asp-for="Port.Street">@Html.DisplayNameFor(model => Model.Port.Street)</label>
+            <input disabled class="form-control" placeholder="Straße" asp-for="Port.Street">
+        </div>
+        <div class="form-group col-md-6">
+            <label asp-for="Port.Postalcode">@Html.DisplayNameFor(model => Model.Port.Postalcode)</label>
+            <input disabled class="form-control" placeholder="Postleitzahl" asp-for="Port.Postalcode">
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group col-md-6">
+            <label asp-for="Port.Longitude">@Html.DisplayNameFor(model => Model.Port.Longitude)</label>
+            <input disabled class="form-control" placeholder="Längengrad" asp-for="Port.Longitude">
+        </div>
+        <div class="form-group col-md-6">
+            <label asp-for="Port.Latitude">@Html.DisplayNameFor(model => Model.Port.Latitude)</label>
+            <input disabled class="form-control" placeholder="Breitengrad" asp-for="Port.Latitude">
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group col-md-3">
+            <label asp-for="Port.Phone">@Html.DisplayNameFor(model => Model.Port.Phone)</label>
+            <input disabled class="form-control" placeholder="Telefon" asp-for="Port.Phone">
+        </div>
+        <div class="form-group col-md-3">
+            <label asp-for="Port.Email">@Html.DisplayNameFor(model => Model.Port.Email)</label>
+            <input disabled class="form-control" placeholder="Email" asp-for="Port.Email">
+        </div>
+        <div class="form-group col-md-6">
+            <label asp-for="Port.Url">@Html.DisplayNameFor(model => Model.Port.Url)</label>
+            <input disabled class="form-control" placeholder="Hompage" asp-for="Port.Url">
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group col-md-6">
+            <label asp-for="Port.Water.Longname">@Html.DisplayNameFor(model => Model.Port.Water.Longname)</label>
+            <input disabled class="form-control" placeholder="Gewässer" asp-for="Port.Water.Longname">
+        </div>
+     
+    </div>
+
+    <span>
+        <button type="submit" class="btn btn-primary">Speichern</button>
+        <a class="btn btn-warning" asp-page="./Index">Zurück</a>
+    </span>
+
+</form>

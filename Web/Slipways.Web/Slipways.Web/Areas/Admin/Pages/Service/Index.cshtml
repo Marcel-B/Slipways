@@ -1,0 +1,54 @@
+﻿@page
+@model com.b_velop.Slipways.Web.Areas.Admin.Pages.Service.IndexModel
+@{
+}
+
+<h1>Service</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Straße</th>
+            <th>PLZ</th>
+            <th>Ort</th>
+            <th>Website</th>
+            <th>Fon</th>
+            <th>Email</th>
+            <th><a class="btn  btn-sm btn-success" asp-page="./Create"><img src="~/img/add-24.png" alt="neu" /></a></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var service in Model.Services)
+        {
+            <tr>
+                <td>
+                    @service.Name
+                </td>
+                <td>
+                    @service.Street
+                </td>
+                <td>
+                    @service.Postalcode
+                </td>
+                <td>
+                    @service.City
+                </td>
+                <td>
+                    <a href="@service.Url">Homepage</a>
+                </td>
+                <td>
+                    @service.Phone
+                </td>
+                <td>
+                    @(service.Email ?? "n/a")
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-success"><img src="~/img/info-24.png" alt="details" /></button>
+                    <button class="btn btn-sm btn-primary"><img src="~/img/edit-24.png" alt="edit" /></button>
+                    <button class="btn btn-sm btn-danger"><img src="~/img/delete-24.png" alt="delete" /></button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

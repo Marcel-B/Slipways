@@ -1,0 +1,103 @@
+﻿<!DOCTYPE html>
+<html lang="de-de">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    @RenderSection("AdditionalMeta", false)
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-md navbar-light bg-light fixed-top">
+            <a class="navbar-brand" asp-area="" asp-page="/Index"><img src="~/img/icons8-boat-launch-96.png" width="42" height="42" alt="logo" /></a>
+
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav mr-auto">
+
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" asp-area="" asp-page="/Index">Slipanlagen</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" asp-area="" asp-page="/Ports">Marinas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" asp-area="" asp-page="/Waters">Gewässer</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" asp-area="" asp-page="/Service">Werkstätten</a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Datenschutz</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" asp-area="" asp-page="/Legal">Impressum</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" target="_blank" href="https://data.slipways.de/ui/playground"><span>GraphQL API &nbsp;<img src="~/img/graphql-48.png" alt="GraphQL API" width="21" /></span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" target="_blank" href="https://data.slipways.de/ui/voyager">GraphQL Übersicht</a>
+                    </li>
+                </ul>
+
+                <ul class="navbar-nav">
+
+                    @if (SignInManager.IsSignedIn(User))
+                    {
+                        <li>
+                            <div class="dropdown show">
+                                <a class="btn btn-outline-danger dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    Admin
+                                </a>
+
+                                <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                                    <a class="dropdown-item" asp-area="Admin" asp-page="/Slipway/Index">Slipanlage</a>
+                                    <a class="dropdown-item" asp-area="Admin" asp-page="/Water/Index">Gewässer</a>
+                                    <a class="dropdown-item" asp-area="Admin" asp-page="/Service/Index">Service</a>
+                                    <a class="dropdown-item" asp-area="Admin" asp-page="/Port/Index">Marnina</a>
+                                </div>
+                            </div>
+                        </li>
+                    }
+                    <partial name="_LoginPartial" />
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container-fluid">
+        <partial name="_CookieConsentPartial" />
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="footer text-muted border-top light bg-light box-shadow mt-3 fixed-bottom" style="position: fixed;">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-auto mr-auto">
+                    &copy; @DateTime.Now.Year - Marcel Benders - <a asp-area="" asp-page="/Privacy">Datenschutz - </a> <a asp-area="" asp-page="/Legal">Impressum</a>
+                </div>
+                <div class="col-auto">
+                    <a class="align-middle" href="https://apps.apple.com/de/app/slipways/id1484222697?mt=8" style="display:inline-block;overflow:hidden;background:url(https://linkmaker.itunes.apple.com/de-de/badge-lrg.svg?releaseDate=2019-12-14&kind=iossoftware&bubble=ios_apps) no-repeat;width:135px;height:40px;"></a>
+                </div>
+
+            </div>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

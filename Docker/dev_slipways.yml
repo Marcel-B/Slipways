@@ -1,0 +1,150 @@
+version: "3.7"
+
+services:
+    slipways-api:
+        image: millegalb/slipways.api:dev-latest
+        deploy:
+            replicas: 1
+            restart_policy:
+                condition: on-failure
+        depends_on:
+            - dev_slipway_db
+        networks:
+            - skynet
+        secrets:
+            - dev_slipway_db
+        environment:
+            SERVER: "db"
+            ASPNETCORE_ENVIRONMENT: "Staging"
+            DATABASE: "Slipways"
+            USER: "sa"
+            PORT: "1433"
+
+    slipways-dataprovider:
+        image: millegalb/slipways.dataprovider:dev-latest
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost/api/test"]
+            interval: 60s
+            timeout: 5s
+            retries: 3
+        deploy:
+            replicas: 1
+            restart_policy:
+                condition: on-failure
+        volumes:
+            - /home/marcel/dev-backUp:/app/backUp
+        depends_on:
+            - dev_slipway_db
+        networks:
+            - skynet
+        secrets:
+            - dev_slipway_db
+        environment:
+            SERVER: "dev_slipway_db"
+            DATABASE: "Slipways"
+            USER: "sa"
+            PORT: "1433"
+            ASPNETCORE_ENVIRONMENT: 'Staging'
+
+    slipways-website:
+        image: millegalb/slipways.web:dev-latest
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:80/"]
+            interval: 60s
+            timeout: 5s
+            retries: 3
+        networks:
+            - skynet
+        depends_on:
+            - slipways-dataprovider
+            - dev_slipway_db
+        volumes:
+            - ./Keys:/app/keys
+        deploy:
+            replicas: 1
+            restart_policy:
+                condition: on-failure
+            labels:
+                - "traefik.enable=true"
+
+                - "traefik.http.middlewares.https-only.redirectscheme.scheme=https"
+                - "traefik.http.routers.dev-slipways-web-http.entrypoints=web"
+                - "traefik.http.routers.dev-slipways-web-http.rule=Host(`dev.slipways.de`)"
+                - "traefik.http.routers.dev-slipways-web-http.middlewares=https-only@docker"
+
+                - "traefik.http.routers.dev-slipways-web-https.rule=Host(`dev.slipways.de`)"
+                - "traefik.http.routers.dev-slipways-web-https.entrypoints=websecure"
+                - "traefik.http.routers.dev-slipways-web-https.tls.certresolver=sec"
+
+                - "traefik.http.services.dev-slipways-web-service.loadbalancer.server.port=80"
+            placement:
+                constraints: [node.role == worker]
+        secrets:
+            - slipways_web
+            - dev_slipway_db
+            - send_grid_key
+            - google_maps_secret
+        environment:
+            SERVER: "dev_slipway_db"
+            DATABASE: "SlipwaysUsers"
+            USER: "sa"
+            PORT: "1433"
+            ASPNETCORE_ENVIRONMENT: "Staging"
+            GRAPH_QL_ENDPOINT: "http://slipways-graphql:5000/graphql"
+            SEND_GRID_USER: "millegalb"
+            API_ENDPOINT: "http://slipways-api"
+            API_PORT: "8095"
+
+    slipways-graphql:
+        image: millegalb/slipways.graphql:dev-latest
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:5000/api/test"]
+            interval: 60s
+            timeout: 5s
+            retries: 3
+        deploy:
+            replicas: 1
+            restart_policy:
+                condition: on-failure
+            labels:
+                - "traefik.enable=true"
+
+                - "traefik.http.middlewares.https-only.redirectscheme.scheme=https"
+                - "traefik.http.routers.dev-slipways-gql-http.entrypoints=web"
+                - "traefik.http.routers.dev-slipways-gql-http.rule=Host(`data.dev.slipways.de`)"
+                - "traefik.http.routers.dev-slipways-gql-http.middlewares=https-only@docker"
+
+                - "traefik.http.routers.dev-slipways-gql-https.entrypoints=websecure"
+                - "traefik.http.routers.dev-slipways-gql-https.rule=Host(`data.dev.slipways.de`)"
+                - "traefik.http.routers.dev-slipways-gql-https.tls=true"
+                - "traefik.http.routers.dev-slipways-gql-https.tls.certresolver=sec"
+
+                - "traefik.http.services.dev-slipways-gql-service.loadbalancer.server.port=5000"
+        depends_on:
+            - dev_slipway_db
+        networks:
+            - skynet
+        secrets:
+            - dev_slipway_db
+        environment:
+            SERVER: "dev_slipway_db"
+            DATABASE: "Slipways"
+            USER: "sa"
+            PORT: "1433"
+            ASPNETCORE_ENVIRONMENT: 'Staging'
+            AUTHORITY: "https://identity.qaybe.de"
+            API_RESOURCE: "slipways.api"
+            CACHE: "dev-cache"
+
+networks:
+    skynet:
+        external: true
+secrets:
+    dev_slipway_db:
+        external: true
+    slipways_web:
+        external: true
+    send_grid_key:
+        external: true
+    google_maps_secret:
+        external: true

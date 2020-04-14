@@ -1,0 +1,85 @@
+version: "3.7"
+services:
+    db:
+        image: mcr.microsoft.com/mssql/server:2017-latest-ubuntu
+        ports:
+            - 1433:1433
+        environment:
+            ACCEPT_EULA: 'Y'
+            SA_PASSWORD: foo123bar!
+            MSSQL_PID: Express
+        volumes:
+            - dev_slipway_base:/var/opt/mssql
+    
+    slipways-graphql:
+        build: ./Slipways.GraphQL
+        depends_on:
+            - db
+        ports: 
+            - 4444:5000
+        environment:
+            SERVER: "db"
+            DATABASE: "Slipways"
+            USER: "sa"
+            dev_slipway_db: foo123bar!
+            PORT: "1433"
+            ASPNETCORE_ENVIRONMENT: 'Development'
+            AUTHORITY: "https://identity.qaybe.de"
+            API_RESOURCE: "slipways.api"
+            CACHE: "dev-cache"
+       
+    slipways-website:
+        build: ./Slipways.Web
+        ports:
+            - 8099:80
+        depends_on:
+            - db
+            - slipways-dataprovider
+            - slipways-graphql
+        volumes:
+            - ./Keys:/app/keys
+        environment:
+            SERVER: "db"
+            DATABASE: "SlipwaysUsers"
+            USER: "sa"
+            PORT: "1433"
+            dev_slipway_db: foo123bar!
+            ASPNETCORE_ENVIRONMENT: "Development"
+            GRAPH_QL_ENDPOINT: "http://slipways-graphql:5000/graphql"
+            SEND_GRID_USER: "millegalb"
+            AUTHORITY: "https://identity.qaybe.de"
+            SCOPE: "slipways.api.allaccess"
+            CLIENT_ID: "slipways.web"
+            slipways_web: "123lk-joDiasdf-asf9u1laf-JIJ"
+            CACHE: "dev-cache"
+            API_ENDPOINT: "http://slipways-api"
+            API_PORT: "8095"
+
+    slipways-api:
+        build: ./Slipways.API
+        environment: 
+            SERVER: "db"
+            ASPNETCORE_ENVIRONMENT: "Development"
+            DATABASE: "Slipways"
+            USER: "sa"
+            PORT: "1433"
+            dev_slipway_db: foo123bar!
+
+    slipways-dataprovider:
+        build: ./Slipways.DataProvider
+        volumes:
+            - ./backUp:/app/backUp
+        ports:
+            - 9999:80
+        depends_on:
+            - db
+        environment:
+            SERVER: "db"
+            DATABASE: "Slipways"
+            db: foo123bar!
+            USER: "sa"
+            PORT: "1433"
+            ASPNETCORE_ENVIRONMENT: 'Development'
+
+volumes:
+    dev_slipway_base:

@@ -1,0 +1,55 @@
+﻿<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>
+                Name
+            </th>
+            <th>
+                Stadt / Ort
+            </th>
+            <th>
+                Gewässer
+            </th>
+            <th>
+                Kosten
+            </th>
+            <th>
+                Karte
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+
+        @foreach (var slipway in Model?.Slipways)
+        {
+            <tr>
+                <td>
+                    <a asp-page="/Details" asp-route-id="@slipway.Id">@slipway.Name</a>
+                </td>
+                <td>
+                    @slipway.City
+                </td>
+                <td>
+                    @slipway.Water?.Longname
+                </td>
+                <td>
+                    @if (slipway.Costs > 0)
+                    {
+                        <img src="~/img/euro-24.png" alt="kostenpflichtig" data-toggle="tooltip" data-placement="top" title='@slipway.Costs?.ToString("C", CultureInfo.CreateSpecificCulture("de-DE"))' />
+                    }
+                    else if (slipway.Costs < 0)
+                    {
+                        <img src="~/img/sad-24.png" alt="keine information" />
+                    }
+                    else
+                    {
+                        <img src="~/img/happy-24.png" alt="kostenlos" />
+                    }
+                </td>
+                <td>
+                    <a href="https://www.google.com/maps/place/@slipway.Latitude,@slipway.Longitude" target="_blank"><img src="~/img/icons8-map-32.png" alt="Karte" /></a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
