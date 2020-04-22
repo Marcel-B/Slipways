@@ -16,7 +16,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="3.1.3" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="3.1.2" />
     <PackageReference Include="prometheus-net.AspNetCore" Version="3.5.0" />
-    <PackageReference Include="NLog.Web.AspNetCore" Version="4.9.1" />
+    <PackageReference Include="NLog.Web.AspNetCore" Version="4.9.2" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.1.3" />  
     <PackageReference Include="NLog.StructuredLogging.Json" Version="4.0.0" />
     <PackageReference Include="b-velop.Utilities" Version="2.1.2" />

@@ -23,13 +23,13 @@ namespace com.b_velop.Slipways.Web.Data
             Query = Queries.Waters.Item2;
         }
 
-        public override Water ConvertToClass(
-            WaterDto item)
-            => item.ToClass();
+        //public override Water ConvertToClass(
+        //    WaterDto item)
+        //    => item.ToClass();
 
-        public override WaterDto ConvertToDto(
-            Water item)
-            => item.ToDto();
+        //public override WaterDto ConvertToDto(
+        //    Water item)
+        //    => item.ToDto();
 
         public override async Task<HashSet<Water>> GetValuesAsync()
         {

@@ -95,9 +95,9 @@ namespace Slipways.API
             app.UseCors(
           options =>
               options
-              .AllowAnyOrigin()
               .AllowAnyMethod()
-              .AllowAnyHeader());
+              .AllowAnyHeader()
+              .WithOrigins("http://localhost:3000", "http://localhost:3001"));
 
             app.UseHttpMetrics();
             app.UseRouting();
