@@ -1,0 +1,25 @@
+name: .NET Core GraphQL
+
+on:
+  push:
+    branches: [ master, dev ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.101
+    - name: Install dependencies
+      run: dotnet restore BackEnd/Slipways.GraphQL
+    - name: Build
+      run: dotnet build --configuration Release --no-restore BackEnd/Slipways.GraphQL
+    - name: Test
+      run: dotnet test --no-restore --verbosity normal BackEnd/Slipways.GraphQL
