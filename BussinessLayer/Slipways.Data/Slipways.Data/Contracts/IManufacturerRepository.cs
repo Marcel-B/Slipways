@@ -1,14 +1,14 @@
-﻿using com.b_velop.Slipways.Data.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using com.b_velop.Slipways.Domain.Models;
 
 namespace com.b_velop.Slipways.Data.Contracts
 {
-    public interface IManufacturerRepository : IRepositoryBase<Manufacturer>
+    public interface IManufacturerRepository : IRepositoryBase
     {
-        Task<ILookup<Guid, Manufacturer>> GetManufacturerByServiceIdAsync(IEnumerable<Guid> serviceIds, CancellationToken cancellationToken);
+        Task<IEnumerable<Manufacturer>> GetManufacturers(CancellationToken cancellationToken = default);
     }
 }

@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using com.b_velop.Slipways.Data.Contracts;
-using com.b_velop.Slipways.Data.Models;
+using com.b_velop.Slipways.Domain.Models;
+using com.b_velop.Slipways.GrQl.Data.Models;
 using com.b_velop.Slipways.GrQl.Infrastructure;
 using GraphQL.DataLoader;
 using GraphQL.Types;
@@ -11,8 +12,8 @@ namespace com.b_velop.Slipways.GrQl.Data.GraphQLTypes
     public class ServiceType : ObjectGraphType<Service>
     {
         public ServiceType(
-            IDataLoaderContextAccessor accessor,
-            IRepositoryWrapper repository)
+            IGraphQlRepository repo,
+            IDataLoaderContextAccessor accessor)
         {
             Name = nameof(Service);
 
@@ -29,12 +30,12 @@ namespace com.b_velop.Slipways.GrQl.Data.GraphQLTypes
             Field(_ => _.Latitude);
             Field(_ => _.Longitude);
 
-            FieldAsync<ListGraphType<ManufacturerType>, IEnumerable<Manufacturer>>(
+            FieldAsync<ListGraphType<ManufacturerType>, IEnumerable<ManufacturerDto>>(
                 TypeName.Manufacturers,
                 "Manufacturers which are repaired by this Service",
                 resolve: async context =>
                 {
-                    var loader = accessor.Context.GetOrAddCollectionBatchLoader<Guid, Manufacturer>("GetManufacturerByServiceId", repository.Manufacturer.GetManufacturerByServiceIdAsync);
+                    var loader = accessor.Context.GetOrAddCollectionBatchLoader<Guid, ManufacturerDto>("GetManufacturersByServices", repo.GetManufacturersByServices);
                     return await loader.LoadAsync(context.Source.Id);
                 });
         }

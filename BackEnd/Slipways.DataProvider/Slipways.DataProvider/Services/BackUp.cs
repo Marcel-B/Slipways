@@ -136,7 +136,7 @@ namespace com.b_velop.Slipways.DataProvider.Services
         {
             try
             {
-                var ports = await wrapper.Port.SelectAllAsync(cancellationToken);
+                var ports = await wrapper.Marina.SelectAllAsync(cancellationToken);
                 await BackUpAsync(ports, Cache.Ports);
             }
             catch (Exception e)

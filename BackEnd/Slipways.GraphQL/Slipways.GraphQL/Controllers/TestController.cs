@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace Slipways.GraphQL.Controllers
+namespace com.b_velop.Slipways.GrQl.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]

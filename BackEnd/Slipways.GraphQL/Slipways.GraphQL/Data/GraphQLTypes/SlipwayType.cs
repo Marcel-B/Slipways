@@ -1,18 +1,20 @@
 ﻿using com.b_velop.Slipways.Data.Contracts;
-using com.b_velop.Slipways.Data.Models;
-using com.b_velop.Slipways.GrQl.Infrastructure;
 using GraphQL.DataLoader;
 using GraphQL.Types;
 using System;
 using System.Collections.Generic;
+using com.b_velop.Slipways.Domain.Models;
+using com.b_velop.Slipways.GrQl.Data.Models;
 
 namespace com.b_velop.Slipways.GrQl.Data.GraphQLTypes
 {
     public class SlipwayType : ObjectGraphType<Slipway>
     {
         public SlipwayType(
-            IDataLoaderContextAccessor accessor,
-            IRepositoryWrapper repository)
+            IWaterRepository waters,
+            IMarinaRepository marinas,
+            IGraphQlRepository graphQls,
+            IDataLoaderContextAccessor accessor)
         {
             Name = nameof(Slipway);
 
@@ -34,30 +36,30 @@ namespace com.b_velop.Slipways.GrQl.Data.GraphQLTypes
 
 
             FieldAsync<WaterType, Water>(
-                nameof(Station.Water),
+                nameof(Water),
                 description: "The Water where the Slipway is located",
                 resolve: async context =>
                 {
-                    var loader = accessor.Context.GetOrAddBatchLoader<Guid, Water>("GetWatersById", repository.Water.GetWatersByIdAsync);
-                    return await loader.LoadAsync(context.Source.WaterFk);
+                    var loader = accessor.Context.GetOrAddBatchLoader<Guid, Water>("GetWatersBySlipways", waters.GetWaterDictById);
+                    return await loader.LoadAsync(context.Source.WaterId);
                 });
-
-            FieldAsync<PortType, Port>(
-                nameof(Port),
+            
+            FieldAsync<MarinaType, Marina>(
+                nameof(Marina),
                 description: "A Port where the Slipway is located",
                 resolve: async context =>
                 {
-                    var loader = accessor.Context.GetOrAddBatchLoader<Guid, Port>("GetPortsById", repository.Port.GetPortsByIdAsync);
-                    return await loader.LoadAsync(context.Source.PortFk ?? Guid.Empty);
+                    var loader = accessor.Context.GetOrAddBatchLoader<Guid, Marina>("GetMarinasBySlipways", marinas.GetMarinaDictById);
+                    return await loader.LoadAsync(context.Source.MarinaId ?? Guid.Empty);
                 });
 
-            FieldAsync<ListGraphType<ExtraType>, IEnumerable<Extra>>(
-                TypeName.Extras,
+            FieldAsync<ListGraphType<ExtraType>, IEnumerable<ExtraDto>>(
+               nameof(Extra),
                 "Extras which the Slipway has to offer",
-                resolve: async context =>
+                resolve:  context =>
                 {
-                    var loader = accessor.Context.GetOrAddCollectionBatchLoader<Guid, Extra>("GetExtrasBySlipwayId", repository.Extra.GetExtrasBySlipwayIdAsync);
-                    return await loader.LoadAsync(context.Source.Id);
+                    var loader = accessor.Context.GetOrAddCollectionBatchLoader<Guid, ExtraDto>("GetExtrasBySlipways", graphQls.GetExtrasBySlipways);
+                    return  loader.LoadAsync(context.Source.Id);
                 });
         }
     }

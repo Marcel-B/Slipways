@@ -1,9 +1,9 @@
+using AutoMapper;
 using com.b_velop.Slipways.Data.Extensions;
 using com.b_velop.Slipways.GraphQL.Middlewares;
-using com.b_velop.Slipways.GrQl.Contracts;
+using com.b_velop.Slipways.GrQl.Data;
 using com.b_velop.Slipways.GrQl.Data.GraphQLSchema;
-using com.b_velop.Slipways.GrQl.Infrastructure;
-using com.b_velop.Slipways.GrQl.Services;
+using com.b_velop.Slipways.Persistence;
 using GraphQL;
 using GraphQL.DataLoader;
 using GraphQL.Server;
@@ -12,11 +12,11 @@ using GraphQL.Server.Ui.Voyager;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Prometheus;
-using System;
 
 namespace com.b_velop.Slipways.GrQl
 {
@@ -37,14 +37,20 @@ namespace com.b_velop.Slipways.GrQl
             IServiceCollection services)
         {
             services.AddControllers();
+            services.AddAutoMapper(typeof(Program).Assembly);
 
             services.AddScoped<IDependencyResolver>(s => new FuncDependencyResolver(s.GetRequiredService));
             services.AddSingleton<IDataLoaderContextAccessor, DataLoaderContextAccessor>();
             services.AddSingleton<DataLoaderDocumentListener>();
-            services.AddScoped<IInitializer, Initializer>();
-            services.AddHostedService<CacheLoader>();
             services.AddScoped<AppSchema>();
-
+            services.AddScoped<IGraphQlRepository, GraphQlRepository>();
+            services.AddDbContext<SlipwaysContext>(options =>
+            {
+                var connection = Configuration.GetConnectionString("postgres");
+                options.UseNpgsql(connection);
+                options.UseLazyLoadingProxies();
+            }, ServiceLifetime.Transient);
+            
             services.AddGraphQL(options =>
             {
                 options.ExposeExceptions = true;
@@ -54,33 +60,7 @@ namespace com.b_velop.Slipways.GrQl
                .AddDataLoader()
                .AddGraphTypes(ServiceLifetime.Scoped);
 
-            var secretProvider = new SecretProvider();
-
-            var port = Environment.GetEnvironmentVariable("PORT");
-            var server = Environment.GetEnvironmentVariable("SERVER");
-            var user = Environment.GetEnvironmentVariable("USER");
-            var database = Environment.GetEnvironmentVariable("DATABASE");
-
-            var password = string.Empty;
-
-            if (WebHostEnvironment.IsStaging())
-            {
-                password = secretProvider.GetSecret("dev_slipway_db");
-            }
-            else if (WebHostEnvironment.IsProduction())
-            {
-                password = secretProvider.GetSecret("sqlserver");
-            }
-            else
-            {
-                password = "foo123bar!";
-            }
-
-            var str = $"Server={server},{port};Database={database};User Id={user};Password={password}";
-#if DEBUG
-            str = $"Server=localhost,1433;Database=Slipways;User Id=sa;Password=foo123bar!";
-#endif
-            services.AddSlipwaysData(str, ServiceLifetime.Transient);
+            services.AddSlipwaysData();
 
             services.Configure<KestrelServerOptions>(options =>
             {

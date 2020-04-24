@@ -1,0 +1,20 @@
+[
+    {
+      "Id" : "F5836F04-E23B-475A-A079-1E4F3C9C4D87",
+      "Created" : "2019-12-10T08:02:42Z",
+      "Updated" : null,
+      "Name" : "Campingplatz"
+    },
+    {
+      "Id" : "06448FD8-DCC1-4579-947A-8A7B18BC1AAB",
+      "Created" : "2019-12-10T08:02:42Z",
+      "Updated" : null,
+      "Name" : "Steg"
+    },
+    {
+      "Id" : "8976CEB5-19D6-4F5C-A34D-A43801667B40",
+      "Created" : "2019-12-10T08:02:42Z",
+      "Updated" : null,
+      "Name" : "Parkplatz"
+    }
+  ]

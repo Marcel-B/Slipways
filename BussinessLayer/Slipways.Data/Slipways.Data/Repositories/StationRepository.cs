@@ -1,10 +1,7 @@
-﻿using com.b_velop.Slipways.Data.Contracts;
-using com.b_velop.Slipways.Data.Helper;
-using com.b_velop.Slipways.Data.Models;
+﻿using System;
+using com.b_velop.Slipways.Data.Contracts;
+using com.b_velop.Slipways.Domain.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -12,38 +9,23 @@ using System.Threading.Tasks;
 
 namespace com.b_velop.Slipways.Data.Repositories
 {
-    public class StationRepository : RepositoryBase<Station>, IStationRepository
+    public class StationRepository : RepositoryBase, IStationRepository
     {
         public StationRepository(
-            SlipwaysContext context,
-            IMemoryCache memoryCache,
-            ILogger<RepositoryBase<Station>> logger) : base(context, memoryCache, logger)
+            Persistence.SlipwaysContext context) : base(context)
         {
-            Key = Cache.Stations;
         }
 
-        public async Task<ILookup<Guid, Station>> GetStationsByWaterIdAsync(
-             IEnumerable<Guid> waterIds,
-             CancellationToken cancellationToken)
-        {
-            if (waterIds == null)
-                throw new ArgumentNullException("WaterIDs are null");
+        public async Task<IEnumerable<Station>> GetStations(
+            CancellationToken cancellationToken = default)
+            => await Context.Stations.ToListAsync(cancellationToken);
 
-            try
-            {
-                var stations = await SelectAllAsync(cancellationToken);
-                var result = stations.Where(_ => waterIds.Contains(_.WaterFk));
-                return result.ToLookup(x => x.WaterFk);
-            }
-            catch (ArgumentNullException e)
-            {
-                Logger.LogError(6665, $"Error occurred while getting Stations by WaterIds", e);
-            }
-            catch (Exception e)
-            {
-                Logger.LogError(6666, $"Error occurred while getting Stations by WaterIds", e);
-            }
-            return default;
+        public async Task<ILookup<Guid, Station>> GetStationsLookupById(
+            IEnumerable<Guid> stationIds, 
+            CancellationToken cancellationToken = default)
+        {
+            var stations =  await Context.Stations.Where(s => stationIds.Contains(s.Id)).ToListAsync(cancellationToken);
+            return stations.ToLookup(x => x.WaterId);
         }
     }
 }

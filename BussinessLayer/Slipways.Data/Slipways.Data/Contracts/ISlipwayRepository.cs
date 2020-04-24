@@ -1,5 +1,5 @@
-﻿using com.b_velop.Slipways.Data.Models;
-using System;
+﻿using System;
+using com.b_velop.Slipways.Domain.Models;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -7,11 +7,12 @@ using System.Threading.Tasks;
 
 namespace com.b_velop.Slipways.Data.Contracts
 {
-    public interface ISlipwayRepository : IRepositoryBase<Slipway>
+    public interface ISlipwayRepository  : IRepositoryBase
     {
-        Task<ILookup<Guid, Slipway>> GetSlipwaysByPortIdAsync(IEnumerable<Guid> portIds, CancellationToken cancellationToken);
-        Task<ILookup<Guid, Slipway>> GetSlipwayByWaterIdAsync(IEnumerable<Guid> waterIds, CancellationToken cancellationToken);
-        Task<ILookup<Guid, Slipway>> GetSlipwaysByExtraIdAsync(IEnumerable<Guid> extraIds, CancellationToken cancellationToken);
-        Task<Slipway> AddPortToSlipwayAsync(Guid slipwayId, Guid portId);
+        Task<IEnumerable<Slipway>> GetSlipways(CancellationToken cancellationToken = default);
+        Task<Slipway> GetSlipway(Guid id, CancellationToken cancellationToken = default);
+        Task<Slipway> GetSlipwayOrDefault(Guid id, CancellationToken cancellationToken = default);
+        Task<ILookup<Guid, Slipway>> GetSlipwaysByMarinas(IEnumerable<Guid> slipwaysIds,CancellationToken cancellationToken = default);
+        Task<ILookup<Guid, Slipway>> GetSlipwaysByWaters(IEnumerable<Guid> slipwaysIds, CancellationToken cancellationToken = default);
     }
 }

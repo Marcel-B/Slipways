@@ -1,4 +1,4 @@
-﻿using com.b_velop.Slipways.Data.Models;
+﻿using com.b_velop.Slipways.Domain.Models;
 using GraphQL.Types;
 
 namespace com.b_velop.Slipways.GrQl.Data.GraphQLInputTypes
@@ -14,7 +14,7 @@ namespace com.b_velop.Slipways.GrQl.Data.GraphQLInputTypes
             Field(_ => _.Longitude);
             Field(_ => _.Rating);
             Field(_ => _.Costs);
-            Field(_ => _.WaterFk, type: typeof(NonNullGraphType<IdGraphType>));
+            Field(_ => _.WaterId, type: typeof(NonNullGraphType<IdGraphType>));
 
             Field(_ => _.Street, nullable: true);
             Field(_ => _.City, nullable: true);

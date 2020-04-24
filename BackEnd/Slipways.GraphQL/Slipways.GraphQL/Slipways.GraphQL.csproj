@@ -39,8 +39,6 @@
     <PackageReference Include="prometheus-net.AspNetCore" Version="3.5.0" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Data\GraphQLAuthorization\" />
-    <Folder Include="Services\" />
     <Folder Include="Data\Models\" />
   </ItemGroup>
   <ItemGroup>

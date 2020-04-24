@@ -1,6 +1,4 @@
-using System;
 using System.Net;
-using com.b_velop.Slipways.Data.Extensions;
 using com.b_velop.Utilities.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;
@@ -11,7 +9,24 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Prometheus;
-using com.b_velop.Utilities.Docker;
+using Microsoft.AspNetCore.Identity;
+using com.b_velop.Slipways.Domain.Identity;
+using com.b_velop.Slipways.Persistence;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Microsoft.EntityFrameworkCore;
+using MediatR;
+using com.b_velop.Slipways.Application.Slipway;
+using AutoMapper;
+using com.b_velop.Slipways.Data.Contracts;
+using com.b_velop.Slipways.Data.Repositories;
+using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.AspNetCore.Authorization;
+using com.b_velop.Slipways.Application.Interfaces;
+using com.b_velop.Slipways.Application.User;
+using com.b_velop.Slipways.Infrastructure.Security;
+using FluentValidation.AspNetCore;
 
 namespace Slipways.API
 {
@@ -32,36 +47,68 @@ namespace Slipways.API
         public void ConfigureServices(
             IServiceCollection services)
         {
-            services.AddControllers()
+            services.AddCors(opt =>
+            {
+                opt.AddPolicy("CorsPolicy", policy =>
+                {
+                    policy.AllowAnyHeader().AllowAnyMethod().WithOrigins("http://localhost:3000");
+                });
+            });
+
+            services.AddControllers(opt =>
+            {
+                var policy = new AuthorizationPolicyBuilder()
+                    .RequireAuthenticatedUser()
+                    .Build();
+                opt.Filters.Add(new AuthorizeFilter(policy));
+            }) .AddFluentValidation(cfg =>
+                {
+                    cfg.RegisterValidatorsFromAssemblyContaining<Login>();
+                })
                 .AddNewtonsoftJson(options => options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
 
-            var secretProvider = new SecretProvider();
             services.AddCors();
+            services.AddScoped<IJwtGenerator, JwtGenerator>();
+            services.AddScoped<IUserAccessor, UserAccessor>();
 
-            var port = Environment.GetEnvironmentVariable("PORT");
-            var server = Environment.GetEnvironmentVariable("SERVER");
-            var user = Environment.GetEnvironmentVariable("USER");
-            var database = Environment.GetEnvironmentVariable("DATABASE");
+            var builder = services.AddIdentityCore<AppUser>(opt =>
+            {
+                opt.Password.RequireDigit = false;
+                opt.Password.RequiredLength = 4;
+                opt.Password.RequireNonAlphanumeric = false;
+                opt.Password.RequireUppercase = false;
+            });
 
-            var password = string.Empty;
+            builder = new IdentityBuilder(builder.UserType, typeof(Role), builder.Services);
+            builder.AddEntityFrameworkStores<SlipwaysContext>();
+            builder.AddRoleValidator<RoleValidator<Role>>();
+            builder.AddRoleManager<RoleManager<Role>>();
+            builder.AddSignInManager<SignInManager<AppUser>>();
 
-            if (WebHostEnvironment.IsStaging())
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["TokenKey"]));
+            
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(opt =>
+                {
+                    opt.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = key,
+                        ValidateAudience = false, // Url is comming from
+                        ValidateIssuer = false
+                    };
+                });
+
+            services.AddMediatR(typeof(List).Assembly);
+            services.AddAutoMapper(typeof(List).Assembly);
+            services.AddScoped<ISlipwayRepository, SlipwayRepository>();       
+            services.AddScoped<IManufacturerRepository, ManufacturerRepository>();
+            services.AddDbContext<SlipwaysContext>(options =>
             {
-                password = secretProvider.GetSecret("dev_slipway_db");
-            }
-            else if (WebHostEnvironment.IsProduction())
-            {
-                password = secretProvider.GetSecret("sqlserver");
-            }
-            else
-            {
-                password = "foo123bar!";
-            }
-            var connectionString = $"Server={server},{port};Database={database};User Id={user};Password={password}";
-#if DEBUG
-            connectionString = $"Server=localhost,1433;Database=Slipways;User Id=sa;Password=foo123bar!";
-#endif
-            services.AddSlipwaysData(connectionString);
+                var connection = Configuration.GetConnectionString("postgres");
+                options.UseNpgsql(connection);
+                options.UseLazyLoadingProxies();
+            });
         }
 
         public void Configure(
@@ -85,22 +132,20 @@ namespace Slipways.API
                         if (error != null)
                         {
                             Logger.LogError(9999, error.Error, error.Error.Message);
-                            context.Response.AddApplicationError(error.Error.Message); 
+                            context.Response.AddApplicationError(error.Error.Message);
                             await context.Response.WriteAsync(error.Error.Message);
                         }
                     });
                 });
             }
-
-            app.UseCors(
-          options =>
-              options
-              .AllowAnyMethod()
-              .AllowAnyHeader()
-              .WithOrigins("http://localhost:3000", "http://localhost:3001"));
-
             app.UseHttpMetrics();
+
             app.UseRouting();
+            app.UseCors("CorsPolicy");
+
+            app.UseAuthentication();
+            app.UseAuthorization();
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();

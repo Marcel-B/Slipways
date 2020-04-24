@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using com.b_velop.Slipways.Data.Models;
+using com.b_velop.Slipways.Domain.Models;
 
 namespace com.b_velop.Slipways.Data.Contracts
 {
-    public interface IWaterRepository : IRepositoryBase<Water>
+    public interface IWaterRepository : IRepositoryBase
     {
-        Task<IDictionary<Guid, Water>> GetWatersByIdAsync(IEnumerable<Guid> waterIds,
-             CancellationToken cancellationToken);
+        Task<IEnumerable<Water>> GetWaters(CancellationToken cancellationToken = default);
+        Task<IDictionary<Guid, Water>> GetWaterDictById(IEnumerable<Guid> waterIds, CancellationToken cancellationToken = default);
     }
 }
