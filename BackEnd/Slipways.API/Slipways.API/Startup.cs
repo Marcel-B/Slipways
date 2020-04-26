@@ -101,8 +101,11 @@ namespace Slipways.API
 
             services.AddMediatR(typeof(List).Assembly);
             services.AddAutoMapper(typeof(List).Assembly);
+            
             services.AddScoped<ISlipwayRepository, SlipwayRepository>();       
             services.AddScoped<IManufacturerRepository, ManufacturerRepository>();
+            services.AddScoped<IWaterRepository, WaterRepository>();
+            
             services.AddDbContext<SlipwaysContext>(options =>
             {
                 var connection = Configuration.GetConnectionString("postgres");

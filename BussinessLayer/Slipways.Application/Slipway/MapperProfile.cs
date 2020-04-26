@@ -7,7 +7,8 @@ namespace com.b_velop.Slipways.Application.Slipway
     {
         public MapperProfile()
         {
-            CreateMap<Domain.Models.Slipway, SlipwayDto>();
+            CreateMap<Domain.Models.Slipway, SlipwayDto>()
+                .ForMember(s => s.Water, opt => opt.MapFrom(s => s.Water.Name));
         }
     }
 }

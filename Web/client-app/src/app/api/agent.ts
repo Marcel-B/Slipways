@@ -1,6 +1,8 @@
 import axios, { AxiosResponse } from 'axios';
 import { ISlipway } from '../models/slipway';
 import {IUser} from "../models/user";
+import {IUserFormValues} from "../models/userFormValues";
+import {IWater} from "../models/water";
 
 axios.defaults.baseURL = 'http://localhost:5000/api';
 
@@ -12,11 +14,17 @@ const requests = {
 };
 
 const Slipways = {
-    list: (): Promise<ISlipway[]> => requests.get('/slipways')
+    list: (): Promise<ISlipway[]> => requests.get('/slipways'),
+    details: (id: string): Promise<ISlipway> => requests.get(`slipways/${id}`),
 };
 
+const Waters = {
+    list: (): Promise<IWater[]> => requests.get('/waters')
+};
 const User = {
-    login: (email: string, password: string): Promise<IUser> => requests.post('/user/login', {email, password})
-};
+    current: (): Promise<IUser> => requests.get('/user'),
+    login: (user: IUserFormValues): Promise<IUser> => requests.post(`/user/login`, user),
+    register: (user: IUserFormValues): Promise<IUser> => requests.post(`/user/register`, user)
+}
 
-export default { Slipways , User};
+export default { Slipways , User, Waters};

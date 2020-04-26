@@ -68,7 +68,6 @@ namespace com.b_velop.Slipways.API
             })
             .ConfigureWebHostDefaults(webBuilder =>
             {
-                webBuilder.UseUrls("http://*:8095");
                 webBuilder.UseStartup<Startup>();
             })
             .UseNLog();

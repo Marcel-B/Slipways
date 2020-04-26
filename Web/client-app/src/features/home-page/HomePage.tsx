@@ -47,7 +47,7 @@ const HomePage: React.FC = () => {
                     <br />
                     <Transition.Group animation='scale' duration={1200}>
                         <Image
-                            src={'/assets/robot_100.png'}
+                            src={'/assets/boat_launch_100.svg'}
                             centered
                             size='huge'
                         />
@@ -65,7 +65,7 @@ const HomePage: React.FC = () => {
                                </Form>
                            )}
                     />
-                <Button as={Link} to='/images' size='huge' inverted>
+                <Button as={Link} to='/slipways' size='huge' inverted>
                     To Slipways
                 </Button>
             </Container>

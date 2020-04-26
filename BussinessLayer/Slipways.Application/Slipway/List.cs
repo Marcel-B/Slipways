@@ -30,7 +30,8 @@ namespace com.b_velop.Slipways.Application.Slipway
                 CancellationToken cancellationToken)
             {
                 var slipways = await _repo.GetSlipways(cancellationToken);
-                return _mapper.Map<IEnumerable<SlipwayDto>>(slipways);
+                var result = _mapper.Map<IEnumerable<SlipwayDto>>(slipways);
+                return result;
             }
         }
     }
