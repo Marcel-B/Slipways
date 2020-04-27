@@ -44,6 +44,6 @@ namespace com.b_velop.Slipways.Data.Repositories
         public async Task<Slipway> GetSlipway(
             Guid id,
             CancellationToken cancellationToken = default)
-            => await Context.Slipways.FindAsync(id, cancellationToken);
+            => await Context.Slipways.FindAsync(new object[] {id}, cancellationToken: cancellationToken);
     }
 }

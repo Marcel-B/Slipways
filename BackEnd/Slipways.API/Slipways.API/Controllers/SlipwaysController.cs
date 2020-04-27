@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using com.b_velop.Slipways.Application.Slipway;
@@ -15,19 +16,13 @@ namespace com.b_velop.Slipways.API.Controllers
         public async Task<IEnumerable<SlipwayDto>> GetItAll(CancellationToken cancellationToken)
             => await Mediator.Send(new List.Query(), cancellationToken);
 
-        // GET api/slipway/8177a148-5674-4b8f-8ded-050907f640f3
-        //[HttpGet("{id}")]
-        //public async Task<IActionResult> GetAsync(
-        //    Guid id,
-        //    CancellationToken cancellationToken)
-        //{
-        //    //using (Metrics.CreateHistogram($"slipways_api_duration_GET_api_slipway_id_seconds", "Histogram").NewTimer())
-        //    //{
-        //    //    var slipway = await _repository.Slipway.SelectByIdAsync(id, cancellationToken);
-        //    //    var slipwayDto = _mapper.Map<SlipwayDto>(slipway);
-        //    //    return Ok(slipwayDto);
-        //    //}
-        //}
+        // GET api/slipways/details/8177a148-5674-4b8f-8ded-050907f640f3
+        [HttpGet("details/{id}")]
+        [AllowAnonymous]
+        public async Task<ActionResult<SlipwayDetailsDto>> GetAsync(
+            Guid id,
+            CancellationToken cancellationToken)
+            => await Mediator.Send(new Details.Query{Id = id}, cancellationToken);
 
         //[HttpPost]
         //public async Task<ActionResult> PostAsync(
