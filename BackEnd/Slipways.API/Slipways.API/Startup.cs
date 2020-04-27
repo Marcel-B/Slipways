@@ -105,6 +105,7 @@ namespace Slipways.API
             services.AddScoped<ISlipwayRepository, SlipwayRepository>();       
             services.AddScoped<IManufacturerRepository, ManufacturerRepository>();
             services.AddScoped<IWaterRepository, WaterRepository>();
+            services.AddScoped<IMarinaRepository, MarinaRepository>();
             
             services.AddDbContext<SlipwaysContext>(options =>
             {
