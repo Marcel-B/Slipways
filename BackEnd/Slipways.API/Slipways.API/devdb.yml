@@ -1,0 +1,32 @@
+version: '3.7'
+
+services:
+  slip_db:
+    image: postgres:latest
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints: [node.hostname == titan.marcelbenders.de]
+    networks:
+      - skynet
+    environment:
+      - "POSTGRES_USER=sailor"
+      - "POSTGRES_DB=slipways"
+      - "POSTGRES_PASSWORD_FILE=/run/secrets/db_slip_password"
+    volumes:
+      - postgresql_slip:/var/lib/postgresql/data
+    ports:
+      - 9767:5432
+    secrets:
+      - db_slip_password
+
+networks:
+  skynet:
+    external: true
+volumes:
+  postgresql_slip:
+secrets:
+  db_slip_password:
+    external: true

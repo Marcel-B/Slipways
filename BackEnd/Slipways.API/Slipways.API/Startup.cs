@@ -25,6 +25,7 @@ using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using com.b_velop.Slipways.Application.Interfaces;
 using com.b_velop.Slipways.Application.User;
+using com.b_velop.Slipways.Infrastructure.Docker;
 using com.b_velop.Slipways.Infrastructure.Security;
 using FluentValidation.AspNetCore;
 
@@ -47,6 +48,7 @@ namespace com.b_velop.Slipways.API
         public void ConfigureServices(
             IServiceCollection services)
         {
+            var secretProvider = new SecretProvider();
             services.AddCors(opt =>
             {
                 opt.AddPolicy("CorsPolicy", policy =>
@@ -85,7 +87,21 @@ namespace com.b_velop.Slipways.API
             builder.AddRoleManager<RoleManager<Role>>();
             builder.AddSignInManager<SignInManager<AppUser>>();
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["TokenKey"]));
+            var keyString = string.Empty;
+            var connection = string.Empty;
+            
+            if (WebHostEnvironment.IsProduction())
+            {
+                keyString = secretProvider.GetSecret("key");
+                var dbPassword = secretProvider.GetSecret("db_slip_password");
+                connection = $"Host=localhost;Port=5432;Username=sailor;Password={dbPassword};Database=slipways;";
+            }
+            else
+            { 
+                connection = Configuration.GetConnectionString("postgres");
+                keyString = Configuration["TokenKey"];
+            }
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyString));
             
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(opt =>
@@ -109,7 +125,6 @@ namespace com.b_velop.Slipways.API
             
             services.AddDbContext<SlipwaysContext>(options =>
             {
-                var connection = Configuration.GetConnectionString("postgres");
                 options.UseNpgsql(connection);
                 options.UseLazyLoadingProxies();
             });
