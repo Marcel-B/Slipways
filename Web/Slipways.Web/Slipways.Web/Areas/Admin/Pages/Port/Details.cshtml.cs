@@ -13,7 +13,7 @@ namespace com.b_velop.Slipways.Web.Areas.Admin.Pages.Port
         private IStoreWrapper _dataStore;
         private ILogger<DetailsModel> _logger;
 
-        public b_velop.Slipways.Data.Models.Port Port { get; set; }
+        public b_velop.Slipways.Domain.Models.Marina Port { get; set; }
 
         [TempData]
         public string Message { get; set; }

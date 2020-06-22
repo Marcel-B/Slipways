@@ -29,7 +29,7 @@ namespace com.b_velop.Slipways.Web.Areas.Admin.Pages.Port
         public SelectList Slipways { get; set; }
 
         [BindProperty]
-        public b_velop.Slipways.Data.Models.Port Port { get; set; }
+        public b_velop.Slipways.Domain.Models.Marina Port { get; set; }
 
         public CreateModel(
             IStoreWrapper dataStore,
