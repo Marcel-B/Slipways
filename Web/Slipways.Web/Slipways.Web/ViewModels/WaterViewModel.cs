@@ -1,5 +1,5 @@
 ﻿using com.b_velop.Slipways.Data.Dtos;
-using com.b_velop.Slipways.Data.Models;
+using com.b_velop.Slipways.Domain.Models;
 using com.b_velop.Slipways.Web.Contracts;
 using com.b_velop.Slipways.Web.Services;
 using Microsoft.AspNetCore.Mvc;

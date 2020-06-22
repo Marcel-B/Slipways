@@ -18,7 +18,7 @@ namespace com.b_velop.Slipways.Web.Areas.Admin.Pages.Port
         public string Message { get; set; }
 
         [BindProperty]
-        public HashSet<b_velop.Slipways.Data.Models.Port> Ports { get; set; }
+        public HashSet<b_velop.Slipways.Domain.Models.Marina> Ports { get; set; }
 
         public IndexModel(
             IStoreWrapper dataStore,
@@ -47,7 +47,7 @@ namespace com.b_velop.Slipways.Web.Areas.Admin.Pages.Port
         public async Task OnGetAsync()
         {
             var ports = await _dataStore.Ports.GetValuesAsync();
-            Ports = ports ?? new HashSet<b_velop.Slipways.Data.Models.Port>();
+            Ports = ports ?? new HashSet<b_velop.Slipways.Domain.Models.Marina>();
         }
     }
 }

@@ -28,7 +28,7 @@ using com.b_velop.Slipways.Application.User;
 using com.b_velop.Slipways.Infrastructure.Security;
 using FluentValidation.AspNetCore;
 
-namespace Slipways.API
+namespace com.b_velop.Slipways.API
 {
     public class Startup
     {
