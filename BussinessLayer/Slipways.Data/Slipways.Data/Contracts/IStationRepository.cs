@@ -10,6 +10,7 @@ namespace com.b_velop.Slipways.Data.Contracts
     public interface IStationRepository : IRepositoryBase
     {
         Task<IEnumerable<Station>> GetStations(CancellationToken cancellationToken = default);
+        Task<Station> GetStation(Guid stationId, CancellationToken cancellationToken = default);
         Task<ILookup<Guid, Station>> GetStationsLookupById(IEnumerable<Guid> stationIds, CancellationToken cancellationToken = default);
     }
 }

@@ -213,7 +213,7 @@ const SlipwayForm: React.FC<RouteComponentProps<DetailParams>> = ({
                                 </Grid.Column>
                                 <Grid.Column>
                                     <Field
-                                        name='contro'
+                                        name='contra'
                                         placeholder='Kontra'
                                         value={slipway.contra}
                                         component={TextAreaInput}

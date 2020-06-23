@@ -4,7 +4,7 @@ import {IUser} from "../models/user";
 import {IUserFormValues} from "../models/userFormValues";
 import {IWater} from "../models/water";
 
-axios.defaults.baseURL = 'http://localhost:5000/api';
+axios.defaults.baseURL = process.env.REACT_APP_API_URL!;// 'http://localhost:5000/api';
 
 const responseBody = (response: AxiosResponse) => response.data;
 

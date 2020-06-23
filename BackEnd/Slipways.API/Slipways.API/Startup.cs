@@ -94,7 +94,7 @@ namespace com.b_velop.Slipways.API
             {
                 keyString = secretProvider.GetSecret("key");
                 var dbPassword = secretProvider.GetSecret("db_slip_password");
-                connection = $"Host=localhost;Port=5432;Username=sailor;Password={dbPassword};Database=slipways;";
+                connection = $"Host=slip_db;Port=5432;Username=sailor;Password={dbPassword};Database=slipways;";
             }
             else
             { 
@@ -119,6 +119,7 @@ namespace com.b_velop.Slipways.API
             services.AddAutoMapper(typeof(List).Assembly);
             
             services.AddScoped<ISlipwayRepository, SlipwayRepository>();       
+            services.AddScoped<IStationRepository, StationRepository>();       
             services.AddScoped<IManufacturerRepository, ManufacturerRepository>();
             services.AddScoped<IWaterRepository, WaterRepository>();
             services.AddScoped<IMarinaRepository, MarinaRepository>();
@@ -159,6 +160,9 @@ namespace com.b_velop.Slipways.API
             }
             app.UseHttpMetrics();
 
+            app.UseDefaultFiles();
+            app.UseStaticFiles();
+            
             app.UseRouting();
             app.UseCors("CorsPolicy");
 
@@ -169,6 +173,7 @@ namespace com.b_velop.Slipways.API
             {
                 endpoints.MapControllers();
                 endpoints.MapMetrics();
+                endpoints.MapFallbackToController("Index", "Fallback");
             });
         }
     }

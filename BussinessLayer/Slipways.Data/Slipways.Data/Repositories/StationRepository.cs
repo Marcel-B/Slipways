@@ -20,6 +20,9 @@ namespace com.b_velop.Slipways.Data.Repositories
             CancellationToken cancellationToken = default)
             => await Context.Stations.ToListAsync(cancellationToken);
 
+        public async Task<Station> GetStation(Guid stationId, CancellationToken cancellationToken = default) 
+            => await Context.Stations.FindAsync( new object[] {stationId}, cancellationToken);
+
         public async Task<ILookup<Guid, Station>> GetStationsLookupById(
             IEnumerable<Guid> stationIds, 
             CancellationToken cancellationToken = default)

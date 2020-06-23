@@ -9,11 +9,19 @@ WORKDIR /src
 
 COPY ["./BackEnd/Slipways.API/Slipways.API/Slipways.API.csproj", "BackEnd/Slipways.API/Slipways.API/"]
 COPY ["./BussinessLayer/Slipways.Data/Slipways.Data/Slipways.Data.csproj", "BussinessLayer/Slipways.Data/Slipways.Data/"]
+COPY ["./BussinessLayer/Slipways.Application/Slipways.Application.csproj", "BussinessLayer/Slipways.Application/"]
+COPY ["./BussinessLayer/Slipways.Persistence/Slipways.Persistence.csproj", "BussinessLayer/Slipways.Persistence/"]
+COPY ["./BussinessLayer/Slipways.Domain/Slipways.Domain.csproj", "BussinessLayer/Slipways.Domain/"]
+COPY ["./BussinessLayer/Slipways.Infrastructure/Slipways.Infrastructure.csproj", "BussinessLayer/Slipways.Infrastructure/"]
 
 RUN dotnet restore "BackEnd/Slipways.API/Slipways.API/Slipways.API.csproj"
 
 COPY ["./BackEnd/Slipways.API/Slipways.API/", "BackEnd/Slipways.API/Slipways.API/"]
 COPY ["./BussinessLayer/Slipways.Data/Slipways.Data/", "BussinessLayer/Slipways.Data/Slipways.Data/"]
+COPY ["./BussinessLayer/Slipways.Application/", "BussinessLayer/Slipways.Application/"]
+COPY ["./BussinessLayer/Slipways.Persistence/", "BussinessLayer/Slipways.Persistence/"]
+COPY ["./BussinessLayer/Slipways.Domain/", "BussinessLayer/Slipways.Domain/"]
+COPY ["./BussinessLayer/Slipways.Infrastructure/", "BussinessLayer/Slipways.Infrastructure/"]
 
 WORKDIR "/src/BackEnd/Slipways.API/Slipways.API"
 
