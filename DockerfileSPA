@@ -1,0 +1,51 @@
+#See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
+
+FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-buster-slim AS base
+WORKDIR /app
+EXPOSE 80 5000
+
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1-buster AS build
+WORKDIR /src
+ENV APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
+
+# install NodeJS 13.x
+# see https://github.com/nodesource/distributions/blob/master/README.md#deb
+RUN apt-get update -yq
+RUN apt-get install curl gnupg -yq
+RUN curl -sL https://deb.nodesource.com/setup_13.x | bash -
+RUN apt-get install -y nodejs
+
+COPY ["./BackEnd/Slipways.API/Slipways.API/Slipways.API.csproj", "BackEnd/Slipways.API/Slipways.API/"]
+COPY ["./BussinessLayer/Slipways.Data/Slipways.Data/Slipways.Data.csproj", "BussinessLayer/Slipways.Data/Slipways.Data/"]
+COPY ["./BussinessLayer/Slipways.Application/Slipways.Application.csproj", "BussinessLayer/Slipways.Application/"]
+COPY ["./BussinessLayer/Slipways.Persistence/Slipways.Persistence.csproj", "BussinessLayer/Slipways.Persistence/"]
+COPY ["./BussinessLayer/Slipways.Domain/Slipways.Domain.csproj", "BussinessLayer/Slipways.Domain/"]
+COPY ["./BussinessLayer/Slipways.Infrastructure/Slipways.Infrastructure.csproj", "BussinessLayer/Slipways.Infrastructure/"]
+COPY ["./Web/client-app/", "Web/client-app/"]
+
+RUN dotnet restore "BackEnd/Slipways.API/Slipways.API/Slipways.API.csproj"
+
+COPY ["./BackEnd/Slipways.API/Slipways.API/", "BackEnd/Slipways.API/Slipways.API/"]
+COPY ["./BussinessLayer/Slipways.Data/Slipways.Data/", "BussinessLayer/Slipways.Data/Slipways.Data/"]
+COPY ["./BussinessLayer/Slipways.Application/", "BussinessLayer/Slipways.Application/"]
+COPY ["./BussinessLayer/Slipways.Persistence/", "BussinessLayer/Slipways.Persistence/"]
+COPY ["./BussinessLayer/Slipways.Domain/", "BussinessLayer/Slipways.Domain/"]
+COPY ["./BussinessLayer/Slipways.Infrastructure/", "BussinessLayer/Slipways.Infrastructure/"]
+
+WORKDIR "/src/Web/client-app"
+RUN ls
+RUN npm install
+RUN npm run build
+
+WORKDIR "/src/BackEnd/Slipways.API/Slipways.API"
+
+
+RUN dotnet build "Slipways.API.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "Slipways.API.csproj" -c Release -o /app/publish
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "Slipways.API.dll"]

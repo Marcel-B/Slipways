@@ -1,5 +1,4 @@
 import React from 'react';
-import { Form as FinalForm, Field } from 'react-final-form';
 
 import {
     Icon,
@@ -9,7 +8,7 @@ import {
     Button,
     Segment,
     Container,
-    Transition, Form,
+    Transition,
 } from 'semantic-ui-react';
 import { Link } from 'react-router-dom';
 import TextInput from "../../app/common/form/TextInput";
@@ -27,22 +26,33 @@ const HomePage: React.FC = () => {
                 <h1 style={{ fontSize: '4em' }}>
                     <Icon
                         flipped='horizontally'
-                        name='space shuttle'
+                        name='ship'
                         size='big'
                         style={{ marginRight: '18px' }}
                     />
-                    Slipways
+                    Slipways.de
                     <Icon
-                        name='space shuttle'
+                        name='ship'
                         size='big'
                         style={{ marginLeft: '18px' }}
                     />
                 </h1>
-
+                    <a className="align-middle"
+                        href="https://apps.apple.com/de/app/slipways/id1484222697?mt=8"
+                        style={{
+                            display: 'inline-block',
+                            overflow: 'hidden',
+                            background: 'url(https://linkmaker.itunes.apple.com/de-de/badge-lrg.svg?releaseDate=2019-12-14&kind=iossoftware&bubble=ios_apps) no-repeat',
+                            width: '135px',
+                            height: '40px'
+                        }}/>
                 <Divider />
 
                 <Header as='h2'>
-                    Let your boat to water
+                    Eine kleine Sammlung von Slipanlagen welche ständig erweitert wird. Durch einfachen Knopfdruck dann die Navigation gestartet werden.
+                    <br/>
+                    <br/>
+                    Lass dein Boot ins Wasser
                     <br />
                     <br />
                     <Transition.Group animation='scale' duration={1200}>
@@ -53,20 +63,8 @@ const HomePage: React.FC = () => {
                         />
                     </Transition.Group>
                 </Header>
-                <FinalForm onSubmit={handleFinalFormSubmit}
-                           render={() => (
-                               <Form>
-                                   <Field
-                                       name='title'
-                                       placeholder='Title'
-                                       value=''
-                                       component={TextInput}
-                                   />
-                               </Form>
-                           )}
-                    />
                 <Button as={Link} to='/slipways' size='huge' inverted>
-                    To Slipways
+                    weiter
                 </Button>
             </Container>
         </Segment>

@@ -8,6 +8,8 @@ import SlipwaysDashboard from "../../features/slipways/dashboard/SlipwaysDashboa
 import SlipwayForm from "../../features/slipways/form/SlipwayForm";
 import { Route, withRouter} from 'react-router-dom';
 import {observer} from "mobx-react-lite";
+import WatersDashboard from "../../features/waters/dashboard/WatersDashboard";
+import SlipwayDetails from "../../features/slipways/details/SlipwayDetails";
 
     //   if (!appLoaded) return <LoadingComponent content='... loading app' />;
 
@@ -20,7 +22,9 @@ function App() {
                 <NavBar/>
                 <Container style={{ marginTop: '7em' }}>
                     <Route exact path='/slipways' component={SlipwaysDashboard}/>
+                    <Route exact path='/waters' component={WatersDashboard}/>
                     <Route exact path='/slipways/create' component={SlipwayForm}/>
+                    <Route  path='/slipways/details/:id' component={SlipwayDetails}/>
                 </Container>
             </Fragment>} />
         </Fragment>

@@ -14,14 +14,14 @@ namespace com.b_velop.Slipways.API
 {
     public class Program
     {
-        public static async Task  Main(
+        public static async Task Main(
             string[] args)
         {
             var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
 
-            var file = "dev-nlog.config";
-            if (env == "Production")
-                file = "nlog.config";
+            // var file = "dev-nlog.config";
+            // if (env == "Production")
+            var file = "nlog.config";
 
             var logger = NLogBuilder.ConfigureNLog(file).GetCurrentClassLogger();
 
@@ -36,13 +36,14 @@ namespace com.b_velop.Slipways.API
                     var context = services.GetRequiredService<SlipwaysContext>();
                     var userManager = services.GetRequiredService<UserManager<AppUser>>();
                     context.Database.Migrate();
-                    await Seed.SeedData(context,userManager);
+                    await Seed.SeedData(context, userManager);
                 }
                 catch (Exception ex)
                 {
                     logger.Error(ex, "Stopped program because of exception");
                     throw;
                 }
+
                 host.Run();
             }
             catch (Exception ex)
@@ -59,16 +60,19 @@ namespace com.b_velop.Slipways.API
         public static IHostBuilder CreateHostBuilder(
             string[] args) =>
             Host.CreateDefaultBuilder(args)
-            .ConfigureLogging(logging =>
-            {
-                logging.ClearProviders();
-                logging.AddConsole();
-                logging.SetMinimumLevel(LogLevel.Trace);
-            })
-            .ConfigureWebHostDefaults(webBuilder =>
-            {
-                webBuilder.UseStartup<Startup>();
-            })
-            .UseNLog();
+                .ConfigureLogging(logging =>
+                {
+                    logging.ClearProviders();
+                    logging.AddConsole();
+                    logging.SetMinimumLevel(LogLevel.Trace);
+                })
+                .ConfigureWebHostDefaults(webBuilder =>
+                {
+                    webBuilder.UseStartup<Startup>()
+                        .UseKestrel(x => x.AddServerHeader = false)
+                        .UseUrls("http://*:5000");
+                    ;
+                })
+                .UseNLog();
     }
 }
