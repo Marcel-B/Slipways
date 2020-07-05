@@ -15,21 +15,21 @@ stages:
     jobs:
       - job: Restore
         steps:
-         - task: DotNetCoreCLI@2
-           displayName: 'Restore packages'
-           inputs:
-             command: 'restore'
-             restoreArguments: '$(Build.SourcesDirectory)/BackEnd/Slipways.API/Slipways.API.sln'
+          - task: DotNetCoreCLI@2
+            displayName: 'Restore packages'
+            inputs:
+              command: 'restore'
+              restoreArguments: '$(Build.SourcesDirectory)/BackEnd/Slipways.API/Slipways.API.sln'
     
       - job: Build
         dependsOn: Restore
         steps:
-         - task: DotNetCoreCLI@2
-           displayName: 'Build project'
-           inputs:
-             command: 'build'
-             projects:
-               '$(Build.SourcesDirectory)/BackEnd/Slipways.API/Slipways.API.sln'
+          - task: DotNetCoreCLI@2
+            displayName: 'Build project'
+            inputs:
+              command: 'build'
+              projects:
+                '$(Build.SourcesDirectory)/BackEnd/Slipways.API/Slipways.API.sln'
               
   - stage: Docker
     displayName: Build and Publish
