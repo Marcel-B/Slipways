@@ -1,20 +1,20 @@
-
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30225.117
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BusinessLayer", "BusinessLayer", "{E75FE221-1635-4A97-9F5D-6CF25956D4E0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slipways.Data", "BussinessLayer\Slipways.Data\Slipways.Data\Slipways.Data.csproj", "{8D91C2EF-4D92-4FE6-B3CB-8F51FC5862B6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Slipways.Data", "BussinessLayer\Slipways.Data\Slipways.Data\Slipways.Data.csproj", "{8D91C2EF-4D92-4FE6-B3CB-8F51FC5862B6}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BackEnd", "BackEnd", "{C2AAA8CE-0DFF-41CC-91D6-5FC269B53265}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slipways.API", "BackEnd\Slipways.API\Slipways.API\Slipways.API.csproj", "{FC2CC885-DC47-40AE-B01D-235B2A624623}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Slipways.API", "BackEnd\Slipways.API\Slipways.API\Slipways.API.csproj", "{FC2CC885-DC47-40AE-B01D-235B2A624623}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slipways.GraphQL", "BackEnd\Slipways.GraphQL\Slipways.GraphQL\Slipways.GraphQL.csproj", "{C1A067E1-B20C-41C0-A99B-529BDB22135B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Slipways.GraphQL", "BackEnd\Slipways.GraphQL\Slipways.GraphQL\Slipways.GraphQL.csproj", "{C1A067E1-B20C-41C0-A99B-529BDB22135B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "FrontEnd", "FrontEnd", "{CBC05499-E1D6-4410-850A-E5CF50C8B702}"
-EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slipways.Web", "Web\Slipways.Web\Slipways.Web\Slipways.Web.csproj", "{D88E85B7-32FC-4255-8242-7DA915B31400}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Slipways.Web", "Web\Slipways.Web\Slipways.Web\Slipways.Web.csproj", "{D88E85B7-32FC-4255-8242-7DA915B31400}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{1DF17C9D-A7FF-4FA8-B0EA-729A1ED3E9FA}"
 EndProject
@@ -23,15 +23,36 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Dockerfiles", "Dockerfiles"
 		DockerfileAPI = DockerfileAPI
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slipways.Domain", "BussinessLayer\Slipways.Domain\Slipways.Domain.csproj", "{221154C1-C793-48CC-B8FB-14F65F131C11}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Slipways.Domain", "BussinessLayer\Slipways.Domain\Slipways.Domain.csproj", "{221154C1-C793-48CC-B8FB-14F65F131C11}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slipways.Application", "BussinessLayer\Slipways.Application\Slipways.Application.csproj", "{95827F2D-1730-41F4-9A4A-D0AD85793BC3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Slipways.Application", "BussinessLayer\Slipways.Application\Slipways.Application.csproj", "{95827F2D-1730-41F4-9A4A-D0AD85793BC3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slipways.Persistence", "BussinessLayer\Slipways.Persistence\Slipways.Persistence.csproj", "{0593AE0B-0445-4733-951D-E0D128EF1D6E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Slipways.Persistence", "BussinessLayer\Slipways.Persistence\Slipways.Persistence.csproj", "{0593AE0B-0445-4733-951D-E0D128EF1D6E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slipways.Infrastructure", "BussinessLayer\Slipways.Infrastructure\Slipways.Infrastructure.csproj", "{DB0E86C0-DAC9-47E8-9074-9A3C74A6301B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Slipways.Infrastructure", "BussinessLayer\Slipways.Infrastructure\Slipways.Infrastructure.csproj", "{DB0E86C0-DAC9-47E8-9074-9A3C74A6301B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SPA", "SPA", "{1B22B330-104D-47AC-A4B9-92079FBE1405}"
+EndProject
+Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "client-app", "Web\client-app\", "{381B7006-7001-476B-9F38-A7B9A0FD9F6E}"
+	ProjectSection(WebsiteProperties) = preProject
+		TargetFrameworkMoniker = ".NETFramework,Version%3Dv4.0"
+		Debug.AspNetCompiler.VirtualPath = "/localhost_52912"
+		Debug.AspNetCompiler.PhysicalPath = "Web\client-app\"
+		Debug.AspNetCompiler.TargetPath = "PrecompiledWeb\localhost_52912\"
+		Debug.AspNetCompiler.Updateable = "true"
+		Debug.AspNetCompiler.ForceOverwrite = "true"
+		Debug.AspNetCompiler.FixedNames = "false"
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.VirtualPath = "/localhost_52912"
+		Release.AspNetCompiler.PhysicalPath = "Web\client-app\"
+		Release.AspNetCompiler.TargetPath = "PrecompiledWeb\localhost_52912\"
+		Release.AspNetCompiler.Updateable = "true"
+		Release.AspNetCompiler.ForceOverwrite = "true"
+		Release.AspNetCompiler.FixedNames = "false"
+		Release.AspNetCompiler.Debug = "False"
+		VWDPort = "52912"
+		SlnRelativePath = "Web\client-app\"
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,10 +60,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{DBF5D7CC-7F73-4F73-8195-BA79533540F0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DBF5D7CC-7F73-4F73-8195-BA79533540F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DBF5D7CC-7F73-4F73-8195-BA79533540F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DBF5D7CC-7F73-4F73-8195-BA79533540F0}.Release|Any CPU.Build.0 = Release|Any CPU
 		{8D91C2EF-4D92-4FE6-B3CB-8F51FC5862B6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{8D91C2EF-4D92-4FE6-B3CB-8F51FC5862B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8D91C2EF-4D92-4FE6-B3CB-8F51FC5862B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -75,6 +92,13 @@ Global
 		{DB0E86C0-DAC9-47E8-9074-9A3C74A6301B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DB0E86C0-DAC9-47E8-9074-9A3C74A6301B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DB0E86C0-DAC9-47E8-9074-9A3C74A6301B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{381B7006-7001-476B-9F38-A7B9A0FD9F6E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{381B7006-7001-476B-9F38-A7B9A0FD9F6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{381B7006-7001-476B-9F38-A7B9A0FD9F6E}.Release|Any CPU.ActiveCfg = Debug|Any CPU
+		{381B7006-7001-476B-9F38-A7B9A0FD9F6E}.Release|Any CPU.Build.0 = Debug|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{8D91C2EF-4D92-4FE6-B3CB-8F51FC5862B6} = {E75FE221-1635-4A97-9F5D-6CF25956D4E0}
@@ -85,5 +109,9 @@ Global
 		{95827F2D-1730-41F4-9A4A-D0AD85793BC3} = {E75FE221-1635-4A97-9F5D-6CF25956D4E0}
 		{0593AE0B-0445-4733-951D-E0D128EF1D6E} = {E75FE221-1635-4A97-9F5D-6CF25956D4E0}
 		{DB0E86C0-DAC9-47E8-9074-9A3C74A6301B} = {E75FE221-1635-4A97-9F5D-6CF25956D4E0}
+		{381B7006-7001-476B-9F38-A7B9A0FD9F6E} = {1B22B330-104D-47AC-A4B9-92079FBE1405}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {16E6DA42-7EFB-40C9-99D1-E2E5002EF951}
 	EndGlobalSection
 EndGlobal
