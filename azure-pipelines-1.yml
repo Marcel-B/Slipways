@@ -7,7 +7,7 @@ pool:
 variables:
   solution: '**/*.sln'
   buildPlatform: 'Any CPU'
-  tag: 'latest'
+  tag: '$(Build.BuildId)'
   buildConfiguration: 'Release'
     
 stages:
@@ -51,4 +51,5 @@ stages:
                 Dockerfile: '**/DockerfileAPI'
                 tags: |
                   $(tag)    
+                  'latest'
     

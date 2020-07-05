@@ -1,8 +1,3 @@
-# ASP.NET
-# Build and test ASP.NET projects.
-# Add steps that publish symbols, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/apps/aspnet/build-aspnet-4
-
 trigger:
 - dev
 
@@ -37,10 +32,6 @@ stages:
                 '$(Build.SourcesDirectory)/BackEnd/Slipways.API/Slipways.API.sln'
               configuration: 'Debug'
 
-# resources:
-# - repo: self
-
-# stages:
   - stage: Build
     displayName: Build image
     jobs:  
@@ -53,38 +44,7 @@ stages:
         displayName: Build an image
         inputs:
           command: build
-          dockerfile: '$(Build.SourcesDirectory)/DockerfileSPA'
+          dockerfile: '$(Build.SourcesDirectory)/DockerfileAPI'
+          repository: 'millegalb/slipways.api'
           tags: |
             $(tag)
-
-  # - stage: Production
-  #   jobs:
-  #     - job: Restore
-  #       steps:
-  #         - task: DotNetCoreCLI@2
-  #           displayName: 'Restore packages'
-  #           inputs:
-  #             command: 'restore'
-
-  #     - job: Build
-  #       dependsOn: Restore
-  #       steps:
-  #         - task: DotNetCoreCLI@2
-  #           displayName: 'Build project'
-  #           inputs:
-  #             command: 'build'
-  #             configuration: 'Production'
-
-  #     - job: Publish
-  #       dependsOn: Build
-  #       steps:
-  #         - task: PublishBuildArtifacts@1
-  #           displayName: 'Publish Artifats'
-  #           inputs:
-  #             PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-  #             ArtifactName: 'FluppesProj'
-  #             publishLocation: 'Container'
-
-
-
-
