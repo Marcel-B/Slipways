@@ -24,6 +24,7 @@ stages:
             displayName: 'Restore packages'
             inputs:
               command: 'restore'
+              restoreArguments: '$(Build.SourcesDirectory)/BackEnd/Slipways.API/Slipways.API.sln'
 
       - job: Build
         dependsOn: Restore
