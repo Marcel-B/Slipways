@@ -49,6 +49,7 @@ stages:
             displayName: Push an image
             inputs:
               command: push
-              containerRegistry: DockerHubConnection
+              repository: 'slipways.api'
+              containerRegistry: 'DockerHubConnection'
     
     
