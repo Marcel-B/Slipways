@@ -43,6 +43,7 @@ stages:
             inputs:
               command: build
               dockerfile: '$(Build.SourcesDirectory)/DockerfileSPA'
+              repository: 'slipways.api'
               tags: |
                 $(tag)
           - task: Docker@2
@@ -51,5 +52,7 @@ stages:
               command: push
               repository: 'slipways.api'
               containerRegistry: 'DockerHubConnection'
+              tags: |
+                $(tag)
     
     
