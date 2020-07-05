@@ -24,6 +24,7 @@ stages:
             displayName: 'Restore packages'
             inputs:
               command: 'restore'
+
       - job: Build
         dependsOn: Restore
         steps:
@@ -31,6 +32,9 @@ stages:
             displayName: 'Build project'
             inputs:
               command: 'build'
+              projects: 
+                '$(Build.SourcesDirectory)/BackEnd/Slipways.API/Slipways.API.sln'
+              configuration: 'Debug'
 
 # resources:
 # - repo: self
