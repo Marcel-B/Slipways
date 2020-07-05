@@ -12,8 +12,8 @@ pool:
 variables:
   solution: '**/*.sln'
   buildPlatform: 'Any CPU'
-  buildConfiguration: 'Release'
-
+  tag: '$(Build.BuildId)'
+  # buildConfiguration: 'Release'
 
 stages:
   - stage: Development
@@ -24,6 +24,8 @@ stages:
             displayName: 'Restore packages'
             inputs:
               command: 'restore'
+              restoreArguments: '$(Build.SourcesDirectory)/BackEnd/Slipways.API/Slipways.API.sln'
+
       - job: Build
         dependsOn: Restore
         steps:
@@ -31,31 +33,57 @@ stages:
             displayName: 'Build project'
             inputs:
               command: 'build'
-  - stage: Production
-    jobs:
-      - job: Restore
-        steps:
-          - task: DotNetCoreCLI@2
-            displayName: 'Restore packages'
-            inputs:
-              command: 'restore'
-      - job: Build
-        dependsOn: Restore
-        steps:
-          - task: DotNetCoreCLI@2
-            displayName: 'Build project'
-            inputs:
-              command: 'build'
-              configuration: 'Production'
-      - job: Publish
-        dependsOn: Build
-        steps:
-          - task: PublishBuildArtifacts@1
-            displayName: 'Publish Artifats'
-            inputs:
-              PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-              ArtifactName: 'FluppesProj'
-              publishLocation: 'Container'
+              projects: 
+                '$(Build.SourcesDirectory)/BackEnd/Slipways.API/Slipways.API.sln'
+              configuration: 'Debug'
+
+# resources:
+# - repo: self
+
+# stages:
+  - stage: Build
+    displayName: Build image
+    jobs:  
+    - job: Build
+      displayName: Build
+      pool:
+        vmImage: 'ubuntu-latest'
+      steps:
+      - task: Docker@2
+        displayName: Build an image
+        inputs:
+          command: build
+          dockerfile: '$(Build.SourcesDirectory)/DockerfileSPA'
+          tags: |
+            $(tag)
+
+  # - stage: Production
+  #   jobs:
+  #     - job: Restore
+  #       steps:
+  #         - task: DotNetCoreCLI@2
+  #           displayName: 'Restore packages'
+  #           inputs:
+  #             command: 'restore'
+
+  #     - job: Build
+  #       dependsOn: Restore
+  #       steps:
+  #         - task: DotNetCoreCLI@2
+  #           displayName: 'Build project'
+  #           inputs:
+  #             command: 'build'
+  #             configuration: 'Production'
+
+  #     - job: Publish
+  #       dependsOn: Build
+  #       steps:
+  #         - task: PublishBuildArtifacts@1
+  #           displayName: 'Publish Artifats'
+  #           inputs:
+  #             PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+  #             ArtifactName: 'FluppesProj'
+  #             publishLocation: 'Container'
 
 
 
