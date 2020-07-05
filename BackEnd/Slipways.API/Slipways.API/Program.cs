@@ -44,7 +44,7 @@ namespace com.b_velop.Slipways.API
                     throw;
                 }
 
-                host.Run();
+                await host.RunAsync();
             }
             catch (Exception ex)
             {

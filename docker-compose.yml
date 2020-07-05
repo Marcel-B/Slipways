@@ -1,0 +1,14 @@
+# Use postgres/example user/password credentials
+version: '3.7'
+
+services:
+
+  db:
+    image: postgres
+    restart: always
+    ports:
+        - 5432:5432
+    environment:
+      - "POSTGRES_PASSWORD=test123"
+      - "POSTGRES_USER=sailor"
+      - "POSTGRES_DB=slipways"
