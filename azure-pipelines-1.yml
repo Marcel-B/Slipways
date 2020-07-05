@@ -48,7 +48,7 @@ stages:
             - task: Docker@2
               inputs:
                 containerRegistry: 'DockerHubConnection'
-                repository: 'slipways.api'
+                repository: 'millegalb/slipways.api'
                 command: 'buildAndPush'
                 Dockerfile: '**/DockerfileSPA'
               #    - task: Docker@2
