@@ -28,7 +28,7 @@ stages:
             displayName: 'Build project'
             inputs:
               command: 'build'
-              projects: |
+              projects:
                 '$(Build.SourcesDirectory)/BackEnd/Slipways.API/Slipways.API.sln'
               
 
