@@ -10,36 +10,34 @@ variables:
   tag: 'latest'
   buildConfiguration: 'Release'
     
-
-
 stages:
-#  - stage: Production
-#    jobs:
-#      - job: Restore
-#        steps:
-#          - task: DotNetCoreCLI@2
-#            displayName: 'Restore packages'
-#            inputs:
-#              command: 'restore'
-#              restoreArguments: '$(Build.SourcesDirectory)/BackEnd/Slipways.API/Slipways.API.sln'
+ - stage: Production
+   jobs:
+     - job: Restore
+       steps:
+         - task: DotNetCoreCLI@2
+           displayName: 'Restore packages'
+           inputs:
+             command: 'restore'
+             restoreArguments: '$(Build.SourcesDirectory)/BackEnd/Slipways.API/Slipways.API.sln'
     
-#      - job: Build
-#        dependsOn: Restore
-#        steps:
-#          - task: DotNetCoreCLI@2
-#            displayName: 'Build project'
-#            inputs:
-#              command: 'build'
-#              projects:
-#                '$(Build.SourcesDirectory)/BackEnd/Slipways.API/Slipways.API.sln'
+     - job: Build
+       dependsOn: Restore
+       steps:
+         - task: DotNetCoreCLI@2
+           displayName: 'Build project'
+           inputs:
+             command: 'build'
+             projects:
+               '$(Build.SourcesDirectory)/BackEnd/Slipways.API/Slipways.API.sln'
               
 
 
-  - stage: Build
-    displayName: Build image
+  - stage: Docker
+    displayName: Build and Publish
     jobs:  
       - job: Build
-        displayName: Build
+        displayName: Build and Publish
         steps:
             - task: Docker@2
               inputs:
@@ -50,22 +48,7 @@ stages:
                 containerRegistry: 'DockerHubConnection'
                 repository: 'millegalb/slipways.api'
                 command: 'buildAndPush'
-                Dockerfile: '**/DockerfileSPA'
-              #    - task: Docker@2
-   #           displayName: Build an image
-   #         inputs:
-   #           command: build
-   #           dockerfile: '$(Build.SourcesDirectory)/DockerfileSPA'
-   #           repository: 'slipways.api'
-   #           tags: |
-   #             $(tag)
-   #       - task: Docker@2
-   #         displayName: Push an image
-   #         inputs:
-   #           command: push
-   #           repository: 'slipways.api'
-   #           containerRegistry: 'DockerHubConnection'
-   #           tags: |
-   #             $(tag)
-    
+                Dockerfile: '**/DockerfileAPI'
+                tags: |
+                  $(tag)    
     
