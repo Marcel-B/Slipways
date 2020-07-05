@@ -12,7 +12,7 @@ pool:
 variables:
   solution: '**/*.sln'
   buildPlatform: 'Any CPU'
-  buildConfiguration: 'Release'
+  # buildConfiguration: 'Release'
 
 
 stages:
@@ -31,31 +31,31 @@ stages:
             displayName: 'Build project'
             inputs:
               command: 'build'
-  - stage: Production
-    jobs:
-      - job: Restore
-        steps:
-          - task: DotNetCoreCLI@2
-            displayName: 'Restore packages'
-            inputs:
-              command: 'restore'
-      - job: Build
-        dependsOn: Restore
-        steps:
-          - task: DotNetCoreCLI@2
-            displayName: 'Build project'
-            inputs:
-              command: 'build'
-              configuration: 'Production'
-      - job: Publish
-        dependsOn: Build
-        steps:
-          - task: PublishBuildArtifacts@1
-            displayName: 'Publish Artifats'
-            inputs:
-              PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-              ArtifactName: 'FluppesProj'
-              publishLocation: 'Container'
+  # - stage: Production
+  #   jobs:
+  #     - job: Restore
+  #       steps:
+  #         - task: DotNetCoreCLI@2
+  #           displayName: 'Restore packages'
+  #           inputs:
+  #             command: 'restore'
+  #     - job: Build
+  #       dependsOn: Restore
+  #       steps:
+  #         - task: DotNetCoreCLI@2
+  #           displayName: 'Build project'
+  #           inputs:
+  #             command: 'build'
+  #             configuration: 'Production'
+  #     - job: Publish
+  #       dependsOn: Build
+  #       steps:
+  #         - task: PublishBuildArtifacts@1
+  #           displayName: 'Publish Artifats'
+  #           inputs:
+  #             PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+  #             ArtifactName: 'FluppesProj'
+  #             publishLocation: 'Container'
 
 
 
