@@ -49,5 +49,5 @@ stages:
                 Dockerfile: 'DockerfileAPI'
                 tags: |
                   $(tag)
-                  'latest'
+                  latest
     
