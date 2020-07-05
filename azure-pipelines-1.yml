@@ -46,8 +46,8 @@ stages:
                 containerRegistry: 'DockerHubConnection'
                 repository: 'millegalb/slipways.api'
                 command: 'buildAndPush'
-                Dockerfile: '**/DockerfileAPI'
+                Dockerfile: 'DockerfileAPI'
                 tags: |
-                  $(tag)    
+                  $(tag)
                   'latest'
     
