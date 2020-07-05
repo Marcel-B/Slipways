@@ -11,19 +11,19 @@ variables:
   buildConfiguration: 'Release'
     
 stages:
- - stage: Production
-   jobs:
-     - job: Restore
-       steps:
+  - stage: Production
+    jobs:
+      - job: Restore
+        steps:
          - task: DotNetCoreCLI@2
            displayName: 'Restore packages'
            inputs:
              command: 'restore'
              restoreArguments: '$(Build.SourcesDirectory)/BackEnd/Slipways.API/Slipways.API.sln'
     
-     - job: Build
-       dependsOn: Restore
-       steps:
+      - job: Build
+        dependsOn: Restore
+        steps:
          - task: DotNetCoreCLI@2
            displayName: 'Build project'
            inputs:
@@ -31,8 +31,6 @@ stages:
              projects:
                '$(Build.SourcesDirectory)/BackEnd/Slipways.API/Slipways.API.sln'
               
-
-
   - stage: Docker
     displayName: Build and Publish
     jobs:  
