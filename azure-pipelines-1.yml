@@ -30,7 +30,7 @@ stages:
               command: 'build'
               projects: |
                 '$(Build.SourcesDirectory)/BackEnd/Slipways.API/Slipways.API.sln'
-              configuration: 'Release'
+              
 
   - stage: Build
     displayName: Build image
