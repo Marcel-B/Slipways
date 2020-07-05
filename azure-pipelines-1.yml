@@ -34,12 +34,17 @@ stages:
 #                '$(Build.SourcesDirectory)/BackEnd/Slipways.API/Slipways.API.sln'
               
 
+
   - stage: Build
     displayName: Build image
     jobs:  
       - job: Build
         displayName: Build
         steps:
+            - task: Docker@2
+              inputs:
+                containerRegistry: 'DockerHubConnection'
+                command: 'login'
             - task: Docker@2
               inputs:
                 containerRegistry: 'DockerHubConnection'
