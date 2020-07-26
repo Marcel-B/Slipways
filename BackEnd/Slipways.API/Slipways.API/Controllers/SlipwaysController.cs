@@ -12,12 +12,17 @@ namespace com.b_velop.Slipways.API.Controllers
     {
         // GET: api/slipways
         [HttpGet]
+        [ActionName("GetAll"), Produces("application/json")]
+        [ProducesResponseType(typeof(IEnumerable<SlipwayDto>), 200)]
         [AllowAnonymous]
         public async Task<IEnumerable<SlipwayDto>> GetItAll(CancellationToken cancellationToken)
             => await Mediator.Send(new List.Query(), cancellationToken);
 
         // GET api/slipways/details/8177a148-5674-4b8f-8ded-050907f640f3
         [HttpGet("details/{id}")]
+        [ActionName("GetAllPromotionauftraege"), Produces("application/json")]
+        [ProducesResponseType(typeof(SlipwayDetailsDto), 200)]
+        [ProducesResponseType(204)]
         [AllowAnonymous]
         public async Task<ActionResult<SlipwayDetailsDto>> GetAsync(
             Guid id,
