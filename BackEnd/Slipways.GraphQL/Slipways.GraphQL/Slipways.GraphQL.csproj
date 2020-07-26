@@ -8,7 +8,7 @@
   <PropertyGroup Condition=" '$(RunConfiguration)' == 'com.b_velop.Slipways.GraphQL' ">
     <StartAction>Project</StartAction>
     <ExternalConsole>true</ExternalConsole>
-    <ApplicationURL>http://localhost:5000</ApplicationURL>
+    <ApplicationURL>http://localhost:5000/ui/playground</ApplicationURL>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

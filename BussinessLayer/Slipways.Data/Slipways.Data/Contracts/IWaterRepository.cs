@@ -10,5 +10,7 @@ namespace com.b_velop.Slipways.Data.Contracts
     {
         Task<IEnumerable<Water>> GetWaters(CancellationToken cancellationToken = default);
         Task<IDictionary<Guid, Water>> GetWaterDictById(IEnumerable<Guid> waterIds, CancellationToken cancellationToken = default);
+        Water AddWater(Water water);
+        Task<Water> GetWater(Guid id, CancellationToken cancellationToken = default);
     }
 }

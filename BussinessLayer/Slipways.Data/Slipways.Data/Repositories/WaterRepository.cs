@@ -27,5 +27,17 @@ namespace com.b_velop.Slipways.Data.Repositories
             var waters = await Context.Waters.Where(w => waterIds.Contains(w.Id)).ToListAsync(cancellationToken);
             return waters.ToDictionary(_ => _.Id);
         }
+
+        public Water AddWater(Water water)
+        {
+            var result = Context.Waters.Add(water);
+            return result.Entity;
+        }
+
+        public async Task<Water> GetWater(Guid id, CancellationToken cancellationToken = default)
+        {
+            var result = await Context.Waters.FirstOrDefaultAsync(_ => _.Id == id, cancellationToken);
+            return result;
+        }
     }
 }

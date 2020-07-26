@@ -354,7 +354,7 @@ namespace com.b_velop.Slipways.Persistence
                 });
             }
 
-            context.SaveChanges();
+            _ = await context.SaveChangesAsync();
         }
     }
 }
