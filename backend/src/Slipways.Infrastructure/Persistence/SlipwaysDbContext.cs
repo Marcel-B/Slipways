@@ -54,6 +54,8 @@ public class SlipwaysDbContext(DbContextOptions<SlipwaysDbContext> options)
         builder.Entity<Station>(e =>
         {
             e.Property(x => x.Name).HasMaxLength(200);
+            e.Property(x => x.WaterLevelState).HasMaxLength(20);
+            e.HasIndex(x => x.ExternalId).IsUnique();
             e.HasOne(x => x.Water).WithMany().HasForeignKey(x => x.WaterId).OnDelete(DeleteBehavior.Restrict);
         });
     }

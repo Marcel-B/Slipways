@@ -21,6 +21,18 @@ docker compose up --build
 
 Beim ersten Start legt die API das Schema an und spielt die mitgelieferten Daten ein (Slipanlagen, Gewässer, Marinas, Pegelstationen, Motorservices).
 
+## Pegelstände
+
+Ein Hintergrund-Job in der API holt alle 15 Minuten die aktuellen Wasserstände aller Pegel von [PEGELONLINE](https://www.pegelonline.wsv.de/) (WSV, Lizenz DL-DE->Zero-2.0) und speichert sie an den Pegelstationen. Im selben Abruf gleicht er die Stationen ab: neue Pegel und Gewässer werden angelegt, vorhandene über die PEGELONLINE-ID bzw. die Pegelnummer aktualisiert. Clients fragen PEGELONLINE nie selbst ab, sondern lesen `/api/stations`.
+
+Einstellungen (Abschnitt `Pegelonline`, z. B. als Umgebungsvariable `Pegelonline__Enabled=false`):
+
+| Schlüssel | Standard | Bedeutung |
+| --- | --- | --- |
+| `Enabled` | `true` | Job ein/aus |
+| `Interval` | `00:15:00` | Abstand der Abrufe |
+| `BaseUrl` | `https://www.pegelonline.wsv.de/webservices/rest-api/v2/` | REST-API |
+
 ## Entwickeln ohne Docker
 
 Backend (braucht .NET 10 SDK und ein laufendes PostgreSQL, z. B. `docker compose up db`):
@@ -55,7 +67,8 @@ dotnet ef migrations add <Name> --project src/Slipways.Infrastructure --startup-
 | --- | --- | --- |
 | GET | `/api/slipways?search=&waterId=` | Slipanlagen, optional gefiltert |
 | GET | `/api/slipways/{id}` | Details einer Slipanlage |
-| GET | `/api/waters`, `/api/marinas`, `/api/extras`, `/api/services`, `/api/stations` | Stammdaten |
+| GET | `/api/waters`, `/api/marinas`, `/api/extras`, `/api/services` | Stammdaten |
+| GET | `/api/stations?waterId=` | Pegelstationen mit aktuellem Wasserstand (`waterLevel`, in cm) |
 | POST | `/api/account/register`, `/api/account/login`, `/api/account/refresh` | Konto und Bearer-Token (ASP.NET Identity) |
 | GET | `/api/account/me` | Angemeldeter Benutzer |
 | GET | `/health` | Health-Check |

@@ -403,6 +403,9 @@ namespace Slipways.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("Created")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("ExternalId")
+                        .HasColumnType("uuid");
+
                     b.Property<double>("Km")
                         .HasColumnType("double precision");
 
@@ -429,7 +432,20 @@ namespace Slipways.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("WaterId")
                         .HasColumnType("uuid");
 
+                    b.Property<double?>("WaterLevel")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTime?>("WaterLevelMeasuredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("WaterLevelState")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("ExternalId")
+                        .IsUnique();
 
                     b.HasIndex("WaterId");
 

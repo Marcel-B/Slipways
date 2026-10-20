@@ -18,6 +18,7 @@ public sealed class SlipwaysApiFactory : WebApplicationFactory<Program>, IAsyncL
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseSetting("Database:InitializeOnStartup", "false");
+        builder.UseSetting("Pegelonline:Enabled", "false");
 
         builder.ConfigureServices(services =>
         {

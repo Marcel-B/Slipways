@@ -2,6 +2,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
+using Slipways.Infrastructure.Gauges;
 using Slipways.Infrastructure.Identity;
 using Slipways.Infrastructure.Persistence;
 
@@ -22,6 +25,16 @@ public static class DependencyInjection
                 options.Password.RequiredLength = 8;
             })
             .AddEntityFrameworkStores<SlipwaysDbContext>();
+
+        services.AddOptions<PegelonlineOptions>().Bind(configuration.GetSection(PegelonlineOptions.SectionName));
+        services.AddHttpClient<PegelonlineClient>((sp, http) =>
+        {
+            http.BaseAddress = sp.GetRequiredService<IOptions<PegelonlineOptions>>().Value.BaseUrl;
+            http.DefaultRequestHeaders.UserAgent.ParseAdd("Slipways (+https://github.com/Marcel-B/Slipways)");
+        });
+        services.TryAddSingleton(TimeProvider.System);
+        services.AddScoped<GaugeSync>();
+        services.AddHostedService<GaugeSyncWorker>();
 
         return services;
     }
