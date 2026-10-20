@@ -31,7 +31,9 @@ if (app.Environment.IsDevelopment())
 
 app.MapHealthChecks("/health");
 app.MapCatalogEndpoints();
-app.MapAccountEndpoints();
+// Accounts are off for the read-only public site; Accounts:Enabled=true brings register and login back.
+if (app.Configuration.GetValue("Accounts:Enabled", false))
+    app.MapAccountEndpoints();
 
 if (app.Configuration.GetValue("Database:InitializeOnStartup", true))
     await app.Services.InitializeDatabaseAsync();
