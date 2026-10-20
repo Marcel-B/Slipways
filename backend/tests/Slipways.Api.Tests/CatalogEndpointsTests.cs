@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json.Nodes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Slipways.Api.Endpoints;
@@ -189,6 +190,35 @@ public class CatalogEndpointsTests(SlipwaysApiFactory factory) : IClassFixture<S
             Assert.InRange(s.Latitude, 45, 56);
             Assert.InRange(s.Longitude, 2, 20);
         });
+    }
+
+    [Fact]
+    public async Task Lists_the_shapes_of_the_waters_a_search_finds()
+    {
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<SlipwaysDbContext>();
+            foreach (var water in await db.Waters.Where(w => w.Shortname == "ALLER" || w.Shortname == "EMS").ToListAsync(TestContext.Current.CancellationToken))
+                water.Shape = """{"type":"LineString","coordinates":[[9.0,52.6],[9.3,52.7],[9.6,52.8]]}""";
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        var all = await _client.GetFromJsonAsync<JsonObject>("/api/waters/shapes", TestContext.Current.CancellationToken);
+        var aller = await _client.GetFromJsonAsync<JsonObject>("/api/waters/shapes?search=aller", TestContext.Current.CancellationToken);
+
+        Assert.NotNull(all);
+        Assert.Equal("FeatureCollection", (string?)all["type"]);
+        var names = all["features"]!.AsArray().Select(f => (string?)f!["properties"]!["name"]).ToList();
+        Assert.Contains("Aller", names);
+        Assert.Contains("Ems", names);
+        Assert.DoesNotContain("Nordsee", names);
+
+        Assert.NotNull(aller);
+        var feature = Assert.Single(aller["features"]!.AsArray())!;
+        Assert.Equal("Feature", (string?)feature["type"]);
+        Assert.Equal("Aller", (string?)feature["properties"]!["name"]);
+        // The middle vertex lies on the line and goes.
+        Assert.Equal("""{"type":"LineString","coordinates":[[9,52.6],[9.6,52.8]]}""", feature["geometry"]!.ToJsonString());
     }
 
     [Fact]

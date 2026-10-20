@@ -85,7 +85,7 @@ export function WaterDetailsPage() {
           <LazyMarkerMap
             markers={mapMarkers}
             bounds={water.bounds}
-            shape={water.shape ? { id: water.id, geometry: water.shape } : undefined}
+            shapes={water.shape ? [{ id: water.id, geometry: water.shape, highlighted: true }] : []}
           />
           <ul className="legend muted">
             {water.shape && (
