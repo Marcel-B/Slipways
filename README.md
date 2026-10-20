@@ -60,4 +60,8 @@ dotnet ef migrations add <Name> --project src/Slipways.Infrastructure --startup-
 | GET | `/api/account/me` | Angemeldeter Benutzer |
 | GET | `/health` | Health-Check |
 
+## Betrieb
+
+Auf Proxmox läuft Slipways in einem LXC mit Tailscale, nächtlicher Nextcloud-Sicherung und Auto-Update von `master`: siehe [`deploy/README.md`](deploy/README.md).
+
 Abhängigkeiten hält Dependabot wöchentlich aktuell.
