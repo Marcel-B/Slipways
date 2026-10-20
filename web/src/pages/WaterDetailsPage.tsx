@@ -38,6 +38,7 @@ function markers(water: WaterDetails): MapMarker[] {
         longitude: m.longitude,
         title: m.name,
         subtitle: 'Marina',
+        to: `/marinas/${m.id}`,
       }),
     ),
   ]
@@ -156,23 +157,18 @@ export function WaterDetailsPage() {
               <ul className="item-list">
                 {water.marinas.map((m) => (
                   <li key={m.id}>
-                    <div className="item">
+                    <Link to={`/marinas/${m.id}`} className="item">
                       <span className="item-icon item-icon-marina">
                         <Anchor size={18} />
                       </span>
                       <span className="item-text">
-                      <strong>
-                        {m.url ? (
-                          <a href={m.url} target="_blank" rel="noreferrer">
-                            {m.name}
-                          </a>
-                        ) : (
-                          m.name
-                        )}
-                      </strong>
-                      <span className="muted">{[m.street, [m.postalCode, m.city].filter(Boolean).join(' ')].filter(Boolean).join(', ')}</span>
+                        <strong>{m.name}</strong>
+                        <span className="muted">
+                          {[m.street, [m.postalCode, m.city].filter(Boolean).join(' ')].filter(Boolean).join(', ')}
+                        </span>
                       </span>
-                    </div>
+                      <ChevronRight size={18} className="item-chevron" />
+                    </Link>
                   </li>
                 ))}
               </ul>

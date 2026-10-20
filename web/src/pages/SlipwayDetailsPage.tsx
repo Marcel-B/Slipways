@@ -13,7 +13,6 @@ import {
   ExternalLink,
   MapPin,
   Navigation,
-  Ruler,
   Sailboat,
   Sparkles,
   ThumbsDown,
@@ -24,16 +23,13 @@ import {
 import { Fragment } from 'react'
 import { Link, useParams } from 'react-router'
 import { api, ApiError } from '../api/client'
-import type { SlipwayDetails, Water } from '../api/types'
+import type { SlipwayDetails } from '../api/types'
 import { LazyMarkerMap } from '../components/LazyMarkerMap'
 import { slipwayMarker } from '../components/mapMarkers'
+import { NearestGauge } from '../components/NearestGauge'
 import { accessLabel, feeLabel, osmUrl, surfaceLabel } from '../components/osmTags'
-import { formatMeasuredAt } from '../components/waterLevel'
-import { WaterLevelText } from '../components/WaterLevelText'
-import { distanceKm } from './distance'
 
 const currency = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' })
-const kilometres = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 1 })
 
 /** Our own costs win; imported slipways only have the OpenStreetMap fee tag. */
 function costs({ costs: value, fee }: SlipwayDetails): { label: string; tone: string } {
@@ -133,13 +129,7 @@ export function SlipwayDetailsPage() {
                   <Anchor size={16} /> Marina
                 </dt>
                 <dd>
-                  {slipway.marina.url ? (
-                    <a href={slipway.marina.url} target="_blank" rel="noreferrer">
-                      {slipway.marina.name}
-                    </a>
-                  ) : (
-                    slipway.marina.name
-                  )}
+                  <Link to={`/marinas/${slipway.marina.id}`}>{slipway.marina.name}</Link>
                 </dd>
               </>
             )}
@@ -189,7 +179,7 @@ export function SlipwayDetailsPage() {
             </ul>
           )}
 
-          {slipway.water && <NearestGauge slipway={slipway} water={slipway.water} />}
+          {slipway.water && <NearestGauge position={slipway} waterId={slipway.water.id} />}
 
           <div className="actions">
             <a
@@ -215,39 +205,5 @@ export function SlipwayDetailsPage() {
         </div>
       </div>
     </article>
-  )
-}
-
-/** The gauge with a current reading closest to the slipway, from the water the slipway is on. */
-function NearestGauge({ slipway, water: { id: waterId } }: { slipway: SlipwayDetails; water: Water }) {
-  // Same query as the water's page, so going there afterwards needs no new request.
-  const { data: water } = useQuery({
-    queryKey: ['water', waterId],
-    queryFn: ({ signal }) => api.water(waterId, signal),
-  })
-
-  const nearest = (water?.stations ?? [])
-    .flatMap((s) => (s.waterLevel ? [{ station: s, level: s.waterLevel, km: distanceKm(slipway, s) }] : []))
-    .sort((a, b) => a.km - b.km)[0]
-  if (!nearest) return null
-
-  const { station, level, km } = nearest
-  return (
-    <section className="gauge-card panel" aria-label="Nächster Pegel">
-      <span className="gauge-icon">
-        <Ruler size={20} />
-      </span>
-      <div>
-        <p className="gauge-title">
-          Nächster Pegel: <Link to={`/waters/${waterId}`}>{station.name}</Link>
-        </p>
-        <p className="gauge-value">
-          <WaterLevelText level={level} />
-        </p>
-        <p className="muted gauge-meta">
-          {kilometres.format(km)} km entfernt · gemessen {formatMeasuredAt(level)}
-        </p>
-      </div>
-    </section>
   )
 }

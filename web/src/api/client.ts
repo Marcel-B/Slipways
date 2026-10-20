@@ -1,4 +1,12 @@
-import type { SlipwayDetails, SlipwaySummary, WaterDetails, WaterShapes, WaterSummary } from './types'
+import type {
+  Marina,
+  MarinaDetails,
+  SlipwayDetails,
+  SlipwaySummary,
+  WaterDetails,
+  WaterShapes,
+  WaterSummary,
+} from './types'
 
 export class ApiError extends Error {
   readonly status: number
@@ -43,4 +51,7 @@ export const api = {
   waterShapes: (search?: string, signal?: AbortSignal) =>
     request<WaterShapes>(search ? `/waters/shapes?search=${encodeURIComponent(search)}` : '/waters/shapes', { signal }),
   water: (id: string, signal?: AbortSignal) => request<WaterDetails>(`/waters/${id}`, { signal }),
+  marinas: (search?: string, signal?: AbortSignal) =>
+    request<Marina[]>(search ? `/marinas?search=${encodeURIComponent(search)}` : '/marinas', { signal }),
+  marina: (id: string, signal?: AbortSignal) => request<MarinaDetails>(`/marinas/${id}`, { signal }),
 }

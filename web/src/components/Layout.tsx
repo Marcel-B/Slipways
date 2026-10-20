@@ -17,6 +17,7 @@ export function Layout() {
               Slipanlagen
             </NavLink>
             <NavLink to="/waters">Gewässer</NavLink>
+            <NavLink to="/marinas">Marinas</NavLink>
           </nav>
           <ThemeToggle />
         </div>

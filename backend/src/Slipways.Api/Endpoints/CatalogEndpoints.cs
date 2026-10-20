@@ -20,6 +20,7 @@ public static class CatalogEndpoints
         api.MapGet("/waters/shapes", ListWaterShapes).WithTags("Waters");
         api.MapGet("/waters/{id:guid}", GetWater).WithTags("Waters");
         api.MapGet("/marinas", ListMarinas).WithTags("Marinas");
+        api.MapGet("/marinas/{id:guid}", GetMarina).WithTags("Marinas");
         api.MapGet("/extras", ListExtras).WithTags("Extras");
         api.MapGet("/services", ListServices).WithTags("Services");
         api.MapGet("/stations", ListStations).WithTags("Stations");
@@ -145,7 +146,7 @@ public static class CatalogEndpoints
 
         var slipways = await ListSlipways(db, null, id, ct);
         var stations = await ListStations(db, id, ct);
-        var marinas = await ListMarinas(db, id, ct);
+        var marinas = await ListMarinas(db, null, id, ct);
         var positions = slipways.Select(s => new PositionDto(s.Latitude, s.Longitude))
             .Concat(stations.Select(s => new PositionDto(s.Latitude, s.Longitude)))
             .Concat(marinas.Select(m => new PositionDto(m.Latitude, m.Longitude)))
@@ -226,9 +227,24 @@ public static class CatalogEndpoints
         return positions.MinBy(p => Math.Pow(p.Latitude - latitude, 2) + Math.Pow(p.Longitude - longitude, 2));
     }
 
-    private static Task<List<MarinaDto>> ListMarinas(SlipwaysDbContext db, Guid? waterId, CancellationToken ct) =>
-        db.Marinas.AsNoTracking()
-            .Where(m => waterId == null || m.WaterId == waterId)
+    private static Task<List<MarinaDto>> ListMarinas(
+        SlipwaysDbContext db, string? search, Guid? waterId, CancellationToken ct)
+    {
+        var query = db.Marinas.AsNoTracking();
+
+        if (waterId is { } water)
+            query = query.Where(m => m.WaterId == water);
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim().ToLower();
+            query = query.Where(m =>
+                m.Name.ToLower().Contains(term) ||
+                (m.City != null && m.City.ToLower().Contains(term)) ||
+                (m.Water != null && m.Water.Name.ToLower().Contains(term)));
+        }
+
+        return query
             .OrderBy(m => m.Name)
             .Select(m => new MarinaDto(
                 m.Id, m.Name, m.Latitude, m.Longitude, m.Url, m.Street, m.PostalCode, m.City, m.Phone, m.Email,
@@ -236,6 +252,28 @@ public static class CatalogEndpoints
                 m.Water == null ? null : new WaterDto(m.Water.Id, m.Water.Name),
                 m.Source, m.OsmId == null ? null : m.OsmType + "/" + m.OsmId))
             .ToListAsync(ct);
+    }
+
+    private static async Task<Results<Ok<MarinaDetailsDto>, NotFound>> GetMarina(
+        SlipwaysDbContext db, Guid id, CancellationToken ct)
+    {
+        var marina = await db.Marinas.AsNoTracking()
+            .Where(m => m.Id == id)
+            .Select(m => new MarinaDetailsDto(
+                m.Id, m.Name, m.Latitude, m.Longitude, m.Url, m.Street, m.PostalCode, m.City, m.Phone, m.Email,
+                m.Operator, m.Fee, m.Access, m.OpeningHours,
+                m.Water == null ? null : new WaterDto(m.Water.Id, m.Water.Name),
+                m.Source, m.OsmId == null ? null : m.OsmType + "/" + m.OsmId,
+                m.Slipways.OrderBy(s => s.Name)
+                    .Select(s => new SlipwaySummaryDto(
+                        s.Id, s.Name, s.Latitude, s.Longitude, s.PostalCode, s.City, s.Country,
+                        s.Water == null ? null : new WaterDto(s.Water.Id, s.Water.Name),
+                        s.Source))
+                    .ToList()))
+            .SingleOrDefaultAsync(ct);
+
+        return marina is null ? TypedResults.NotFound() : TypedResults.Ok(marina);
+    }
 
     private static Task<List<ExtraDto>> ListExtras(SlipwaysDbContext db, CancellationToken ct) =>
         db.Extras.AsNoTracking()

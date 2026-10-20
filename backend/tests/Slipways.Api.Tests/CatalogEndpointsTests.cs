@@ -238,6 +238,40 @@ public class CatalogEndpointsTests(SlipwaysApiFactory factory) : IClassFixture<S
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
+    [Fact]
+    public async Task Returns_marina_details_with_its_slipways()
+    {
+        var slipway = await _client.GetFromJsonAsync<SlipwayDetailsDto>($"/api/slipways/{KelheimId}", TestContext.Current.CancellationToken);
+        var marinaId = slipway!.Marina!.Id;
+
+        var marina = await _client.GetFromJsonAsync<MarinaDetailsDto>($"/api/marinas/{marinaId}", TestContext.Current.CancellationToken);
+
+        Assert.NotNull(marina);
+        Assert.Equal(slipway.Marina.Name, marina.Name);
+        Assert.Contains(marina.Slipways, s => s.Id == KelheimId);
+    }
+
+    [Fact]
+    public async Task Filters_marinas_by_search_term()
+    {
+        var slipway = await _client.GetFromJsonAsync<SlipwayDetailsDto>($"/api/slipways/{KelheimId}", TestContext.Current.CancellationToken);
+        var term = slipway!.Marina!.Name.Split(' ')[0];
+
+        var marinas = await _client.GetFromJsonAsync<List<MarinaDto>>($"/api/marinas?search={Uri.EscapeDataString(term)}", TestContext.Current.CancellationToken);
+
+        Assert.NotNull(marinas);
+        Assert.Contains(marinas, m => m.Id == slipway.Marina.Id);
+        Assert.All(marinas, m => Assert.Contains(term, $"{m.Name} {m.City} {m.Water?.Name}", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task Returns_404_for_unknown_marina()
+    {
+        var response = await _client.GetAsync($"/api/marinas/{Guid.NewGuid()}", TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
     [Theory]
     [InlineData("/api/marinas")]
     [InlineData("/api/extras")]

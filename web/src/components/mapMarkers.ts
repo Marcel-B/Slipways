@@ -1,5 +1,5 @@
 import type { Geometry } from 'geojson'
-import type { SlipwaySummary } from '../api/types'
+import type { Marina, SlipwaySummary } from '../api/types'
 
 // Kept apart from MarkerMap so pages can use it without pulling Leaflet into the main chunk.
 
@@ -47,5 +47,17 @@ export function slipwayMarker(slipway: SlipwaySummary): MapMarker {
     title: slipway.name,
     subtitle: slipway.water?.name,
     to: `/slipways/${slipway.id}`,
+  }
+}
+
+export function marinaMarker(marina: Marina): MapMarker {
+  return {
+    id: marina.id,
+    kind: 'marina',
+    latitude: marina.latitude,
+    longitude: marina.longitude,
+    title: marina.name,
+    subtitle: marina.water?.name ?? 'Marina',
+    to: `/marinas/${marina.id}`,
   }
 }
