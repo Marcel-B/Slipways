@@ -17,33 +17,32 @@
   --shadow: 0 1px 2px rgb(16 42 67 / 6%), 0 4px 16px rgb(16 42 67 / 6%);
   --radius: 14px;
   --hero: linear-gradient(135deg, #073763 0%, #0b5394 45%, #0e7c86 100%);
-  color-scheme: light dark;
+  color-scheme: light;
   font-family: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.5;
   color: var(--text);
   background: var(--bg);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0e151c;
-    --surface: #16202a;
-    --surface-muted: #1d2935;
-    --text: #e5e9ee;
-    --muted: #9aa7b4;
-    --accent: #7ab3e6;
-    --accent-strong: #a9cdf0;
-    --accent-soft: #1b3047;
-    --buoy: #f0915f;
-    --buoy-soft: #3a2519;
-    --free: #7bd39a;
-    --free-soft: #17311f;
-    --border: #283541;
-    --error: #f1948a;
-    --warning: #f6b26b;
-    --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 4px 16px rgb(0 0 0 / 25%);
-    --hero: linear-gradient(135deg, #062440 0%, #0a3d6b 50%, #0b5a63 100%);
-  }
+:root[data-theme='dark'] {
+  --bg: #0e151c;
+  --surface: #16202a;
+  --surface-muted: #1d2935;
+  --text: #e5e9ee;
+  --muted: #9aa7b4;
+  --accent: #7ab3e6;
+  --accent-strong: #a9cdf0;
+  --accent-soft: #1b3047;
+  --buoy: #f0915f;
+  --buoy-soft: #3a2519;
+  --free: #7bd39a;
+  --free-soft: #17311f;
+  --border: #283541;
+  --error: #f1948a;
+  --warning: #f6b26b;
+  --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 4px 16px rgb(0 0 0 / 25%);
+  --hero: linear-gradient(135deg, #062440 0%, #0a3d6b 50%, #0b5a63 100%);
+  color-scheme: dark;
 }
 
 * {
@@ -132,6 +131,29 @@ svg {
 .nav {
   display: flex;
   gap: 0.25rem;
+  margin-left: auto;
+}
+
+/* On phones the logo alone names the site, so navigation and theme switch fit in one row. */
+@media (max-width: 480px) {
+  .brand-name {
+    display: none;
+  }
+
+  .header-inner {
+    gap: 0.5rem;
+    padding: 0.6rem 0.75rem;
+  }
+
+  .nav a {
+    padding: 0.35rem 0.5rem;
+    font-size: 0.95rem;
+  }
+
+  .theme-toggle button {
+    width: 28px;
+    height: 28px;
+  }
 }
 
 .nav a {
@@ -150,6 +172,35 @@ svg {
 .nav a.active {
   color: var(--accent);
   background: var(--accent-soft);
+}
+
+.theme-toggle {
+  display: inline-flex;
+  padding: 0.2rem;
+  background: var(--surface-muted);
+  border-radius: 999px;
+}
+
+.theme-toggle button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  color: var(--muted);
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+}
+
+.theme-toggle button:hover {
+  color: var(--text);
+}
+
+.theme-toggle button[aria-pressed='true'] {
+  color: var(--accent);
+  background: var(--surface);
+  box-shadow: var(--shadow);
 }
 
 /* Page frame */
@@ -350,10 +401,8 @@ svg {
   background: var(--accent);
 }
 
-@media (prefers-color-scheme: dark) {
-  .view-toggle button[aria-pressed='true'] {
-    color: var(--bg);
-  }
+:root[data-theme='dark'] .view-toggle button[aria-pressed='true'] {
+  color: var(--bg);
 }
 
 .overview[data-view='list'] .map-panel,
@@ -447,14 +496,12 @@ a.item:hover strong {
   background: color-mix(in srgb, #741b47 12%, transparent);
 }
 
-@media (prefers-color-scheme: dark) {
-  .item-icon-water {
-    color: #5fc9d1;
-  }
+:root[data-theme='dark'] .item-icon-water {
+  color: #5fc9d1;
+}
 
-  .item-icon-marina {
-    color: #e39bc0;
-  }
+:root[data-theme='dark'] .item-icon-marina {
+  color: #e39bc0;
 }
 
 .item-text {
@@ -831,10 +878,8 @@ a.item:hover .item-chevron {
   border-radius: 10px;
 }
 
-@media (prefers-color-scheme: dark) {
-  .gauge-icon {
-    color: #93c47d;
-  }
+:root[data-theme='dark'] .gauge-icon {
+  color: #93c47d;
 }
 
 .gauge-title {
@@ -884,10 +929,8 @@ a.item:hover .item-chevron {
   background: var(--accent-strong);
 }
 
-@media (prefers-color-scheme: dark) {
-  .button-primary {
-    color: var(--bg);
-  }
+:root[data-theme='dark'] .button-primary {
+  color: var(--bg);
 }
 
 .stats {
