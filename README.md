@@ -198,6 +198,7 @@ Gegen die lokale API: im Schema unter Run > Arguments die Umgebungsvariable `SLI
 | --- | --- | --- | --- |
 | Pegelstationen, Wasserstände, Gewässer an Pegeln | [PEGELONLINE](https://www.pegelonline.wsv.de/webservice/ueberblick) der WSV | [DL-DE->Zero-2.0](https://www.govdata.de/dl-de/zero-2-0) | keine; wir nennen die Quelle trotzdem |
 | Kartenkacheln | [OpenStreetMap](https://www.openstreetmap.org/copyright) | ODbL 1.0 / CC BY-SA | „© OpenStreetMap-Mitwirkende“ sichtbar an der Karte |
+| Kartenkacheln der Android-App | [OpenFreeMap](https://openfreemap.org/) (OpenMapTiles, Daten aus OpenStreetMap) | ODbL 1.0 (Daten), Stil BSD/CC BY | Namensnennung an der Karte; der Kartenstil bringt sie mit |
 | Gewässerverläufe (`shape`) | [OpenStreetMap](https://www.openstreetmap.org/copyright) über Nominatim | [ODbL 1.0](https://opendatacommons.org/licenses/odbl/) | Namensnennung (Seitenfuß, Link zum OSM-Element auf der Detailseite); die API gibt die Formen weiter, sie stehen deshalb selbst unter ODbL (Share-Alike) |
 | Slipanlagen, Marinas, Motorservices (Seed) | von Hand erfasst (2019/20) | eigene Daten | – |
 | Slipanlagen und Marinas mit `source = osm` | [OpenStreetMap](https://www.openstreetmap.org/copyright) über Overpass | [ODbL 1.0](https://opendatacommons.org/licenses/odbl/) | Namensnennung (Seitenfuß, Quelle und Link zum OSM-Element auf der Detailseite); getrennt gehalten über `Source` und OSM-Element; die API gibt sie weiter, sie stehen deshalb selbst unter ODbL (Share-Alike) |

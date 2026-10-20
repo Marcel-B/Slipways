@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DirectionsBoat
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Water
 import androidx.compose.material3.Icon
@@ -28,7 +28,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.bvelop.slipways.ui.details.SlipwayDetailsScreen
 import com.bvelop.slipways.ui.info.InfoScreen
-import com.bvelop.slipways.ui.list.SlipwayListScreen
+import com.bvelop.slipways.ui.overview.OverviewScreen
 import com.bvelop.slipways.ui.waters.WaterDetailsScreen
 import com.bvelop.slipways.ui.waters.WaterListScreen
 
@@ -44,7 +44,7 @@ private object Routes {
 }
 
 private enum class Tab(val route: String, val label: String, val icon: ImageVector) {
-    SLIPWAYS(Routes.SLIPWAYS_TAB, "Slipanlagen", Icons.Filled.DirectionsBoat),
+    SLIPWAYS(Routes.SLIPWAYS_TAB, "Slipanlagen", Icons.Filled.Map),
     WATERS(Routes.WATERS_TAB, "Gewässer", Icons.Filled.Water),
     INFO(Routes.INFO_TAB, "Info", Icons.Filled.Info),
 }
@@ -99,7 +99,7 @@ fun SlipwaysApp() {
                 }
             }
 
-            tab(Routes.SLIPWAYS_TAB) { openSlipway, _ -> SlipwayListScreen(onSlipwayClick = openSlipway) }
+            tab(Routes.SLIPWAYS_TAB) { openSlipway, _ -> OverviewScreen(onSlipwayClick = openSlipway) }
             tab(Routes.WATERS_TAB) { _, openWater -> WaterListScreen(onWaterClick = openWater) }
             navigation(startDestination = Routes.list(Routes.INFO_TAB), route = Routes.INFO_TAB) {
                 composable(Routes.list(Routes.INFO_TAB)) { InfoScreen() }
