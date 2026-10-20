@@ -36,7 +36,7 @@ export function DatenschutzPage() {
 
       <h2>Hosting</h2>
       <p>
-        Der Server steht in einem Rechenzentrum der Hetzner Online GmbH, Industriestr. 25, 91710 Gunzenhausen, in Deutschland. Hetzner
+        Der Server steht in Nürnberg in einem Rechenzentrum der Hetzner Online GmbH, Industriestr. 25, 91710 Gunzenhausen. Hetzner
         verarbeitet die oben genannten Verbindungsdaten in unserem Auftrag auf Grundlage eines Vertrags zur Auftragsverarbeitung
         nach Art. 28 DSGVO.
       </p>
