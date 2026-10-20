@@ -168,3 +168,39 @@ private let bille = """
         try await api.slipway(id: "missing")
     }
 }
+
+private let marina = """
+{"id":"m","name":"Yachthafen Kelheim","latitude":48.91,"longitude":11.88,"url":"www.example.org","street":null,"postalCode":"93309","city":"Kelheim","phone":null,"email":null,"operator":null,"fee":null,"access":null,"openingHours":null,"water":null,"source":"osm","osmElement":"node/7"}
+"""
+
+@Test func listsMarinas() async throws {
+    let api = SlipwaysAPI(baseURL: baseURL, transport: StubTransport(["/api/marinas": (200, "[\(marina)]")]))
+
+    let marinas = try await api.marinas()
+
+    #expect(marinas.map(\.name) == ["Yachthafen Kelheim"])
+    #expect(Overview.matches(marinas[0], search: " kelheim"))
+    #expect(Overview.matches(marinas[0], search: "YACHT"))
+    #expect(!Overview.matches(marinas[0], search: "Donau"))
+}
+
+@Test func overviewListsOnlyEntriesInAreaUpToLimit() {
+    let points = [(latitude: 48.9, longitude: 11.9), (latitude: 52.4, longitude: 13.0), (latitude: 48.95, longitude: 11.85)]
+    let kelheim = MapArea(centerLatitude: 48.9, centerLongitude: 11.9, latitudeDelta: 0.2, longitudeDelta: 0.2)
+
+    #expect(Overview.visible(points, in: kelheim) { $0 }?.count == 2)
+    #expect(Overview.visible(points, in: kelheim, limit: 1) { $0 } == nil)
+    #expect(Overview.visible(points, in: .start, limit: 2) { $0 } == nil)
+    #expect(Overview.visible(points, in: .start) { $0 }?.count == 3)
+}
+
+@Test func fitsAreaAroundPoints() throws {
+    let area = try #require(MapArea.fitting([(latitude: 48.0, longitude: 11.0), (latitude: 49.0, longitude: 12.0)]))
+    #expect(area.contains(latitude: 48.0, longitude: 11.0))
+    #expect(area.contains(latitude: 49.0, longitude: 12.0))
+    #expect(abs(area.latitudeDelta - 1.3) < 0.0001)
+
+    let single = try #require(MapArea.fitting([(latitude: 48.0, longitude: 11.0)]))
+    #expect(abs(single.latitudeDelta - 0.02) < 0.0001)
+    #expect(MapArea.fitting([]) == nil)
+}

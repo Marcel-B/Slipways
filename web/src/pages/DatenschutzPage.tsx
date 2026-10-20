@@ -60,9 +60,11 @@ export function DatenschutzPage() {
 
       <h2>Karten in den Apps</h2>
       <p>
-        Die iOS-App zeigt Karten mit Apple Maps (MapKit) an. Dabei lädt Ihr Gerät Kartendaten von Apple. Die Android-App kann eine
-        Slipanlage auf Ihren Wunsch an eine installierte Karten-App übergeben. Für diese Dienste gelten die Datenschutzbestimmungen
-        des jeweiligen Anbieters, etwa von <a href="https://www.apple.com/de/legal/privacy/">Apple</a> oder{' '}
+        Die iOS-App zeigt Karten mit Apple Maps (MapKit) an. Dabei lädt Ihr Gerät Kartendaten von Apple. Die Android-App lädt
+        Kartenbilder, Schriften und Symbole von <a href="https://openfreemap.org/">OpenFreeMap</a> (tiles.openfreemap.org); dabei
+        werden Ihre IP-Adresse und der angezeigte Kartenausschnitt übertragen. Außerdem kann sie eine Slipanlage auf Ihren Wunsch an
+        eine installierte Karten-App übergeben. Für diese Dienste gelten die Datenschutzbestimmungen des jeweiligen Anbieters, etwa
+        von <a href="https://www.apple.com/de/legal/privacy/">Apple</a> oder{' '}
         <a href="https://policies.google.com/privacy?hl=de">Google</a>.
       </p>
 

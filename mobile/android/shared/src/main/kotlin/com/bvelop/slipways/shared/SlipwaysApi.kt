@@ -30,6 +30,8 @@ class SlipwaysApi(baseUrl: String, httpClient: HttpClient) {
             if (!search.isNullOrBlank()) parameter("search", search.trim())
         }.bodyOrThrow()
 
+    suspend fun marinas(): List<Marina> = client.get("api/marinas").bodyOrThrow()
+
     suspend fun water(id: String): WaterDetails = client.get("api/waters/$id").bodyOrThrow()
 
     private suspend inline fun <reified T> HttpResponse.bodyOrThrow(): T {

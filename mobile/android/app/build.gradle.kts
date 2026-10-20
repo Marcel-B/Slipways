@@ -42,6 +42,7 @@ android {
 dependencies {
     implementation(project(":shared"))
     implementation(libs.ktor.client.okhttp)
+    implementation(libs.maplibre.android)
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)

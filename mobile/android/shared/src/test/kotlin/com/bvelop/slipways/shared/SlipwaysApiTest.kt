@@ -13,6 +13,7 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -124,6 +125,41 @@ class SlipwaysApiTest {
     }
 
     @Test
+    fun `lists marinas and matches search`() = runTest {
+        val api = api { json("[$MARINA]") }
+
+        val marinas = api.marinas()
+
+        assertEquals("http://localhost:5080/api/marinas", requests.single().url.toString())
+        assertTrue(Overview.matches(marinas.single(), " kelheim"))
+        assertTrue(Overview.matches(marinas.single(), "YÁCHT"))
+        assertFalse(Overview.matches(marinas.single(), "Donau"))
+    }
+
+    @Test
+    fun `overview lists only entries in area up to limit`() {
+        val points = listOf(Position(48.9, 11.9), Position(52.4, 13.0), Position(48.95, 11.85))
+        val kelheim = MapArea(48.8, 11.8, 49.0, 12.0)
+
+        assertEquals(2, Overview.visible(points, kelheim) { it }?.size)
+        assertNull(Overview.visible(points, kelheim, limit = 1) { it })
+        assertNull(Overview.visible(points, MapArea.START, limit = 2) { it })
+        assertEquals(3, Overview.visible(points, MapArea.START) { it }?.size)
+    }
+
+    @Test
+    fun `fits area around points`() {
+        val area = assertNotNull(MapArea.fitting(listOf(Position(48.0, 11.0), Position(49.0, 12.0))))
+        assertTrue(area.contains(48.0, 11.0))
+        assertTrue(area.contains(49.0, 12.0))
+        assertEquals(1.3, area.north - area.south, 0.0001)
+
+        val single = assertNotNull(MapArea.fitting(listOf(Position(48.0, 11.0))))
+        assertEquals(0.02, single.north - single.south, 0.0001)
+        assertNull(MapArea.fitting(emptyList()))
+    }
+
+    @Test
     fun `turns error status into ApiException`() = runTest {
         val api = api { json("", HttpStatusCode.NotFound) }
 
@@ -137,6 +173,7 @@ class SlipwaysApiTest {
         const val KELHEIM = """{"id":"1","name":"Am Jachthafen, Kelheim","latitude":48.9,"longitude":11.9,"street":"Am Jachthafen 13","postalCode":"93309","city":"Kelheim","country":"DE","url":null,"comment":null,"rating":0,"costs":null,"pro":null,"contra":null,"operator":null,"fee":null,"access":null,"openingHours":null,"surface":null,"water":{"id":"w","name":"Donau"},"marina":null,"extras":["Campingplatz"],"source":"manual","osmElement":null,"created":"2020-02-18T16:14:59Z","updated":"2026-10-20T16:26:23.5072912Z"}"""
         const val NONNENSTEG = """{"id":"2","name":"Nonnensteg","latitude":52.3832808,"longitude":13.0360706,"postalCode":null,"city":null,"country":"DE","water":null,"source":"osm"}"""
         const val IMPORTED_DETAILS = """{"id":"2","name":"Nonnensteg","latitude":52.38,"longitude":13.03,"street":null,"postalCode":null,"city":null,"country":"DE","url":"www.example.org","comment":null,"rating":0,"costs":null,"pro":null,"contra":null,"operator":"Stadt Potsdam","fee":"no","access":"yes","openingHours":"24/7","surface":"concrete","water":null,"marina":null,"extras":[],"source":"osm","osmElement":"node/42","created":"2026-10-20T12:00:00Z","updated":null}"""
+        const val MARINA = """{"id":"m","name":"Yachthafen Kelheim","latitude":48.91,"longitude":11.88,"url":"www.example.org","street":null,"postalCode":"93309","city":"Kelheim","phone":null,"email":null,"operator":null,"fee":null,"access":null,"openingHours":null,"water":null,"source":"osm","osmElement":"node/7"}"""
         const val BODENSEE = """{"id":"b","name":"Bodensee","shortname":"BODENSEE","slipwayCount":158,"stationCount":1,"position":{"latitude":47.67,"longitude":9.31},"gauge":{"stationId":"k","stationName":"KONSTANZ","waterLevel":{"value":248,"measuredAt":"2026-10-20T17:30:00Z","state":"low"}}}"""
         const val BILLE = """{"id":"w","name":"Bille","shortname":"BILLE","bounds":{"south":53.48,"west":10.02,"north":53.65,"east":10.51},
             "shape":{"type":"MultiLineString","coordinates":[[[10.46,53.64],[10.47,53.65]]]},
