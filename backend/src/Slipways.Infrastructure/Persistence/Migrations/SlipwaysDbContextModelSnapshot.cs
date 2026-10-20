@@ -274,6 +274,10 @@ namespace Slipways.Infrastructure.Persistence.Migrations
                     b.Property<string>("Operator")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("OsmCountry")
+                        .HasMaxLength(2)
+                        .HasColumnType("TEXT");
+
                     b.Property<long?>("OsmId")
                         .HasColumnType("INTEGER");
 
@@ -471,6 +475,10 @@ namespace Slipways.Infrastructure.Persistence.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Operator")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("OsmCountry")
+                        .HasMaxLength(2)
                         .HasColumnType("TEXT");
 
                     b.Property<long?>("OsmId")

@@ -4,7 +4,7 @@ public sealed class OsmOptions
 {
     public const string SectionName = "Osm";
 
-    private static readonly string[] DefaultCountries = ["DE", "AT", "CH", "NL"];
+    private static readonly string[] DefaultCountries = ["DE", "AT", "CH", "NL", "DK", "SE", "NO", "IT", "HR"];
 
     /// <summary>Turns the periodic import off, e.g. for tests or offline development.</summary>
     public bool Enabled { get; set; } = true;
@@ -20,7 +20,10 @@ public sealed class OsmOptions
 
     public IReadOnlyList<string> CountriesToImport => Countries.Length > 0 ? Countries : DefaultCountries;
 
-    /// <summary>Slipways and marinas change rarely, and every run asks Overpass for whole countries.</summary>
+    /// <summary>
+    /// How often each country is imported. Slipways and marinas change rarely, and every run asks Overpass for a whole
+    /// country. The countries take turns, so one runs every <c>Interval</c> divided by their number.
+    /// </summary>
     public TimeSpan Interval { get; set; } = TimeSpan.FromDays(30);
 
     /// <summary>How long to wait after a failed run before trying again, instead of waiting a whole <see cref="Interval"/>.</summary>
@@ -29,7 +32,10 @@ public sealed class OsmOptions
     /// <summary>Sent to Overpass as the query timeout, so it can plan its resources; a country takes well under a minute.</summary>
     public TimeSpan QueryTimeout { get; set; } = TimeSpan.FromMinutes(3);
 
-    /// <summary>Pause between two queries; Overpass asks clients not to send queries in parallel or in quick succession.</summary>
+    /// <summary>
+    /// Pause between two queries, also between two countries due at the same time; Overpass asks clients not to send
+    /// queries in parallel or in quick succession.
+    /// </summary>
     public TimeSpan RequestSpacing { get; set; } = TimeSpan.FromSeconds(10);
 
     /// <summary>First wait when Overpass is busy (429, 502, 503, 504); it doubles with every further attempt.</summary>

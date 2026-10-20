@@ -12,7 +12,7 @@ struct InfoView: View {
     var body: some View {
         List {
             Section {
-                Text("Slipways zeigt Slipanlagen, Marinas und aktuelle Pegelstände an Gewässern in Deutschland und den Nachbarländern.")
+                Text("Slipways zeigt Slipanlagen, Marinas und aktuelle Pegelstände an Gewässern in Deutschland und weiteren Ländern Europas.")
                 Link(destination: Links.website) { Label("slipways.de", systemImage: "safari") }
             }
 

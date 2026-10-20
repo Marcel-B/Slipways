@@ -15,6 +15,12 @@ public interface IOsmPlace
     string? OsmType { get; set; }
     long? OsmId { get; set; }
 
+    /// <summary>
+    /// ISO 3166-1 code of the country whose import found the element first. Only that country's import updates the
+    /// place or reports it missing, so an element on a border is not taken over by its neighbour every month.
+    /// </summary>
+    string? OsmCountry { get; set; }
+
     /// <summary>Null when the place lies on none of the known waters, which is common for imported ones.</summary>
     Guid? WaterId { get; set; }
 }

@@ -21,6 +21,7 @@ public class Marina : Entity, IOsmPlace
     public string Source { get; set; } = Sources.Manual;
     public string? OsmType { get; set; }
     public long? OsmId { get; set; }
+    public string? OsmCountry { get; set; }
 
     public Guid? WaterId { get; set; }
     public Water? Water { get; set; }

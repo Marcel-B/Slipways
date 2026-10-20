@@ -56,7 +56,6 @@ public sealed class OsmImportTests : IAsyncLifetime
     private readonly SqliteConnection _connection = new("DataSource=:memory:");
     private readonly TimeProvider _time = new FixedTime(new DateTimeOffset(2026, 10, 20, 10, 0, 0, TimeSpan.Zero));
     private readonly StubHandler _overpass = new();
-    private string[] _countries = ["DE"];
     private SlipwaysDbContext _db = null!;
 
     public async ValueTask InitializeAsync()
@@ -86,7 +85,7 @@ public sealed class OsmImportTests : IAsyncLifetime
     {
         var slipwaysBefore = await _db.Slipways.CountAsync(TestContext.Current.CancellationToken);
 
-        var result = await CreateImport().RunAsync(TestContext.Current.CancellationToken);
+        var result = await CreateImport().RunAsync("DE", TestContext.Current.CancellationToken);
 
         Assert.Equal(new OsmImportCounts(Added: 2, Updated: 0, Linked: 1), result.Slipways);
         Assert.Equal(new OsmImportCounts(Added: 1, Updated: 0, Linked: 1), result.Marinas);
@@ -116,10 +115,10 @@ public sealed class OsmImportTests : IAsyncLifetime
     [Fact]
     public async Task Records_its_success_for_the_schedule()
     {
-        await CreateImport().RunAsync(TestContext.Current.CancellationToken);
+        await CreateImport().RunAsync("DE", TestContext.Current.CancellationToken);
 
         var state = await _db.JobStates.AsNoTracking().SingleAsync(TestContext.Current.CancellationToken);
-        Assert.Equal((OsmImportSchedule.JobName, _time.GetUtcNow().UtcDateTime, (DateTime?)null), (state.Name, state.LastSuccess, state.LastFailure));
+        Assert.Equal(("osm:DE", _time.GetUtcNow().UtcDateTime, (DateTime?)null), (state.Name, state.LastSuccess, state.LastFailure));
     }
 
     [Fact]
@@ -128,7 +127,7 @@ public sealed class OsmImportTests : IAsyncLifetime
         var kelheimBefore = await _db.Slipways.AsNoTracking().Include(s => s.Extras).SingleAsync(s => s.Id == KelheimId, TestContext.Current.CancellationToken);
         var marinaBefore = await _db.Marinas.AsNoTracking().SingleAsync(m => m.Id == SaalMarinaId, TestContext.Current.CancellationToken);
 
-        await CreateImport().RunAsync(TestContext.Current.CancellationToken);
+        await CreateImport().RunAsync("DE", TestContext.Current.CancellationToken);
 
         var kelheim = await _db.Slipways.AsNoTracking().Include(s => s.Extras).SingleAsync(s => s.Id == KelheimId, TestContext.Current.CancellationToken);
         Assert.Equal((Sources.Manual, "node", 1001L), (kelheim.Source, kelheim.OsmType, kelheim.OsmId));
@@ -145,7 +144,7 @@ public sealed class OsmImportTests : IAsyncLifetime
     [Fact]
     public async Task Updates_osm_fields_by_element_and_keeps_manual_ones()
     {
-        await CreateImport().RunAsync(TestContext.Current.CancellationToken);
+        await CreateImport().RunAsync("DE", TestContext.Current.CancellationToken);
 
         // Someone rates the imported slipway and adds an extra; the linked manual slipway keeps its own data.
         var imported = await _db.Slipways.SingleAsync(s => s.OsmType == "way" && s.OsmId == 2001, TestContext.Current.CancellationToken);
@@ -165,7 +164,7 @@ public sealed class OsmImportTests : IAsyncLifetime
             .Replace("\"fee\": \"no\", ", "")
             .Replace("\"lat\": 48.93165", "\"lat\": 48.93160")
             .Replace("\"name\": \"Slipanlage Jachthafen\"", "\"name\": \"Neuer Name\""));
-        var result = await CreateImport().RunAsync(TestContext.Current.CancellationToken);
+        var result = await CreateImport().RunAsync("DE", TestContext.Current.CancellationToken);
 
         Assert.Equal(new OsmImportCounts(Added: 0, Updated: 1, Linked: 0), result.Slipways);
         var updated = await _db.Slipways.AsNoTracking().Include(s => s.Extras).SingleAsync(s => s.Id == imported.Id, TestContext.Current.CancellationToken);
@@ -183,10 +182,10 @@ public sealed class OsmImportTests : IAsyncLifetime
     [Fact]
     public async Task Second_run_with_same_data_changes_nothing()
     {
-        await CreateImport().RunAsync(TestContext.Current.CancellationToken);
+        await CreateImport().RunAsync("DE", TestContext.Current.CancellationToken);
         var before = await _db.Slipways.AsNoTracking().OrderBy(s => s.Id).Select(s => new { s.Id, s.Updated }).ToListAsync(TestContext.Current.CancellationToken);
 
-        var result = await CreateImport().RunAsync(TestContext.Current.CancellationToken);
+        var result = await CreateImport().RunAsync("DE", TestContext.Current.CancellationToken);
 
         Assert.Equal(new OsmImportCounts(0, 0, 0), result.Slipways);
         Assert.Equal(new OsmImportCounts(0, 0, 0), result.Marinas);
@@ -198,10 +197,10 @@ public sealed class OsmImportTests : IAsyncLifetime
     [Fact]
     public async Task Keeps_and_reports_places_that_are_gone_from_osm()
     {
-        await CreateImport().RunAsync(TestContext.Current.CancellationToken);
+        await CreateImport().RunAsync("DE", TestContext.Current.CancellationToken);
 
         _overpass.Respond("DE", "slipway", EmptyJson);
-        var result = await CreateImport().RunAsync(TestContext.Current.CancellationToken);
+        var result = await CreateImport().RunAsync("DE", TestContext.Current.CancellationToken);
 
         Assert.Equal(["node/1001", "node/1002", "way/2001"], result.Missing.Order());
         Assert.True(await _db.Slipways.AnyAsync(s => s.OsmType == "node" && s.OsmId == 1002, TestContext.Current.CancellationToken));
@@ -209,19 +208,48 @@ public sealed class OsmImportTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Queries_each_country_and_kind_one_after_another_with_a_timeout()
+    public async Task Queries_both_kinds_of_one_country_one_after_another_with_a_timeout()
     {
-        _countries = ["DE", "AT"];
-        _overpass.Respond("AT", "slipway", SlipwaysJson);
+        await CreateImport().RunAsync("DE", TestContext.Current.CancellationToken);
 
-        var result = await CreateImport().RunAsync(TestContext.Current.CancellationToken);
-
-        Assert.Equal(["DE slipway", "AT slipway", "DE marina", "AT marina"], _overpass.Queries.Select(q => $"{q.Country} {q.Leisure}"));
+        Assert.Equal(["DE slipway", "DE marina"], _overpass.Queries.Select(q => $"{q.Country} {q.Leisure}"));
         Assert.All(_overpass.Queries, q => Assert.Contains("[timeout:180]", q.Text));
         Assert.All(_overpass.Queries, q => Assert.EndsWith("out center tags;", q.Text));
         Assert.Equal(1, _overpass.MaxConcurrent);
-        // The same elements in the second country are not added twice.
-        Assert.Equal(2, result.Slipways.Added);
+    }
+
+    [Fact]
+    public async Task Leaves_elements_on_a_border_to_the_country_that_found_them_first()
+    {
+        await CreateImport().RunAsync("DE", TestContext.Current.CancellationToken);
+
+        // Austria's area also contains the slipways, but with other tags; Germany no longer has them.
+        _overpass.Respond("AT", "slipway", SlipwaysJson.Replace("\"name\": \"Slipanlage Jachthafen\"", "\"name\": \"Slip Österreich\""));
+        var austria = await CreateImport().RunAsync("AT", TestContext.Current.CancellationToken);
+        _overpass.Respond("DE", "slipway", EmptyJson);
+        var germany = await CreateImport().RunAsync("DE", TestContext.Current.CancellationToken);
+
+        Assert.Equal(new OsmImportCounts(0, 0, 0), austria.Slipways);
+        // Only the places Germany found count as missing there, not Austria's or those of other countries.
+        Assert.Empty(austria.Missing);
+        Assert.Equal(["node/1001", "node/1002", "way/2001"], germany.Missing.Order());
+        Assert.Equal("DE", (await FindSlipwayAsync("way", 2001)).OsmCountry);
+        Assert.Equal("DE", (await FindSlipwayAsync("node", 1001)).OsmCountry);
+    }
+
+    [Fact]
+    public async Task Gives_places_from_before_the_import_by_country_their_country()
+    {
+        await CreateImport().RunAsync("DE", TestContext.Current.CancellationToken);
+        await _db.Slipways.ExecuteUpdateAsync(s => s.SetProperty(x => x.OsmCountry, (string?)null), TestContext.Current.CancellationToken);
+        var before = await FindSlipwayAsync("way", 2001);
+
+        var result = await CreateImport().RunAsync("DE", TestContext.Current.CancellationToken);
+
+        var after = await FindSlipwayAsync("way", 2001);
+        Assert.Equal("DE", after.OsmCountry);
+        Assert.Equal(before.Updated, after.Updated);
+        Assert.Equal(new OsmImportCounts(0, 0, 0), result.Slipways);
     }
 
     [Fact]
@@ -229,7 +257,7 @@ public sealed class OsmImportTests : IAsyncLifetime
     {
         _overpass.BusyResponses = 2;
 
-        var result = await CreateImport().RunAsync(TestContext.Current.CancellationToken);
+        var result = await CreateImport().RunAsync("DE", TestContext.Current.CancellationToken);
 
         Assert.Equal(2, result.Slipways.Added);
         Assert.Equal(4, _overpass.Queries.Count);
@@ -254,7 +282,6 @@ public sealed class OsmImportTests : IAsyncLifetime
         _db.ChangeTracker.Clear();
         var options = Options.Create(new OsmOptions
         {
-            Countries = _countries,
             RequestSpacing = TimeSpan.Zero,
             BusyBackoff = TimeSpan.Zero,
         });

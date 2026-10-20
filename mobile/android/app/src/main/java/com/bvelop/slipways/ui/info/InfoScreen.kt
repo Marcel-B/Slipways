@@ -25,7 +25,7 @@ fun InfoScreen() {
             Modifier.padding(padding).verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("Slipways zeigt Slipanlagen, Marinas und aktuelle Pegelstände an Gewässern in Deutschland und den Nachbarländern.")
+            Text("Slipways zeigt Slipanlagen, Marinas und aktuelle Pegelstände an Gewässern in Deutschland und weiteren Ländern Europas.")
             LinkText("slipways.de", Links.WEBSITE)
 
             Heading("Datenquellen")

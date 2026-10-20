@@ -25,13 +25,13 @@ public sealed class OsmImport(SlipwaysDbContext db, OverpassClient client, IOpti
     /// <summary>Metres from a water's shape within which a place is put on that water.</summary>
     public const double WaterDistance = 300;
 
-    private int _queries;
-
-    public async Task<OsmImportResult> RunAsync(CancellationToken cancellationToken = default)
+    /// <summary>Imports the places of one <paramref name="country"/> (ISO 3166-1 code).</summary>
+    public async Task<OsmImportResult> RunAsync(string country, CancellationToken cancellationToken = default)
     {
         // Everything is fetched before anything changes: a failed query must not make places look deleted.
-        var slipwayElements = await FetchAsync("slipway", cancellationToken);
-        var marinaElements = await FetchAsync("marina", cancellationToken);
+        var slipwayElements = await FetchAsync(country, "slipway", cancellationToken);
+        await Task.Delay(options.Value.RequestSpacing, time, cancellationToken);
+        var marinaElements = await FetchAsync(country, "marina", cancellationToken);
 
         var now = time.GetUtcNow().UtcDateTime;
         var shapes = await db.Waters.AsNoTracking()
@@ -42,33 +42,21 @@ public sealed class OsmImport(SlipwaysDbContext db, OverpassClient client, IOpti
         var missing = new List<string>();
 
         var slipways = Import(await db.Slipways.ToListAsync(cancellationToken), slipwayElements,
-            () => new Slipway { Name = "" }, ApplySlipway, waters, now, missing);
+            () => new Slipway { Name = "" }, ApplySlipway, waters, country, now, missing);
         var marinas = Import(await db.Marinas.ToListAsync(cancellationToken), marinaElements,
-            () => new Marina { Name = "" }, ApplyMarina, waters, now, missing);
+            () => new Marina { Name = "" }, ApplyMarina, waters, country, now, missing);
 
         // In the same save as the places, so the recorded success and the data never disagree.
-        await OsmImportSchedule.MarkSuccessAsync(db, now, cancellationToken);
+        await OsmImportSchedule.MarkSuccessAsync(db, country, now, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
         return new OsmImportResult(slipways, marinas, missing);
     }
 
-    /// <summary>Elements of all countries, one query per country; an element on a border comes only once.</summary>
-    private async Task<List<OsmPlace>> FetchAsync(string leisure, CancellationToken cancellationToken)
-    {
-        var places = new Dictionary<(string, long), OsmPlace>();
-        foreach (var country in options.Value.CountriesToImport)
-        {
-            if (_queries++ > 0)
-                await Task.Delay(options.Value.RequestSpacing, time, cancellationToken);
-
-            foreach (var element in await client.GetElementsAsync(country, leisure, cancellationToken))
-            {
-                if (element is { Latitude: { } latitude, Longitude: { } longitude })
-                    places.TryAdd((element.Type, element.Id), new OsmPlace(element, country, latitude, longitude));
-            }
-        }
-        return places.Values.ToList();
-    }
+    private async Task<List<OsmPlace>> FetchAsync(string country, string leisure, CancellationToken cancellationToken) =>
+        (await client.GetElementsAsync(country, leisure, cancellationToken))
+            .Where(e => e is { Latitude: not null, Longitude: not null })
+            .Select(e => new OsmPlace(e, country, e.Latitude!.Value, e.Longitude!.Value))
+            .ToList();
 
     private OsmImportCounts Import<T>(
         List<T> existing,
@@ -76,6 +64,7 @@ public sealed class OsmImport(SlipwaysDbContext db, OverpassClient client, IOpti
         Func<T> create,
         Action<T, OsmPlace> apply,
         WaterLocator waters,
+        string country,
         DateTime now,
         List<string> missing) where T : Entity, IOsmPlace
     {
@@ -88,11 +77,16 @@ public sealed class OsmImport(SlipwaysDbContext db, OverpassClient client, IOpti
             var key = (place.Element.Type, place.Element.Id);
             if (byElement.TryGetValue(key, out var match))
             {
+                // An element on a border belongs to the country whose import found it first.
+                if (match.OsmCountry is { } owner && owner != country)
+                    continue;
                 if (match.Source == Sources.Osm && Update(match, place))
                 {
                     match.Updated = now;
                     updated++;
                 }
+                // Places from before the import ran per country learn their country now.
+                match.OsmCountry ??= country;
                 continue;
             }
 
@@ -110,6 +104,7 @@ public sealed class OsmImport(SlipwaysDbContext db, OverpassClient client, IOpti
                 {
                     free.OsmType = place.Element.Type;
                     free.OsmId = place.Element.Id;
+                    free.OsmCountry = country;
                     free.Updated = now;
                     linked++;
                 }
@@ -122,13 +117,16 @@ public sealed class OsmImport(SlipwaysDbContext db, OverpassClient client, IOpti
             created.Source = Sources.Osm;
             created.OsmType = place.Element.Type;
             created.OsmId = place.Element.Id;
+            created.OsmCountry = country;
             Apply(created, place);
             db.Add(created);
             added++;
         }
 
         var found = places.Select(p => (p.Element.Type, p.Element.Id)).ToHashSet();
-        missing.AddRange(byElement.Keys.Where(k => !found.Contains(k)).Select(k => $"{k.Item1}/{k.Item2}"));
+        missing.AddRange(byElement
+            .Where(e => e.Value.OsmCountry == country && !found.Contains(e.Key))
+            .Select(e => $"{e.Key.Item1}/{e.Key.Item2}"));
         return new OsmImportCounts(added, updated, linked);
 
         void Apply(T entity, OsmPlace place)
