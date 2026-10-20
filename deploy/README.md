@@ -85,7 +85,14 @@ Nach dem Vorbild von fil-o-mat: jede Nacht um 3 Uhr eine Kopie der SQLite-Datenb
 
 Das Passwort ist ein App-Passwort (Nextcloud: Einstellungen → Sicherheit → Geräte & Sitzungen), das sich einzeln widerrufen lässt. Schlägt eine Sicherung fehl, versucht systemd es nach 30 Minuten noch einmal. Das Ergebnis steht in `/var/lib/slipways/backup.json`.
 
-Nachträglich einschalten:
+Nachträglich einschalten: `lxc/setup-nextcloud.sh` fragt Nextcloud-Adresse, Benutzer, App-Passwort und Ordner ab, prüft die Anmeldung, legt den Ordner an, trägt alles in die `.env` ein und startet eine erste Sicherung.
+
+```bash
+bash /opt/slipways/deploy/lxc/setup-nextcloud.sh                     # direkt auf dem Server
+pct exec <CTID> -- bash /opt/slipways/deploy/lxc/setup-nextcloud.sh  # im LXC, von der Proxmox-Shell
+```
+
+Oder von Hand:
 
 ```bash
 pct exec <CTID> -- bash -c 'cat >> /opt/slipways/.env <<ENV
