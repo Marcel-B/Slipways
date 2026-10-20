@@ -1,13 +1,13 @@
 // Angaben zum Betreiber für Impressum, Datenschutz und Support.
 // Werte in eckigen Klammern sind Platzhalter und werden auf den Seiten markiert, bis sie ersetzt sind.
 export const operator = {
-  name: '[Vor- und Nachname bzw. Firma]',
-  street: '[Straße und Hausnummer]',
-  city: '[PLZ und Ort]',
+  name: 'Marcel Benders',
+  street: 'Scheiblerstraße 111',
+  city: '47800 Krefeld',
   country: 'Deutschland',
-  email: '[E-Mail-Adresse]',
+  email: 'slipways@marcelbenders.com',
   // Zweiter schneller Kontaktweg neben der E-Mail; leer lassen, wenn es keinen gibt
-  phone: '[Telefonnummer]',
+  phone: '',
   // Nur angeben, wenn vorhanden
   vatId: '',
 }
