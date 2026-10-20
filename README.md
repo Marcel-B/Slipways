@@ -152,7 +152,7 @@ dotnet ef migrations add <Name> --project src/Slipways.Infrastructure --startup-
 
 ## Mobile-Apps
 
-Beide Apps sind reine Lesesichten mit den Tabs Slipanlagen, Gewässer und Info. Die Release-Versionen sprechen mit https://slipways.de, die Debug-Versionen mit der lokalen API aus `docker compose up` (Port 5080). Aufbau und Lizenzhinweis: [`docs/mobile-apps.md`](docs/mobile-apps.md).
+Beide Apps sind reine Lesesichten mit den Tabs Slipanlagen, Gewässer und Info. Release- und Debug-Versionen sprechen mit https://slipways.de; die Debug-Versionen lassen sich auf die lokale API aus `docker compose up` (Port 5080) umstellen. Aufbau und Lizenzhinweis: [`docs/mobile-apps.md`](docs/mobile-apps.md).
 
 Android (Android Studio oder JDK 17+ mit Android SDK):
 
@@ -161,7 +161,7 @@ cd mobile/android
 ./gradlew :shared:test :app:assembleDebug
 ```
 
-Im Emulator erreicht die Debug-Version die API unter `http://10.0.2.2:5080`. Der API-Client liegt im reinen Kotlin-Modul `shared`, die Oberfläche in `app`.
+Gegen die lokale API: `./gradlew :app:installDebug -Pslipways.apiBaseUrl=http://10.0.2.2:5080` (10.0.2.2 ist im Emulator der Rechner). Der API-Client liegt im reinen Kotlin-Modul `shared`, die Oberfläche in `app`.
 
 iOS (Xcode 26 und [XcodeGen](https://github.com/yonaskolb/XcodeGen), `brew install xcodegen`):
 
@@ -172,7 +172,7 @@ open Slipways.xcodeproj
 swift test --package-path SlipwaysKit
 ```
 
-Im Simulator nutzt die Debug-Version `http://localhost:5080`. Der API-Client liegt im Swift-Package `SlipwaysKit`.
+Gegen die lokale API: im Schema unter Run > Arguments die Umgebungsvariable `SLIPWAYS_API_BASE_URL=http://localhost:5080` setzen. Der API-Client liegt im Swift-Package `SlipwaysKit`.
 
 
 ## API-Überblick
