@@ -8,9 +8,10 @@ export function DatenschutzPage() {
       <title>Datenschutz · Slipways</title>
       <h1>Datenschutzerklärung</h1>
       <p>
-        Diese Erklärung gilt für die Website slipways.de und die Slipways-Apps für iOS und Android. Slipways ist ein reines
-        Nachschlagewerk: Es gibt keine Benutzerkonten, keine Registrierung, keine Werbung, kein Tracking und keine Analysewerkzeuge.
-        Wir setzen keine Cookies und speichern nichts im Browser oder auf dem Gerät, das Sie identifiziert.
+        Diese Erklärung gilt für die Website slipways.de und die Slipways-Apps für iOS und Android. Slipways ist ein
+        Nachschlagewerk, das Sie ohne Konto mit Vorschlägen ergänzen können: Es gibt keine Benutzerkonten, keine Registrierung, keine
+        Werbung, kein Tracking und keine Analysewerkzeuge. Wir setzen keine Cookies und speichern nichts im Browser oder auf dem
+        Gerät, das Sie identifiziert.
       </p>
 
       <h2>Verantwortlicher</h2>
@@ -110,6 +111,31 @@ export function DatenschutzPage() {
         Marinas zu zeigen, die diese selbst veröffentlicht haben. Auf einen Hinweis an <OperatorEmail /> löschen wir die Angaben und
         lesen die Webseite nicht mehr aus. Betreiber können das Auslesen auch selbst über die robots.txt mit dem Namen{' '}
         <code>Slipways</code> unterbinden.
+      </p>
+
+      <h2>Vorschläge, Tipps und neue Slipanlagen</h2>
+      <p>
+        Auf der Website können Sie ohne Konto Angaben ergänzen oder korrigieren, Tipps geben, Probleme melden und fehlende
+        Slipanlagen vorschlagen. Wir speichern dafür nur, was Sie in das Formular schreiben bzw. auswählen, den Zeitpunkt und einen
+        Prüfwert zu dem Link, unter dem Sie den Stand Ihres Vorschlags sehen. Wir fragen weder Namen noch E-Mail-Adresse ab und
+        speichern zu einem Vorschlag keine IP-Adresse und keine Angaben zu Browser oder Gerät. Bitte schreiben Sie keine
+        personenbezogenen Daten in Ihre Texte.
+      </p>
+      <p>
+        Gegen massenhafte Einsendungen rechnet Ihr Browser vor dem Absenden eine kleine Rechenaufgabe (Proof of Work). Sie kommt von
+        unserem eigenen Server, es ist kein fremder Dienst beteiligt, und sie setzt keine Cookies. Außerdem begrenzt der Server die
+        Zahl der Vorschläge je IP-Adresse; dieser Zähler liegt wie oben beschrieben nur im Arbeitsspeicher.
+      </p>
+      <p>
+        Jeder Vorschlag wird von Hand geprüft und ist erst nach der Freigabe öffentlich, dann ohne Hinweis darauf, von wem er
+        stammt. Abgelehnte Vorschläge löschen wir 30 Tage nach der Entscheidung, angenommene nach 90 Tagen (ihr Inhalt steht dann
+        im Eintrag selbst). Solange ein Vorschlag noch nicht geprüft ist, können Sie ihn über den Link jederzeit zurückziehen; er
+        wird dann sofort gelöscht. Ihr Browser merkt sich diesen Link im lokalen Speicher (localStorage), damit Sie ihn
+        wiederfinden; diese Angabe verlässt Ihr Gerät nicht und lässt sich über die Browser-Einstellungen löschen.
+      </p>
+      <p>
+        Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO. Unser berechtigtes Interesse ist, das Verzeichnis mit Hilfe der Nutzer aktuell
+        zu halten und vor Missbrauch zu schützen.
       </p>
 
       <h2>Ihre Rechte</h2>

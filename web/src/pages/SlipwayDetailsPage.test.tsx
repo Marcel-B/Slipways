@@ -34,6 +34,7 @@ const imported: SlipwayDetails = {
   osmElement: 'way/1050341846',
   created: '2026-10-20T15:05:14Z',
   updated: null,
+  infos: [],
 }
 
 const donau = { id: 'd19708ca-ac42-4ad4-8d62-e85722f946f6', name: 'Donau' }

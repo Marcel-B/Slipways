@@ -132,6 +132,22 @@ Ohne `SLIPWAYS_MONITORING_HOST` steht in Loki `host="unknown"`. Kommen später k
 
 Den Tag vergibt `tailscale up --advertise-tags=tag:slipways` auf slipways-1, oder ein Auth-Key mit Tag. Gilt das Gleiche für die Test-Stage im LXC, kommt dort hinzu: Der LXC hängt über `vmbr0` direkt im Heimnetz. Davon trennt ihn nur ein eigenes VLAN oder eine Firewall-Regel in Proxmox.
 
+## Moderation
+
+Vorschläge aus Web und Apps (siehe [README](../README.md#nutzerbeiträge)) gibt die Moderationsseite frei. Sie hat kein Login: Die API beantwortet `/moderation` und `/api/moderation/…` nur auf Port 9465, und `deploy/compose.lxc.yaml` gibt den nur auf `127.0.0.1:9465` frei (`SLIPWAYS_MODERATION_PORT`). Über slipways.de ist sie nicht erreichbar, auch nicht aus dem Tailnet, denn die Domain zeigt auf die öffentliche Adresse. Ins Tailnet bringt sie `tailscale serve`, wie `/metrics`:
+
+```bash
+# auf slipways-1 als root; die Einstellung überlebt Neustarts
+tailscale serve --bg --https=9465 http://127.0.0.1:9465
+tailscale serve status
+```
+
+Danach von jedem Gerät im Tailnet (auch vom Handy mit der Tailscale-App): `https://slipways-1.<tailnet>.ts.net:9465/moderation`. Wer im Tailnet ist, kann moderieren; soll das nur für eigene Geräte gelten, in der Tailscale-Policy den Zugriff auf `tcp:9465` von `slipways-1` beschränken.
+
+Neue Vorschläge zeigt der Messwert `slipways_suggestions_pending`. Ein Alarm darauf (z. B. `slipways_suggestions_pending > 0` seit einem Tag) fehlt noch, wie die anderen Alarme (`docs/offene-punkte.md`).
+
+Lokal mit `docker compose up` liegt die Moderation unter `http://localhost:9465/moderation`.
+
 ## Auto-Update
 
 Der systemd-Timer `slipways-update.timer` startet alle 5 Minuten `lxc/slipways-update.sh`. Gibt es auf dem Branch neue Commits, holt das Skript sie, baut die Images neu (mit frischen Basis-Images), sichert die Datenbank lokal nach `/var/lib/slipways/backups/pre-update.db` und startet den Stack neu. Die API spielt Migrationen beim Start selbst ein.

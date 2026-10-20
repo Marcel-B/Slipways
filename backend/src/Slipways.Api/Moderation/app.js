@@ -26,6 +26,14 @@ const fieldLabels = {
   key_required: 'Nur mit Schlüssel',
 }
 
+const yesNo = { yes: 'ja', no: 'nein' }
+const valueLabels = {
+  fee: { yes: 'kostenpflichtig', no: 'kostenlos' },
+  access: { yes: 'öffentlich', permissive: 'geduldet', customers: 'nur für Kunden', members: 'nur für Mitglieder', private: 'privat', no: 'kein Zugang' },
+  surface: { concrete: 'Beton', asphalt: 'Asphalt', paving_stones: 'Pflaster', gravel: 'Kies', wood: 'Holz', sand: 'Sand', grass: 'Gras', unpaved: 'unbefestigt' },
+}
+const label = (field, value) => (value === null ? '–' : ((valueLabels[field] ?? yesNo)[value] ?? value))
+
 const publicSite = 'https://slipways.de'
 const dateFormat = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short' })
 let status = 'pending'
@@ -84,8 +92,8 @@ function card(s) {
   if (s.fields.length > 0) {
     const rows = s.fields.map((f) => element('tr', {},
       element('td', { textContent: fieldLabels[f.field] ?? f.field }),
-      element('td', { textContent: f.value }),
-      element('td', { textContent: f.current ?? '–' })))
+      element('td', { textContent: label(f.field, f.value) }),
+      element('td', { textContent: label(f.field, f.current) })))
     parts.push(element('table', {},
       element('thead', {}, element('tr', {}, element('th', { textContent: 'Feld' }), element('th', { textContent: 'Vorschlag' }), element('th', { textContent: 'jetzt' }))),
       element('tbody', {}, ...rows)))

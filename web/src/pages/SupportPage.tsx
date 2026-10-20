@@ -20,7 +20,7 @@ export function SupportPage() {
       <h2>Häufige Fragen</h2>
       <dl className="faq">
         <dt>Brauche ich ein Konto?</dt>
-        <dd>Nein. Slipways lässt sich ohne Anmeldung nutzen, es gibt keine Benutzerkonten.</dd>
+        <dd>Nein. Slipways lässt sich ohne Anmeldung nutzen, auch zum Mitmachen. Es gibt keine Benutzerkonten.</dd>
 
         <dt>Woher stammen die Daten?</dt>
         <dd>
@@ -37,7 +37,8 @@ export function SupportPage() {
 
         <dt>Eine Angabe stimmt nicht. Was kann ich tun?</dt>
         <dd>
-          Schreiben Sie uns eine E-Mail. Angaben aus OpenStreetMap können Sie auch direkt auf{' '}
+          Auf der Detailseite über den Stift neben der Angabe oder über „Etwas stimmt nicht“ (siehe unten), oder per E-Mail. Angaben
+          aus OpenStreetMap können Sie auch direkt auf{' '}
           <a href="https://www.openstreetmap.org/fixthebug">openstreetmap.org</a> korrigieren; die Änderung erscheint dann mit der
           nächsten Aktualisierung bei Slipways.
         </dd>
@@ -50,6 +51,24 @@ export function SupportPage() {
           Slipways verwendet kein Tracking und keine Cookies. Einzelheiten stehen in der <Link to="/datenschutz">Datenschutzerklärung</Link>.
         </dd>
       </dl>
+
+      <h2 id="mitmachen">Mitmachen</h2>
+      <p>
+        Auf jeder Detailseite können Sie fehlende Angaben ergänzen, falsche korrigieren, ankreuzen, was es vor Ort gibt (etwa
+        Parkplatz für Gespann, Steg oder Toilette), einen kurzen Tipp geben oder ein Problem melden. Fehlt eine Slipanlage ganz,
+        schlagen Sie sie über „Slipanlage fehlt?“ auf der Startseite vor. Ein Konto brauchen Sie dafür nicht.
+      </p>
+      <p>
+        Jeder Vorschlag wird von Hand geprüft, bevor er erscheint. Bitte tragen Sie nur ein, was Sie aus eigener Erfahrung wissen,
+        und schreiben Sie nichts aus anderen Verzeichnissen oder Webseiten ab. Mit dem Absenden erlauben Sie Slipways, den Beitrag
+        dauerhaft und ohne Namensnennung zu veröffentlichen. Ergänzungen zu Einträgen aus OpenStreetMap veröffentlichen wir wie die
+        Einträge selbst unter der{' '}
+        <a href="https://opendatacommons.org/licenses/odbl/1-0/">Open Database License (ODbL)</a>; sie stehen gesammelt unter{' '}
+        <a href="/api/contributions/odbl">/api/contributions/odbl</a> zum Herunterladen bereit.
+      </p>
+      <p>
+        Tipps sollen sachlich sein: keine Werbung, keine Links, keine Angaben zu Personen und keine Bewertungen von Betreibern.
+      </p>
 
       <h2>Keine Gewähr</h2>
       <p>
