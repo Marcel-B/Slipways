@@ -32,6 +32,7 @@ export function SuggestionStatusPage() {
 
   return (
     <article className="details narrow">
+      <title>Dein Vorschlag · Slipways</title>
       <Link to="/" className="back">
         <ArrowLeft size={16} /> Zur Karte
       </Link>

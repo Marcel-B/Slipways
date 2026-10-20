@@ -98,6 +98,7 @@ export function NewSlipwayPage() {
 
   return (
     <article className="details">
+      <title>Slipanlage vorschlagen · Slipways</title>
       <Link to="/" className="back">
         <ArrowLeft size={16} /> Alle Slipanlagen
       </Link>

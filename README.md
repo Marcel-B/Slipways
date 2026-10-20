@@ -273,6 +273,10 @@ Gegen die lokale API: im Schema unter Run > Arguments die Umgebungsvariable `SLI
 | GET | `/api/account/me` | Angemeldeter Benutzer, nur mit `Accounts__Enabled=true` |
 | GET | `/health` | Health-Check |
 
+## Suchmaschinen
+
+Das Web ist eine Single-Page-App, deshalb setzt nginx Titel, Beschreibung, Canonical-Link, Open Graph und strukturierte Daten (schema.org als JSON-LD: `Place` für Slipanlagen, `Marina`, `BodyOfWater`, `WebSite` für die Startseite) schon serverseitig in `index.html`: Ein Server Side Include im Block `seo` holt sie von `/api/seo/head/<Pfad>`. Antwortet die API nicht (Neustart, Rate-Limit), bleiben die allgemeinen Angaben aus `index.html` stehen. Unbekannte Seiten und IDs bekommen `noindex`, weil die SPA auch für sie `200` liefert. `/sitemap.xml` baut die API aus der Datenbank (`/api/seo/sitemap`), `web/public/robots.txt` verweist darauf. Die Adresse in Canonical-Links und Sitemap steht in `Seo:SiteUrl` (Vorgabe `https://slipways.de`, die Test-Stage verweist damit auf die Produktion). Im Browser setzen die Seiten ihren Titel selbst (React-`<title>`); Slipanlagen und Marinas heißen dort wie in der API „Name in Ort“, wenn der Ort nicht schon im Namen steht.
+
 ## Absicherung
 
 Die API ist bewusst ohne Anmeldung lesbar, Web und Apps brauchen keinen Schlüssel. Schreiben kann man von außen nur Vorschläge, die erst nach der Moderation sichtbar werden (siehe „Nutzerbeiträge“); Konto-Endpunkte gibt es nur mit `Accounts:Enabled=true`.

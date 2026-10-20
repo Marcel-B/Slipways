@@ -63,6 +63,7 @@ export function WaterDetailsPage() {
 
   return (
     <article className="details">
+      <title>{`${water.name} · Slipways`}</title>
       <Link to="/waters" className="back">
         <ArrowLeft size={16} /> Alle Gewässer
       </Link>

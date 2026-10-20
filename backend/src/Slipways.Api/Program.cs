@@ -18,6 +18,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 builder.Services.AddApiRateLimiting();
+builder.Services.AddOptions<SeoOptions>().BindConfiguration(SeoOptions.SectionName);
 builder.Services.AddHealthChecks().AddDbContextCheck<SlipwaysDbContext>();
 
 // Bearer tokens are protected with data protection keys; persist them so logins survive restarts.
@@ -72,6 +73,7 @@ if (app.Environment.IsDevelopment())
 app.MapHealthChecks("/health");
 app.MapMetrics();
 app.MapCatalogEndpoints();
+app.MapSeoEndpoints();
 app.MapSuggestionEndpoints();
 app.MapModerationEndpoints();
 // Accounts are off for the read-only public site; Accounts:Enabled=true brings register and login back.

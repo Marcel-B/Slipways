@@ -59,6 +59,7 @@ export function WatersPage() {
 
   return (
     <>
+      <title>Gewässer · Slipways</title>
       <section className="hero">
         <h1>Gewässer</h1>
         <p className="hero-lead">Flüsse, Seen und Kanäle mit ihren Slipanlagen und Pegeln.</p>
