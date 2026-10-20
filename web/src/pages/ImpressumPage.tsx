@@ -1,6 +1,6 @@
 import { Link } from 'react-router'
 import { operator } from '../legal/operator'
-import { OperatorAddress, OperatorEmail, OperatorField } from '../legal/OperatorField'
+import { OperatorAddress, OperatorEmail } from '../legal/OperatorField'
 
 export function ImpressumPage() {
   return (
@@ -15,12 +15,6 @@ export function ImpressumPage() {
       <h2>Kontakt</h2>
       <p>
         E-Mail: <OperatorEmail />
-        {operator.phone && (
-          <>
-            <br />
-            Telefon: <OperatorField value={operator.phone} />
-          </>
-        )}
       </p>
 
       {operator.vatId && (

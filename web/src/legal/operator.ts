@@ -6,8 +6,6 @@ export const operator = {
   city: '47800 Krefeld',
   country: 'Deutschland',
   email: 'slipways@marcelbenders.com',
-  // Zweiter schneller Kontaktweg neben der E-Mail; leer lassen, wenn es keinen gibt
-  phone: '',
   // Nur angeben, wenn vorhanden
   vatId: '',
 }
