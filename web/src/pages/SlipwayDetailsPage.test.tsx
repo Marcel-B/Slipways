@@ -7,28 +7,36 @@ import { SlipwayDetailsPage } from './SlipwayDetailsPage'
 
 vi.mock('../components/LazyMarkerMap', () => ({ LazyMarkerMap: () => null }))
 
-const donau = { id: 'd19708ca-ac42-4ad4-8d62-e85722f946f6', name: 'Donau' }
-
-const slipway: SlipwayDetails = {
-  id: 'eac96a93-fd47-4a9a-8771-0005805b9655',
-  name: 'Am Jachthafen, Kelheim',
-  latitude: 48.93,
-  longitude: 11.99,
-  postalCode: '93309',
-  city: 'Kelheim',
-  country: 'DE',
-  water: donau,
-  street: 'Am Jachthafen',
+const imported: SlipwayDetails = {
+  id: '05df3689-6855-41e9-a1d8-f4c923603308',
+  name: 'Slipanlage',
+  latitude: 47.06824,
+  longitude: 15.43536,
+  street: null,
+  postalCode: null,
+  city: null,
+  country: 'AT',
+  url: null,
   comment: null,
   rating: 0,
-  costs: 0,
+  costs: null,
   pro: null,
   contra: null,
+  operator: 'Stadt Graz',
+  fee: 'no',
+  access: 'customers',
+  openingHours: null,
+  surface: 'concrete',
+  water: null,
   marina: null,
   extras: [],
-  created: '2020-04-14T00:00:00Z',
+  source: 'osm',
+  osmElement: 'way/1050341846',
+  created: '2026-10-20T15:05:14Z',
   updated: null,
 }
+
+const donau = { id: 'd19708ca-ac42-4ad4-8d62-e85722f946f6', name: 'Donau' }
 
 function station(name: string, latitude: number, value: number | null): Station {
   return {
@@ -56,9 +64,15 @@ const water: WaterDetails = {
   marinas: [],
 }
 
-function renderAt(url: string) {
+function renderSlipway(slipway: SlipwayDetails) {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn((url: string) =>
+      Promise.resolve(new Response(JSON.stringify(url.startsWith('/api/waters') ? water : slipway), { status: 200 })),
+    ),
+  )
   const router = createMemoryRouter([{ path: '/slipways/:id', element: <SlipwayDetailsPage /> }], {
-    initialEntries: [url],
+    initialEntries: [`/slipways/${slipway.id}`],
   })
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
@@ -71,15 +85,51 @@ function renderAt(url: string) {
 describe('SlipwayDetailsPage', () => {
   afterEach(() => vi.unstubAllGlobals())
 
-  it('shows the slipway with its costs, a route link and the nearest gauge with a reading', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn((url: string) =>
-        Promise.resolve(new Response(JSON.stringify(url.startsWith('/api/waters') ? water : slipway), { status: 200 })),
-      ),
-    )
+  it('shows tags of an imported slipway and credits OpenStreetMap', async () => {
+    renderSlipway(imported)
 
-    renderAt(`/slipways/${slipway.id}`)
+    expect(await screen.findByRole('heading', { name: 'Slipanlage' })).toBeInTheDocument()
+    expect(screen.queryByText('Gewässer')).not.toBeInTheDocument()
+    expect(screen.getByText('kostenlos')).toBeInTheDocument()
+    expect(screen.getByText('nur für Kunden')).toBeInTheDocument()
+    expect(screen.getByText('Beton')).toBeInTheDocument()
+    expect(screen.getByText('Stadt Graz')).toBeInTheDocument()
+    expect(screen.getByText(/© OpenStreetMap-Mitwirkende/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'in OpenStreetMap ansehen' })).toHaveAttribute(
+      'href',
+      'https://www.openstreetmap.org/way/1050341846',
+    )
+  })
+
+  it('marks our own slipways as such', async () => {
+    renderSlipway({
+      ...imported,
+      name: 'Am Jachthafen, Kelheim',
+      source: 'manual',
+      osmElement: null,
+      water: donau,
+    })
+
+    expect(await screen.findByRole('link', { name: 'Donau' })).toHaveAttribute(
+      'href',
+      `/waters/${donau.id}`,
+    )
+    expect(screen.getByText('eigene Erfassung')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'in OpenStreetMap ansehen' })).not.toBeInTheDocument()
+  })
+
+  it('shows the costs, a route link and the nearest gauge with a reading', async () => {
+    renderSlipway({
+      ...imported,
+      name: 'Am Jachthafen, Kelheim',
+      latitude: 48.93,
+      longitude: 11.99,
+      costs: 0,
+      fee: null,
+      source: 'manual',
+      osmElement: null,
+      water: donau,
+    })
 
     expect(await screen.findByRole('heading', { name: 'Am Jachthafen, Kelheim' })).toBeInTheDocument()
     expect(screen.getByText('kostenlos')).toBeInTheDocument()
@@ -94,8 +144,14 @@ describe('SlipwayDetailsPage', () => {
 
   it('reports an unknown slipway', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('', { status: 404, statusText: 'Not Found' })))
-
-    renderAt(`/slipways/${slipway.id}`)
+    const router = createMemoryRouter([{ path: '/slipways/:id', element: <SlipwayDetailsPage /> }], {
+      initialEntries: [`/slipways/${imported.id}`],
+    })
+    render(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>,
+    )
 
     expect(await screen.findByText('Diese Slipanlage gibt es nicht.')).toBeInTheDocument()
   })

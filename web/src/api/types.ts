@@ -5,6 +5,17 @@ export interface Water {
   name: string
 }
 
+/** `osm` for data imported from OpenStreetMap (ODbL), `manual` for our own. */
+export type Source = 'manual' | 'osm'
+
+/** OpenStreetMap tags as they are, e.g. fee "yes" or opening hours "Mo-Fr 08:00-18:00". */
+export interface OsmTags {
+  operator: string | null
+  fee: string | null
+  access: string | null
+  openingHours: string | null
+}
+
 export interface SlipwaySummary {
   id: string
   name: string
@@ -13,18 +24,24 @@ export interface SlipwaySummary {
   postalCode: string | null
   city: string | null
   country: string | null
-  water: Water
+  /** Null when the slipway lies on none of the known waters. */
+  water: Water | null
+  source: Source
 }
 
-export interface SlipwayDetails extends SlipwaySummary {
+export interface SlipwayDetails extends SlipwaySummary, OsmTags {
   street: string | null
+  url: string | null
   comment: string | null
   rating: number
   costs: number | null
   pro: string | null
   contra: string | null
+  surface: string | null
   marina: { id: string; name: string; url: string | null } | null
   extras: string[]
+  /** Set for imported slipways and for our own ones matched to OpenStreetMap, such as "node/123". */
+  osmElement: string | null
   created: string
   updated: string | null
 }
@@ -70,7 +87,7 @@ export interface Station {
   waterLevel: WaterLevel | null
 }
 
-export interface Marina {
+export interface Marina extends OsmTags {
   id: string
   name: string
   latitude: number
@@ -81,7 +98,9 @@ export interface Marina {
   city: string | null
   phone: string | null
   email: string | null
-  water: Water
+  water: Water | null
+  source: Source
+  osmElement: string | null
 }
 
 /** Shapes thinned out for the overview map; feature ids are water ids. */

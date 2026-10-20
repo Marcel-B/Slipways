@@ -1,6 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import {
   Anchor,
+  BadgeCheck,
+  Building2,
+  Clock,
+  DoorOpen,
+  Globe,
+  Layers,
   ArrowLeft,
   Coins,
   Crosshair,
@@ -13,12 +19,15 @@ import {
   ThumbsDown,
   ThumbsUp,
   Waves,
+  type LucideIcon,
 } from 'lucide-react'
+import { Fragment } from 'react'
 import { Link, useParams } from 'react-router'
 import { api, ApiError } from '../api/client'
-import type { SlipwayDetails } from '../api/types'
+import type { SlipwayDetails, Water } from '../api/types'
 import { LazyMarkerMap } from '../components/LazyMarkerMap'
 import { slipwayMarker } from '../components/mapMarkers'
+import { accessLabel, feeLabel, osmUrl, surfaceLabel } from '../components/osmTags'
 import { formatMeasuredAt } from '../components/waterLevel'
 import { WaterLevelText } from '../components/WaterLevelText'
 import { distanceKm } from './distance'
@@ -26,10 +35,12 @@ import { distanceKm } from './distance'
 const currency = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' })
 const kilometres = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 1 })
 
-function costs(value: number | null): { label: string; tone: string } {
-  if (value === null) return { label: 'Kosten unbekannt', tone: 'neutral' }
-  if (value === 0) return { label: 'kostenlos', tone: 'free' }
-  return { label: currency.format(value), tone: 'paid' }
+/** Our own costs win; imported slipways only have the OpenStreetMap fee tag. */
+function costs({ costs: value, fee }: SlipwayDetails): { label: string; tone: string } {
+  if (value === 0 || (value === null && fee === 'no')) return { label: 'kostenlos', tone: 'free' }
+  if (value !== null) return { label: currency.format(value), tone: 'paid' }
+  if (fee) return { label: feeLabel(fee), tone: 'paid' }
+  return { label: 'Kosten unbekannt', tone: 'neutral' }
 }
 
 export function SlipwayDetailsPage() {
@@ -50,7 +61,13 @@ export function SlipwayDetailsPage() {
   const address = [slipway.street, [slipway.postalCode, slipway.city].filter(Boolean).join(' '), slipway.country]
     .filter(Boolean)
     .join(', ')
-  const cost = costs(slipway.costs)
+  const cost = costs(slipway)
+  const facts: [LucideIcon, string, string | null][] = [
+    [Building2, 'Betreiber', slipway.operator],
+    [DoorOpen, 'Zugang', slipway.access && accessLabel(slipway.access)],
+    [Clock, 'Öffnungszeiten', slipway.openingHours],
+    [Layers, 'Untergrund', slipway.surface && surfaceLabel(slipway.surface)],
+  ]
   const position = `${slipway.latitude},${slipway.longitude}`
 
   return (
@@ -65,9 +82,11 @@ export function SlipwayDetailsPage() {
         <div>
           <h1>{slipway.name}</h1>
           <div className="chips">
-            <Link to={`/waters/${slipway.water.id}`} className="chip chip-water">
-              <Waves size={14} /> {slipway.water.name}
-            </Link>
+            {slipway.water && (
+              <Link to={`/waters/${slipway.water.id}`} className="chip chip-water">
+                <Waves size={14} /> {slipway.water.name}
+              </Link>
+            )}
             <span className={`chip chip-${cost.tone}`}>
               <Coins size={14} /> {cost.label}
             </span>
@@ -84,6 +103,28 @@ export function SlipwayDetailsPage() {
                   <MapPin size={16} /> Adresse
                 </dt>
                 <dd>{address}</dd>
+              </>
+            )}
+            {facts
+              .filter(([, , value]) => value)
+              .map(([Icon, label, value]) => (
+                <Fragment key={label}>
+                  <dt>
+                    <Icon size={16} /> {label}
+                  </dt>
+                  <dd>{value}</dd>
+                </Fragment>
+              ))}
+            {slipway.url && (
+              <>
+                <dt>
+                  <Globe size={16} /> Webseite
+                </dt>
+                <dd>
+                  <a href={slipway.url} target="_blank" rel="noreferrer">
+                    {slipway.url}
+                  </a>
+                </dd>
               </>
             )}
             {slipway.marina && (
@@ -116,6 +157,20 @@ export function SlipwayDetailsPage() {
             <dd>
               {slipway.latitude.toFixed(5)}, {slipway.longitude.toFixed(5)}
             </dd>
+            <dt>
+              <BadgeCheck size={16} /> Quelle
+            </dt>
+            <dd>
+              {slipway.source === 'osm' ? '© OpenStreetMap-Mitwirkende (ODbL)' : 'eigene Erfassung'}
+              {slipway.osmElement && (
+                <>
+                  ,{' '}
+                  <a href={osmUrl(slipway.osmElement)} target="_blank" rel="noreferrer">
+                    in OpenStreetMap ansehen
+                  </a>
+                </>
+              )}
+            </dd>
           </dl>
 
           {slipway.comment && <p className="comment">{slipway.comment}</p>}
@@ -134,7 +189,7 @@ export function SlipwayDetailsPage() {
             </ul>
           )}
 
-          <NearestGauge slipway={slipway} />
+          {slipway.water && <NearestGauge slipway={slipway} water={slipway.water} />}
 
           <div className="actions">
             <a
@@ -164,11 +219,11 @@ export function SlipwayDetailsPage() {
 }
 
 /** The gauge with a current reading closest to the slipway, from the water the slipway is on. */
-function NearestGauge({ slipway }: { slipway: SlipwayDetails }) {
+function NearestGauge({ slipway, water: { id: waterId } }: { slipway: SlipwayDetails; water: Water }) {
   // Same query as the water's page, so going there afterwards needs no new request.
   const { data: water } = useQuery({
-    queryKey: ['water', slipway.water.id],
-    queryFn: ({ signal }) => api.water(slipway.water.id, signal),
+    queryKey: ['water', waterId],
+    queryFn: ({ signal }) => api.water(waterId, signal),
   })
 
   const nearest = (water?.stations ?? [])
@@ -184,7 +239,7 @@ function NearestGauge({ slipway }: { slipway: SlipwayDetails }) {
       </span>
       <div>
         <p className="gauge-title">
-          Nächster Pegel: <Link to={`/waters/${slipway.water.id}`}>{station.name}</Link>
+          Nächster Pegel: <Link to={`/waters/${waterId}`}>{station.name}</Link>
         </p>
         <p className="gauge-value">
           <WaterLevelText level={level} />

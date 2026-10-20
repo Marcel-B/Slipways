@@ -55,6 +55,10 @@ public record WaterDetailsDto(
     IReadOnlyList<StationDto> Stations,
     IReadOnlyList<MarinaDto> Marinas);
 
+/// <summary>
+/// <paramref name="Source"/> is "manual" for our own data and "osm" for data imported from OpenStreetMap (ODbL).
+/// <paramref name="Water"/> is null when the slipway lies on none of the known waters.
+/// </summary>
 public record SlipwaySummaryDto(
     Guid Id,
     string Name,
@@ -63,10 +67,16 @@ public record SlipwaySummaryDto(
     string? PostalCode,
     string? City,
     string? Country,
-    WaterDto Water);
+    WaterDto? Water,
+    string Source);
 
 public record MarinaSummaryDto(Guid Id, string Name, string? Url);
 
+/// <summary>
+/// <paramref name="Operator"/> to <paramref name="Surface"/> are OpenStreetMap tags as they are, e.g. fee "yes".
+/// <paramref name="OsmElement"/>, such as "node/123", is set for imported slipways and for our own ones that were
+/// matched to OpenStreetMap; see <see cref="SlipwaySummaryDto"/> for <paramref name="Source"/>.
+/// </summary>
 public record SlipwayDetailsDto(
     Guid Id,
     string Name,
@@ -76,17 +86,26 @@ public record SlipwayDetailsDto(
     string? PostalCode,
     string? City,
     string? Country,
+    string? Url,
     string? Comment,
     int Rating,
     decimal? Costs,
     string? Pro,
     string? Contra,
-    WaterDto Water,
+    string? Operator,
+    string? Fee,
+    string? Access,
+    string? OpeningHours,
+    string? Surface,
+    WaterDto? Water,
     MarinaSummaryDto? Marina,
     IReadOnlyList<string> Extras,
+    string Source,
+    string? OsmElement,
     DateTime Created,
     DateTime? Updated);
 
+/// <summary>Fields and <paramref name="Source"/> as in <see cref="SlipwayDetailsDto"/>.</summary>
 public record MarinaDto(
     Guid Id,
     string Name,
@@ -98,7 +117,13 @@ public record MarinaDto(
     string? City,
     string? Phone,
     string? Email,
-    WaterDto Water);
+    string? Operator,
+    string? Fee,
+    string? Access,
+    string? OpeningHours,
+    WaterDto? Water,
+    string Source,
+    string? OsmElement);
 
 public record ExtraDto(Guid Id, string Name);
 

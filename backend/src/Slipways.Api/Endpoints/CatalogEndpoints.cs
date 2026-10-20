@@ -41,14 +41,15 @@ public static class CatalogEndpoints
             query = query.Where(s =>
                 s.Name.ToLower().Contains(term) ||
                 (s.City != null && s.City.ToLower().Contains(term)) ||
-                s.Water.Name.ToLower().Contains(term));
+                (s.Water != null && s.Water.Name.ToLower().Contains(term)));
         }
 
         return await query
             .OrderBy(s => s.Name)
             .Select(s => new SlipwaySummaryDto(
                 s.Id, s.Name, s.Latitude, s.Longitude, s.PostalCode, s.City, s.Country,
-                new WaterDto(s.Water.Id, s.Water.Name)))
+                s.Water == null ? null : new WaterDto(s.Water.Id, s.Water.Name),
+                s.Source))
             .ToListAsync(ct);
     }
 
@@ -58,11 +59,13 @@ public static class CatalogEndpoints
         var slipway = await db.Slipways.AsNoTracking()
             .Where(s => s.Id == id)
             .Select(s => new SlipwayDetailsDto(
-                s.Id, s.Name, s.Latitude, s.Longitude, s.Street, s.PostalCode, s.City, s.Country,
+                s.Id, s.Name, s.Latitude, s.Longitude, s.Street, s.PostalCode, s.City, s.Country, s.Url,
                 s.Comment, s.Rating, s.Costs, s.Pro, s.Contra,
-                new WaterDto(s.Water.Id, s.Water.Name),
+                s.Operator, s.Fee, s.Access, s.OpeningHours, s.Surface,
+                s.Water == null ? null : new WaterDto(s.Water.Id, s.Water.Name),
                 s.Marina == null ? null : new MarinaSummaryDto(s.Marina.Id, s.Marina.Name, s.Marina.Url),
                 s.Extras.OrderBy(e => e.Name).Select(e => e.Name).ToList(),
+                s.Source, s.OsmId == null ? null : s.OsmType + "/" + s.OsmId,
                 s.Created, s.Updated))
             .SingleOrDefaultAsync(ct);
 
@@ -229,7 +232,9 @@ public static class CatalogEndpoints
             .OrderBy(m => m.Name)
             .Select(m => new MarinaDto(
                 m.Id, m.Name, m.Latitude, m.Longitude, m.Url, m.Street, m.PostalCode, m.City, m.Phone, m.Email,
-                new WaterDto(m.Water.Id, m.Water.Name)))
+                m.Operator, m.Fee, m.Access, m.OpeningHours,
+                m.Water == null ? null : new WaterDto(m.Water.Id, m.Water.Name),
+                m.Source, m.OsmId == null ? null : m.OsmType + "/" + m.OsmId))
             .ToListAsync(ct);
 
     private static Task<List<ExtraDto>> ListExtras(SlipwaysDbContext db, CancellationToken ct) =>
