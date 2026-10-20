@@ -32,6 +32,16 @@ export function ImpressumPage() {
         lizenziert unter der <a href="https://www.govdata.de/dl-de/zero-2-0">Datenlizenz Deutschland – Zero – Version 2.0</a>.
       </p>
 
+      <h2>Urheberrecht und Lizenz</h2>
+      <p>
+        Website, Apps und die selbst erfassten Daten zu Slipanlagen, Marinas und Motorservices: © 2019–2026 Marcel Benders.
+        Der <a href="https://github.com/Marcel-B/Slipways">Quellcode</a> ist öffentlich einsehbar und steht unter der{' '}
+        <a href="https://github.com/Marcel-B/Slipways/blob/master/LICENSE">PolyForm Strict License 1.0.0</a>. Lesen und für
+        persönliche, nicht-kommerzielle Zwecke ausprobieren ist erlaubt. Für alles Weitere, etwa kommerzielle Nutzung,
+        Änderungen, eigene Instanzen oder die Übernahme der Daten, bitte vorher über die oben genannte E-Mail-Adresse fragen. Daten
+        aus OpenStreetMap und PEGELONLINE stehen unter ihren eigenen Lizenzen (siehe oben).
+      </p>
+
       <h2>Keine Gewähr</h2>
       <p>
         Alle Angaben zu Slipanlagen, Gewässern und Pegelständen werden ohne Gewähr bereitgestellt. Sie ersetzen weder amtliche

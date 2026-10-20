@@ -37,6 +37,11 @@ export function Layout() {
             <a href="https://www.openstreetmap.org/copyright">OpenStreetMap-Mitwirkende</a> (ODbL) · Pegelstände{' '}
             <a href="https://www.pegelonline.wsv.de/">PEGELONLINE</a> der WSV (DL-DE-&gt;Zero-2.0)
           </p>
+          <p className="muted">
+            © 2019–2026 Marcel Benders ·{' '}
+            <a href="https://github.com/Marcel-B/Slipways">Quellcode</a> unter{' '}
+            <a href="https://github.com/Marcel-B/Slipways/blob/master/LICENSE">PolyForm Strict 1.0.0</a>
+          </p>
         </div>
       </footer>
     </>

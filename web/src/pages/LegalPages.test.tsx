@@ -35,6 +35,15 @@ describe('legal pages', () => {
     expect(document.querySelector('mark.placeholder')).toBeNull()
   })
 
+  it('names the license in the footer and the imprint', async () => {
+    renderAt('/impressum')
+    const footer = (await screen.findByRole('contentinfo')) as HTMLElement
+    const license = 'https://github.com/Marcel-B/Slipways/blob/master/LICENSE'
+    expect(footer.querySelector(`a[href="${license}"]`)).toHaveTextContent('PolyForm Strict 1.0.0')
+    expect(screen.getByRole('heading', { level: 2, name: 'Urheberrecht und Lizenz' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'PolyForm Strict License 1.0.0' })).toHaveAttribute('href', license)
+  })
+
   it('links the legal pages in the footer', async () => {
     renderAt('/impressum')
     const footer = (await screen.findByRole('contentinfo')) as HTMLElement
