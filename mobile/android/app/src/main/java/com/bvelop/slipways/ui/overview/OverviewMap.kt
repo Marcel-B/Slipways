@@ -91,7 +91,7 @@ fun OverviewMap(
             }
             loaded.addOnCameraIdleListener {
                 val bounds = loaded.projection.visibleRegion.latLngBounds
-                currentOnAreaChange(MapArea(bounds.latSouth, bounds.lonWest, bounds.latNorth, bounds.lonEast))
+                currentOnAreaChange(MapArea(bounds.latitudeSouth, bounds.longitudeWest, bounds.latitudeNorth, bounds.longitudeEast))
             }
             loaded.addOnMapClickListener { point ->
                 val screen = loaded.projection.toScreenLocation(point)
