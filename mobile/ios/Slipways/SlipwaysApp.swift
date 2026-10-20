@@ -3,22 +3,12 @@ import SwiftUI
 
 @main
 struct SlipwaysApp: App {
-    @State private var session: Session
-    private let api: SlipwaysAPI
-
-    init() {
-        let tokens = KeychainTokenStore()
-        let api = SlipwaysAPI(baseURL: AppConfig.apiBaseURL, token: { tokens.token() })
-        self.api = api
-        _session = State(initialValue: Session(api: api, tokens: tokens))
-    }
+    private let api = SlipwaysAPI(baseURL: AppConfig.apiBaseURL)
 
     var body: some Scene {
         WindowGroup {
             SlipwayListView()
-                .environment(session)
                 .environment(\.api, api)
-                .task { await session.restore() }
         }
     }
 }

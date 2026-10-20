@@ -6,7 +6,6 @@ struct SlipwayListView: View {
     @State private var search = ""
     @State private var slipways: [SlipwaySummary]?
     @State private var error: Error?
-    @State private var showsAccount = false
 
     var body: some View {
         NavigationStack {
@@ -14,10 +13,6 @@ struct SlipwayListView: View {
                 .navigationTitle("Slipanlagen")
                 .navigationDestination(for: SlipwaySummary.self) { SlipwayDetailView(slipway: $0) }
                 .searchable(text: $search, prompt: "Name, Ort oder Gewässer")
-                .toolbar {
-                    Button("Konto", systemImage: "person.crop.circle") { showsAccount = true }
-                }
-                .sheet(isPresented: $showsAccount) { AccountView() }
                 .task(id: search) { await load() }
                 .refreshable { await load() }
         }

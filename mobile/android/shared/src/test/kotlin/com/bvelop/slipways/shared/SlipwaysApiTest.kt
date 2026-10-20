@@ -18,13 +18,9 @@ import kotlin.test.assertNull
 class SlipwaysApiTest {
     private val requests = mutableListOf<HttpRequestData>()
 
-    private fun api(
-        token: String? = null,
-        handler: suspend MockRequestHandleScope.(HttpRequestData) -> HttpResponseData,
-    ) = SlipwaysApi(
+    private fun api(handler: suspend MockRequestHandleScope.(HttpRequestData) -> HttpResponseData) = SlipwaysApi(
         baseUrl = "http://localhost:5080",
         httpClient = HttpClient(MockEngine { request -> requests += request; handler(request) }),
-        tokenProvider = { token },
     )
 
     private fun MockRequestHandleScope.json(body: String, status: HttpStatusCode = HttpStatusCode.OK) =
@@ -56,21 +52,11 @@ class SlipwaysApiTest {
     }
 
     @Test
-    fun `sends bearer token for the current user`() = runTest {
-        val api = api(token = "abc") { json("""{"id":"u","email":"skipper@example.com","displayName":null}""") }
-
-        val user = api.me()
-
-        assertEquals("skipper@example.com", user.email)
-        assertEquals("Bearer abc", requests.single().headers[HttpHeaders.Authorization])
-    }
-
-    @Test
     fun `turns error status into ApiException`() = runTest {
-        val api = api { json("", HttpStatusCode.Unauthorized) }
+        val api = api { json("", HttpStatusCode.NotFound) }
 
-        val error = assertFailsWith<ApiException> { api.login("a@b.de", "wrong") }
+        val error = assertFailsWith<ApiException> { api.slipway("missing") }
 
-        assertEquals(401, error.status)
+        assertEquals(404, error.status)
     }
 }

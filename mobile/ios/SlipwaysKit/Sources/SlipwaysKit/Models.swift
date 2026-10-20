@@ -53,16 +53,3 @@ public struct SlipwayDetails: Codable, Hashable, Identifiable, Sendable {
         return [street, place.isEmpty ? nil : place, country].compactMap { $0 }.joined(separator: ", ")
     }
 }
-
-public struct User: Codable, Hashable, Sendable {
-    public let id: String
-    public let email: String
-    public let displayName: String?
-}
-
-public struct AccessToken: Codable, Sendable {
-    public let tokenType: String
-    public let accessToken: String
-    public let expiresIn: Int
-    public let refreshToken: String
-}

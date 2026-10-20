@@ -44,17 +44,3 @@ data class SlipwayDetails(
         get() = listOfNotNull(street, listOfNotNull(postalCode, city).joinToString(" ").ifBlank { null }, country)
             .joinToString(", ")
 }
-
-@Serializable
-data class User(val id: String, val email: String, val displayName: String? = null)
-
-@Serializable
-data class AccessToken(
-    val tokenType: String,
-    val accessToken: String,
-    val expiresIn: Long,
-    val refreshToken: String,
-)
-
-@Serializable
-internal data class Credentials(val email: String, val password: String)

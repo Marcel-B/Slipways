@@ -74,7 +74,7 @@ cd mobile/android
 ./gradlew :shared:test :app:assembleDebug
 ```
 
-Im Emulator erreicht die Debug-Version die API unter `http://10.0.2.2:5080`. API-Client und Login-Logik liegen im reinen Kotlin-Modul `shared`, die Oberfläche in `app`.
+Im Emulator erreicht die Debug-Version die API unter `http://10.0.2.2:5080`. Der API-Client liegt im reinen Kotlin-Modul `shared`, die Oberfläche in `app`.
 
 iOS (Xcode 26 und [XcodeGen](https://github.com/yonaskolb/XcodeGen), `brew install xcodegen`):
 
@@ -85,7 +85,7 @@ open Slipways.xcodeproj
 swift test --package-path SlipwaysKit
 ```
 
-Im Simulator nutzt die Debug-Version `http://localhost:5080`. API-Client und Login-Logik liegen im Swift-Package `SlipwaysKit`, das Token im Schlüsselbund.
+Im Simulator nutzt die Debug-Version `http://localhost:5080`. Der API-Client liegt im Swift-Package `SlipwaysKit`.
 
 ## API-Überblick
 
