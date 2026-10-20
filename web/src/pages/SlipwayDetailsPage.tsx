@@ -201,7 +201,7 @@ export function SlipwayDetailsPage() {
           </div>
         </div>
         <div className="details-map">
-          <LazyMarkerMap markers={[slipwayMarker(slipway)]} center={[slipway.latitude, slipway.longitude]} zoom={14} />
+          <LazyMarkerMap markers={[slipwayMarker(slipway)]} center={[slipway.latitude, slipway.longitude]} zoom={14} introZoom />
         </div>
       </div>
     </article>

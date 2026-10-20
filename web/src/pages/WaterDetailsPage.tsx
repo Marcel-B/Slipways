@@ -182,6 +182,7 @@ export function WaterDetailsPage() {
               bounds={water.bounds}
               shapes={water.shape ? [{ id: water.id, geometry: water.shape, highlighted: true }] : []}
               cluster
+              introZoom
             />
             <ul className="legend muted">
               {water.shape && (

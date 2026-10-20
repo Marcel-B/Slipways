@@ -1,6 +1,6 @@
 import type { GeoJSON as LeafletGeoJSON, Map as LeafletMap } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { GeoJSON, MapContainer, Marker, Pane, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import { Link } from 'react-router'
 import Supercluster, { type PointFeature } from 'supercluster'
@@ -28,6 +28,8 @@ interface MarkerMapProps {
   onViewChange?: (view: MapView) => void
   /** Moves the map to these bounds whenever a new object is passed, e.g. to show search hits. */
   focus?: Bounds | null
+  /** Starts a little further out and glides in to the initial view, as a gentle entrance on detail pages. */
+  introZoom?: boolean
 }
 
 type SelectHandlers = (id: string) => Record<string, () => void> | undefined
@@ -43,6 +45,7 @@ export function MarkerMap({
   highlightedId = null,
   onViewChange,
   focus = null,
+  introZoom = false,
 }: MarkerMapProps) {
   const selectHandlers: SelectHandlers = (id) =>
     onSelect && { popupopen: () => onSelect(id), popupclose: () => onSelect(null) }
@@ -74,6 +77,7 @@ export function MarkerMap({
         ))}
       </Pane>
       <AutoResize />
+      {introZoom && <IntroZoom />}
       {onViewChange && <ViewReporter onViewChange={onViewChange} />}
       {focus && <Focus bounds={focus} />}
       <MarkerLayer markers={markers} cluster={cluster} highlightedId={highlightedId} selectHandlers={selectHandlers} />
@@ -88,6 +92,25 @@ function AutoResize() {
     const observer = new ResizeObserver(() => map.invalidateSize())
     observer.observe(map.getContainer())
     return () => observer.disconnect()
+  }, [map])
+  return null
+}
+
+const INTRO_ZOOM_OUT = 2
+
+function IntroZoom() {
+  const map = useMap()
+  // Layout effect: the map moves out before the first paint, so the target view never flashes up.
+  useLayoutEffect(() => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+    const center = map.getCenter()
+    const zoom = map.getZoom()
+    map.setView(center, zoom - INTRO_ZOOM_OUT, { animate: false })
+    const frame = requestAnimationFrame(() => map.flyTo(center, zoom, { duration: 1 }))
+    return () => {
+      cancelAnimationFrame(frame)
+      map.stop()
+    }
   }, [map])
   return null
 }
