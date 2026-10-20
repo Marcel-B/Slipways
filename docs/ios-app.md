@@ -63,7 +63,9 @@ Maßgeblich sind `backend/src/Slipways.Api/Endpoints/Contracts.cs` und die Tabel
    - Modelle an die DTOs anpassen und den Untertitel ohne Gewässer korrekt bilden.
    - Release-Adresse auf `https://slipways.de` setzen.
    - Tests mit `water: null` und einer OSM-Slipanlage als Fixture ergänzen.
-3. **Lizenz:** „© OpenStreetMap-Mitwirkende“ bei Einträgen mit `source = osm` und auf einer Info-Seite anzeigen. Auf derselben Seite Impressum, Datenschutz und Support verlinken.
+3. **Lizenz:** Der Hinweis im Fuß der Website gilt nicht für die App. Sie ist ein eigenes Werk im Sinne der ODbL (§ 4.3) und braucht einen eigenen Hinweis. Nach den [Attribution Guidelines der OSMF](https://osmfoundation.org/wiki/Licence/Attribution_Guidelines) gehört er an die Karte, in eine Ecke oder daneben (alternativ auf einen Startbildschirm), und muss danach auffindbar bleiben, z. B. über (i) oder „Info“. Ein reiner Credits-Bildschirm reicht nur bei Spielen.
+   - MapKit zeigt nur Apples eigenes „Rechtliches“ an, das deckt die OSM-Einträge nicht ab. Deshalb nicht „Kartendaten ©“ wie im Web, sondern „Daten © OpenStreetMap-Mitwirkende (ODbL)“ mit Link auf `https://www.openstreetmap.org/copyright`.
+   - Den Hinweis an jeder Karte mit OSM-Einträgen und in den Details bei `source = osm` zeigen. Auf einer Info-Seite den vollständigen Hinweis, PEGELONLINE (DL-DE->Zero-2.0) sowie Impressum, Datenschutz und Support verlinken.
 4. **Funktionen nachziehen, damit die Rechtstexte stimmen:**
    - Tab „Gewässer“ mit Pegelstand.
    - Gewässer-Detailseite mit Karte, Verlauf (`MKGeoJSONDecoder`), Slipanlagen, Pegeln und Marinas.
