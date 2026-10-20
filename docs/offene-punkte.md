@@ -31,6 +31,14 @@ Beschrieben im README („Angaben von den Webseiten der Marinas“), Code in `ba
 
 1. **Kartenstil.** Die Karte nutzt weiter die bunten OSM-Standardkacheln, auf denen die Pins wenig hervorstechen. Ruhiger wäre z. B. OpenFreeMap (Vektorkacheln, ohne Schlüssel, braucht MapLibre GL bzw. `@maplibre/maplibre-gl-leaflet`). Jeder neue Kachel-Server muss in die Datenschutzseite und in die Content-Security-Policy (`web/security-headers.conf`). Entscheidung steht aus, Recherche in den Projektdateien unter `recherche/ui-framework-und-design.md`.
 
+## Suchmaschinen (20.10.2026)
+
+Beschrieben im README („Suchmaschinen“).
+
+1. **Search Console.** slipways.de bei der Google Search Console und den Bing Webmaster Tools anmelden (DNS-TXT-Eintrag bei Contabo) und `https://slipways.de/sitemap.xml` einreichen. Kann nur Marcel.
+2. **Vorschaubild.** Für Link-Vorschauen (`og:image`) gibt es noch kein Bild; das Favicon ist ein SVG und wird dafür nicht genommen. Ein PNG mit 1200×630 px nach `web/public/` legen und in `SeoEndpoints.Render` eintragen.
+3. **Inhalt ohne JavaScript.** Serverseitig kommen nur Kopfdaten; Text und Links der Seiten rendert erst React. Google und Bing führen JavaScript aus, andere Crawler sehen nur Titel und Beschreibung. Falls das nicht reicht: ein kurzer Inhalt in `#root` per zweitem Include oder Prerendering.
+
 ## Mobile-Apps (20.10.2026)
 
 Beide Apps laden wieder, haben Gewässer, Pegel, OSM-Hinweis und Info-Seite. Aufbau in [`docs/mobile-apps.md`](mobile-apps.md).

@@ -28,6 +28,7 @@ import { marinaMarker, slipwayMarker } from '../components/mapMarkers'
 import { NearestGauge } from '../components/NearestGauge'
 import { accessLabel, feeLabel, osmUrl } from '../components/osmTags'
 import { count } from './count'
+import { placeTitle } from './pageTitle'
 
 export function MarinaDetailsPage() {
   const { id = '' } = useParams()
@@ -61,6 +62,7 @@ export function MarinaDetailsPage() {
 
   return (
     <article className="details">
+      <title>{`${placeTitle(marina.name, marina.city)} · Slipways`}</title>
       <Link to="/marinas" className="back">
         <ArrowLeft size={16} /> Alle Marinas
       </Link>
