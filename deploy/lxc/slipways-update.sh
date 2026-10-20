@@ -5,7 +5,7 @@
 #   slipways-update.sh --force   auch ohne neue Commits neu bauen (z. B. für neue Basis-Images)
 #
 # Lässt sich der neue Stand nicht bauen, läuft die bisherige Version weiter, bis ein weiterer Commit kommt.
-# Vor jedem Update sichert das Skript die Datenbank lokal nach /var/lib/slipways/backups/pre-update.dump,
+# Vor jedem Update sichert das Skript die Datenbank lokal nach /var/lib/slipways/backups/pre-update.db,
 # weil die API beim Start Migrationen einspielt.
 set -euo pipefail
 
@@ -86,7 +86,7 @@ main() {
     return 0
   fi
 
-  write_status failed "Backend antwortet nach dem Update nicht (docker compose logs api); Sicherung: $STATE_DIR/backups/pre-update.dump"
+  write_status failed "Backend antwortet nach dem Update nicht (docker compose logs api); Sicherung: $STATE_DIR/backups/pre-update.db"
   log "Backend antwortet nach dem Update nicht"
   (cd "$REPO" && docker compose logs --tail 50 api) || true
   return 1

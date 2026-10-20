@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Sichert die PostgreSQL-Datenbank über WebDAV in die Nextcloud, nach dem Vorbild von fil-o-mat.
+# Sichert die SQLite-Datenbank über WebDAV in die Nextcloud, nach dem Vorbild von fil-o-mat.
 # Läuft im LXC als root, jede Nacht gestartet vom systemd-Timer slipways-backup.timer (siehe install.sh):
 #   slipways-backup.sh            sichern und hochladen
 #   slipways-backup.sh local      nur lokal sichern (vor einem Update), nichts hochladen
 #
-# Jede Sicherung schreibt zwei Dateien: eine pro Wochentag (slipways-mon.dump, die letzten sieben Tage) und eine pro
-# Monat (slipways-2026-10.dump, der letzte Stand jedes Monats). In der Nextcloud wird nichts gelöscht.
+# Jede Sicherung schreibt zwei Dateien: eine pro Wochentag (slipways-mon.db, die letzten sieben Tage) und eine pro
+# Monat (slipways-2026-10.db, der letzte Stand jedes Monats). In der Nextcloud wird nichts gelöscht.
 # Zugangsdaten stehen in der .env im Repo-Root: NEXTCLOUD_WEBDAV_URL, NEXTCLOUD_USERNAME, NEXTCLOUD_APP_PASSWORD.
 set -euo pipefail
 
@@ -32,9 +32,15 @@ write_status() {
 }
 
 dump() {
-  # Custom-Format: komprimiert, mit pg_restore einzeln oder ganz zurückspielbar
-  (cd "$REPO" && docker compose exec -T db pg_dump -U slipways -d slipways --format=custom --no-owner) > "$1"
-  [[ -s "$1" ]] || { echo "pg_dump lieferte nichts" >&2; return 1; }
+  # Die Datenbank liegt im Volume der API; .backup kopiert sie konsistent, auch während die API schreibt
+  local volume db
+  volume="$(docker volume inspect --format '{{ .Mountpoint }}' slipways_api-data)" \
+    || { echo "Volume slipways_api-data fehlt" >&2; return 1; }
+  db="$volume/slipways.db"
+  [[ -f "$db" ]] || { echo "$db fehlt" >&2; return 1; }
+  rm -f "$1"
+  sqlite3 "$db" ".backup '$1'"
+  [[ -s "$1" ]] || { echo "Sicherung ist leer" >&2; return 1; }
 }
 
 # curl liest die Zugangsdaten aus einer Konfigurationsdatei auf stdin, damit sie nicht in der Prozessliste stehen
@@ -51,7 +57,7 @@ main() {
   chmod 700 "$LOCAL_DIR"
 
   if [[ "${1:-}" == local ]]; then
-    local file="$LOCAL_DIR/pre-update.dump"
+    local file="$LOCAL_DIR/pre-update.db"
     dump "$file.tmp" && mv "$file.tmp" "$file"
     log "Lokale Sicherung: $file ($(stat -c %s "$file") Bytes)"
     return 0
@@ -66,9 +72,9 @@ main() {
     return 0
   fi
 
-  local file="$LOCAL_DIR/latest.dump"
+  local file="$LOCAL_DIR/latest.db"
   if ! dump "$file.tmp"; then
-    write_status false "" "pg_dump fehlgeschlagen"
+    write_status false "" "Sicherung der Datenbank fehlgeschlagen"
     return 1
   fi
   mv "$file.tmp" "$file"
@@ -83,7 +89,7 @@ main() {
     *) write_status false "" "Sicherungsordner lässt sich nicht anlegen (HTTP $status)"; log "MKCOL: $status"; return 1 ;;
   esac
 
-  local names=("slipways-$(LC_ALL=C date +%a | tr '[:upper:]' '[:lower:]').dump" "slipways-$(date +%Y-%m).dump")
+  local names=("slipways-$(LC_ALL=C date +%a | tr '[:upper:]' '[:lower:]').db" "slipways-$(date +%Y-%m).db")
   local name
   for name in "${names[@]}"; do
     status="$(webdav --upload-file "$file" --header 'Content-Type: application/octet-stream' \

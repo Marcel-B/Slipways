@@ -78,7 +78,7 @@ UNIT
 install_units
 [[ "${1:-}" == --units-only ]] && exit 0
 
-command -v jq >/dev/null || { apt-get update -qq && apt-get install -y -qq jq >/dev/null; }
+command -v jq >/dev/null && command -v sqlite3 >/dev/null || { apt-get update -qq && apt-get install -y -qq jq sqlite3 >/dev/null; }
 mkdir -p /var/lib/slipways/backups
 chmod 700 /var/lib/slipways/backups
 

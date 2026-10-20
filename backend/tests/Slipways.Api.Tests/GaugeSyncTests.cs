@@ -47,7 +47,7 @@ public sealed class GaugeSyncTests : IAsyncLifetime
     {
         await _connection.OpenAsync();
         _db = new SlipwaysDbContext(new DbContextOptionsBuilder<SlipwaysDbContext>().UseSqlite(_connection).Options);
-        await _db.Database.EnsureCreatedAsync();
+        await _db.Database.MigrateAsync();
         await SeedData.SeedAsync(_db);
     }
 

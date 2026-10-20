@@ -33,6 +33,11 @@ export function Layout() {
       <main className="main">
         <Outlet />
       </main>
+      <footer className="footer muted">
+        Kartendaten ©{' '}
+        <a href="https://www.openstreetmap.org/copyright">OpenStreetMap-Mitwirkende</a> (ODbL) · Pegelstände{' '}
+        <a href="https://www.pegelonline.wsv.de/">PEGELONLINE</a> der WSV (DL-DE-&gt;Zero-2.0)
+      </footer>
     </>
   )
 }

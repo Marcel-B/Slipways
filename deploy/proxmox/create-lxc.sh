@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Legt auf einem Proxmox-Host einen Debian-LXC an und startet darin Slipways (API, PostgreSQL, Web) mit Docker,
+# Legt auf einem Proxmox-Host einen Debian-LXC an und startet darin Slipways (API mit SQLite, Web) mit Docker,
 # dazu Tailscale, die nächtliche Nextcloud-Sicherung und das Auto-Update vom Branch.
 #
 # Aufruf in der Proxmox-Shell (als root):
@@ -105,7 +105,6 @@ pct exec "$CTID" -- env \
     umask 077
     cat > /opt/slipways/.env <<ENV
 COMPOSE_FILE=compose.yaml:deploy/compose.lxc.yaml
-POSTGRES_PASSWORD=$(openssl rand -hex 24)
 SLIPWAYS_PORT=$PORT
 SLIPWAYS_API_PORT=5080
 NEXTCLOUD_WEBDAV_URL=$NEXTCLOUD_WEBDAV_URL

@@ -17,7 +17,9 @@ public static class DependencyInjection
         var connectionString = configuration.GetConnectionString("Slipways")
             ?? throw new InvalidOperationException("Connection string 'Slipways' is not configured.");
 
-        services.AddDbContext<SlipwaysDbContext>(options => options.UseNpgsql(connectionString));
+        services.AddDbContext<SlipwaysDbContext>(options => options
+            .UseSqlite(connectionString)
+            .AddInterceptors(new SqliteUnicodeInterceptor()));
 
         services.AddIdentityApiEndpoints<AppUser>(options =>
             {
@@ -39,16 +41,13 @@ public static class DependencyInjection
         return services;
     }
 
-    /// <summary>Applies pending migrations (or creates the schema for non-relational test setups) and seeds an empty database.</summary>
+    /// <summary>Applies pending migrations and seeds an empty database.</summary>
     public static async Task InitializeDatabaseAsync(this IServiceProvider services, CancellationToken cancellationToken = default)
     {
         await using var scope = services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<SlipwaysDbContext>();
 
-        if (db.Database.IsNpgsql())
-            await db.Database.MigrateAsync(cancellationToken);
-        else
-            await db.Database.EnsureCreatedAsync(cancellationToken);
+        await db.Database.MigrateAsync(cancellationToken);
 
         await SeedData.SeedAsync(db, cancellationToken);
     }

@@ -98,6 +98,13 @@ h1 {
   padding: 1rem;
 }
 
+.footer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+  font-size: 0.85rem;
+}
+
 .panel {
   padding: 1rem;
   background: var(--surface);

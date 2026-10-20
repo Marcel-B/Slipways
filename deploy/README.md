@@ -1,6 +1,6 @@
 # Betrieb auf Proxmox (LXC)
 
-`proxmox/create-lxc.sh` legt auf dem Proxmox-Host einen unprivilegierten Debian-Container an, installiert Docker und startet darin den ganzen Stack aus `compose.yaml` (API, PostgreSQL, Web). Dazu kommen Tailscale, eine nächtliche Sicherung in die Nextcloud und ein Auto-Update, das jeden neuen Stand auf `master` selbst einspielt.
+`proxmox/create-lxc.sh` legt auf dem Proxmox-Host einen unprivilegierten Debian-Container an, installiert Docker und startet darin den ganzen Stack aus `compose.yaml` (API mit SQLite, Web). Dazu kommen Tailscale, eine nächtliche Sicherung in die Nextcloud und ein Auto-Update, das jeden neuen Stand auf `master` selbst einspielt.
 
 ```bash
 # in der Proxmox-Shell als root
@@ -38,7 +38,7 @@ Alle über Umgebungsvariablen beim Aufruf:
 | `TS_AUTHKEY` | – | Auth-Key fürs Tailnet; ohne zeigt Tailscale einen Login-Link an |
 | `TS_SERVE` | `0` | `1`: zusätzlich `https://slipways.<tailnet>.ts.net` über `tailscale serve` (MagicDNS und HTTPS-Zertifikate im Tailnet an) |
 
-Im LXC liegt alles unter `/opt/slipways`. Die Einstellungen des Stacks stehen in `/opt/slipways/.env` (nur root lesbar), darunter ein beim Anlegen erzeugtes Datenbank-Passwort. `deploy/compose.lxc.yaml` ergänzt `compose.yaml` für den Betrieb: Production-Modus (ohne Scalar), PostgreSQL nicht von außen erreichbar, API nur lokal auf `127.0.0.1:5080`, Neustart nach einem Reboot.
+Im LXC liegt alles unter `/opt/slipways`. Die Einstellungen des Stacks stehen in `/opt/slipways/.env` (nur root lesbar). Die Datenbank ist die SQLite-Datei `slipways.db` im Docker-Volume `slipways_api-data`. `deploy/compose.lxc.yaml` ergänzt `compose.yaml` für den Betrieb: Production-Modus (ohne Scalar), API nur lokal auf `127.0.0.1:5080`, Neustart nach einem Reboot.
 
 ## Tailscale
 
@@ -53,7 +53,7 @@ Mehrmals aufrufen schadet nicht. Tailscale startet ohne `--accept-routes`, damit
 
 ## Auto-Update
 
-Der systemd-Timer `slipways-update.timer` startet alle 5 Minuten `lxc/slipways-update.sh`. Gibt es auf dem Branch neue Commits, holt das Skript sie, baut die Images neu (mit frischen Basis-Images), sichert die Datenbank lokal nach `/var/lib/slipways/backups/pre-update.dump` und startet den Stack neu. Die API spielt Migrationen beim Start selbst ein.
+Der systemd-Timer `slipways-update.timer` startet alle 5 Minuten `lxc/slipways-update.sh`. Gibt es auf dem Branch neue Commits, holt das Skript sie, baut die Images neu (mit frischen Basis-Images), sichert die Datenbank lokal nach `/var/lib/slipways/backups/pre-update.db` und startet den Stack neu. Die API spielt Migrationen beim Start selbst ein.
 
 - Lässt sich der neue Stand nicht bauen, läuft die bisherige Version weiter, der Checkout bleibt auf ihr, und der kaputte Commit wird nicht alle 5 Minuten neu versucht, sondern erst der nächste.
 - Antwortet das Backend nicht (z. B. nach einem abgebrochenen Update), zieht der nächste Lauf den Stack wieder hoch.
@@ -66,7 +66,7 @@ pct exec <CTID> -- /opt/slipways/deploy/lxc/slipways-update.sh --force  # sofort
 
 ## Nextcloud-Sicherung
 
-Nach dem Vorbild von fil-o-mat: jede Nacht um 3 Uhr ein Abzug der Datenbank (`pg_dump` im Custom-Format), per WebDAV in die Nextcloud. Jede Sicherung schreibt zwei Dateien: eine pro Wochentag (`slipways-mon.dump`, die letzten sieben Tage) und eine pro Monat (`slipways-2026-10.dump`, der letzte Stand jedes Monats). In der Nextcloud wird nichts gelöscht. Der Sicherungsordner wird angelegt, der darüber muss existieren.
+Nach dem Vorbild von fil-o-mat: jede Nacht um 3 Uhr eine Kopie der SQLite-Datenbank (`sqlite3 .backup`, konsistent auch während die API läuft), per WebDAV in die Nextcloud. Jede Sicherung schreibt zwei Dateien: eine pro Wochentag (`slipways-mon.db`, die letzten sieben Tage) und eine pro Monat (`slipways-2026-10.db`, der letzte Stand jedes Monats). In der Nextcloud wird nichts gelöscht. Der Sicherungsordner wird angelegt, der darüber muss existieren.
 
 Das Passwort ist ein App-Passwort (Nextcloud: Einstellungen → Sicherheit → Geräte & Sitzungen), das sich einzeln widerrufen lässt. Schlägt eine Sicherung fehl, versucht systemd es nach 30 Minuten noch einmal. Das Ergebnis steht in `/var/lib/slipways/backup.json`.
 
@@ -85,13 +85,15 @@ Von Hand sichern: `pct exec <CTID> -- systemctl start slipways-backup`, Log: `jo
 
 ### Zurückspielen
 
-Die Datei aus der Nextcloud in den LXC kopieren (z. B. nach `/root/slipways.dump`), dann:
+Die Datei aus der Nextcloud in den LXC kopieren (z. B. nach `/root/slipways.db`), dann:
 
 ```bash
 cd /opt/slipways
-docker compose stop api web
-docker compose exec -T db pg_restore -U slipways -d slipways --clean --if-exists --no-owner < /root/slipways.dump
-docker compose start api web
+docker compose stop api
+data="$(docker volume inspect --format '{{ .Mountpoint }}' slipways_api-data)"
+rm -f "$data"/slipways.db-*
+install -o 1654 -g 1654 -m 644 /root/slipways.db "$data/slipways.db"   # 1654 = Benutzer der API im Container
+docker compose start api
 ```
 
 Die Anmeldungen hängen an den Data-Protection-Schlüsseln im Volume `slipways_api-keys`; die sind nicht in der Sicherung, nach einem Umzug müssen sich Benutzer also neu anmelden.

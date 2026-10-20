@@ -31,6 +31,7 @@ public sealed class SlipwaysApiFactory : WebApplicationFactory<Program>, IAsyncL
     public async ValueTask InitializeAsync()
     {
         await _connection.OpenAsync();
+        SqliteUnicodeInterceptor.Register(_connection);
         await Services.InitializeDatabaseAsync();
     }
 

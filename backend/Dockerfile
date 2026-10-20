@@ -13,8 +13,8 @@ RUN dotnet publish src/Slipways.Api/Slipways.Api.csproj -c Release -o /app --no-
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 COPY --from=build /app .
-# Volume mount point for data protection keys, writable by the non-root app user.
-RUN mkdir /keys && chown $APP_UID /keys
+# Volume mount points for the SQLite database and data protection keys, writable by the non-root app user.
+RUN mkdir /data /keys && chown $APP_UID /data /keys
 USER $APP_UID
 EXPOSE 8080
 ENTRYPOINT ["dotnet", "Slipways.Api.dll"]
