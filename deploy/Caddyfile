@@ -1,0 +1,9 @@
+# Reverse Proxy vor der Web-App, eingebunden über deploy/compose.https.yaml
+{$SLIPWAYS_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy web:8080
+}
+
+www.{$SLIPWAYS_DOMAIN} {
+	redir https://{$SLIPWAYS_DOMAIN}{uri} permanent
+}

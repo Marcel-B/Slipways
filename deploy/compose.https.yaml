@@ -1,0 +1,30 @@
+# HTTPS mit eigener Domain über Caddy, ergänzt compose.yaml und deploy/compose.lxc.yaml.
+# Caddy holt die Zertifikate selbst bei Let's Encrypt und leitet HTTP auf HTTPS um. In der .env im Repo-Root:
+#   COMPOSE_FILE=compose.yaml:deploy/compose.lxc.yaml:deploy/compose.https.yaml
+#   SLIPWAYS_DOMAIN=slipways.de
+# Die Domain (und www.) muss per A/AAAA-Eintrag auf den Server zeigen, Ports 80 und 443 müssen offen sein.
+services:
+  web:
+    # Von außen geht es nur noch über Caddy
+    ports: !reset []
+
+  caddy:
+    image: caddy:2-alpine
+    environment:
+      SLIPWAYS_DOMAIN: ${SLIPWAYS_DOMAIN:?SLIPWAYS_DOMAIN fehlt in der .env}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - web
+    restart: unless-stopped
+
+volumes:
+  # Zertifikate und Schlüssel; ohne Volume holt Caddy bei jedem Neustart neue und läuft ins Rate-Limit
+  caddy-data:
+  caddy-config:
