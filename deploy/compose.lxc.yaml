@@ -1,0 +1,22 @@
+# Betrieb im Proxmox-LXC, ergänzt compose.yaml (eingebunden über COMPOSE_FILE in der .env im Repo-Root):
+#   COMPOSE_FILE=compose.yaml:deploy/compose.lxc.yaml
+# Werte stehen in der .env, die deploy/proxmox/create-lxc.sh anlegt.
+services:
+  db:
+    # Die Datenbank ist nur für die API da, nicht im Netz
+    ports: !reset []
+    restart: unless-stopped
+
+  api:
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${SLIPWAYS_ENVIRONMENT:-Production}
+      TZ: Europe/Berlin
+    # Nur lokal für Health-Check und Updater; von außen geht es über das Web unter /api
+    ports: !override
+      - "127.0.0.1:${SLIPWAYS_API_PORT:-5080}:8080"
+    restart: unless-stopped
+
+  web:
+    ports: !override
+      - "${SLIPWAYS_PORT:-8080}:8080"
+    restart: unless-stopped
