@@ -37,14 +37,14 @@ Einstellungen (Abschnitt `Pegelonline`, z. B. als Umgebungsvariable `Pegelonline
 
 Die Detailseite eines Gewässers hebt seinen Verlauf (Flüsse, Kanäle) bzw. seine Fläche (Seen) aus [OpenStreetMap](https://www.openstreetmap.org/) hervor. Die Übersicht zeichnet die Verläufe aller Gewässer, die die Suche findet, und hebt das angeklickte hervor; dafür liefert `/api/waters/shapes` sie gröber vereinfacht (etwa 500 m, zusammen rund 160 KB, mit gzip rund 55 KB). Welche OSM-Elemente zu einem Gewässer gehören, steht in [`waterShapes.json`](backend/src/Slipways.Infrastructure/Seed/waterShapes.json), zugeordnet über den Kurznamen, den auch PEGELONLINE verwendet. Eine leere Liste heißt: geprüft, es gibt keinen passenden Verlauf (Nord- und Ostsee, Grundwassermessstellen, Abschnitte, die OSM nicht kennt).
 
-Ein Hintergrund-Job in der API übernimmt die Zuordnung beim Start und holt die Formen bei [Nominatim](https://nominatim.org/), auf etwa 100 m vereinfacht (zusammen rund 0,6 MB). Danach prüft er einmal am Tag, ob eine Form älter als 30 Tage ist. Clients fragen Nominatim nie selbst ab, sondern lesen `/api/waters/{id}`.
+Ein Hintergrund-Job in der API übernimmt die Zuordnung beim Start und holt die Formen bei [Nominatim](https://nominatim.org/), auf etwa 100 m vereinfacht (zusammen rund 0,6 MB). Danach prüft er stündlich, ob ein Gewässer noch keine Form hat (etwa weil PEGELONLINE es gerade erst angelegt hat) oder seine Form älter als 30 Tage ist; nur dann fragt er Nominatim. Clients fragen Nominatim nie selbst ab, sondern lesen `/api/waters/{id}`.
 
 Einstellungen (Abschnitt `Nominatim`):
 
 | Schlüssel | Standard | Bedeutung |
 | --- | --- | --- |
 | `Enabled` | `true` | Job ein/aus |
-| `Interval` | `1.00:00:00` | Abstand der Prüfungen |
+| `Interval` | `01:00:00` | Abstand der Prüfungen |
 | `RefreshAfter` | `30.00:00:00` | Alter, ab dem eine Form neu geholt wird |
 | `RequestSpacing` | `00:00:01` | Pause zwischen Anfragen (Nutzungsbedingungen von Nominatim) |
 | `BaseUrl` | `https://nominatim.openstreetmap.org/` | Nominatim-Server |

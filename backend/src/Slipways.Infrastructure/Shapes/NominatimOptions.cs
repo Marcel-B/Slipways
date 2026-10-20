@@ -12,8 +12,11 @@ public sealed class NominatimOptions
     /// <summary>Nominatim's usage policy allows one request per second.</summary>
     public TimeSpan RequestSpacing { get; set; } = TimeSpan.FromSeconds(1);
 
-    /// <summary>How often to look for shapes that are missing or due for a refresh.</summary>
-    public TimeSpan Interval { get; set; } = TimeSpan.FromDays(1);
+    /// <summary>
+    /// How often to look for shapes that are missing or due for a refresh. Cheap when nothing is due, and hourly
+    /// picks up waters soon after the gauge sync adds them, e.g. on the first start.
+    /// </summary>
+    public TimeSpan Interval { get; set; } = TimeSpan.FromHours(1);
 
     /// <summary>Shapes change rarely; refreshing them now and then picks up corrections in OpenStreetMap.</summary>
     public TimeSpan RefreshAfter { get; set; } = TimeSpan.FromDays(30);
