@@ -26,6 +26,8 @@ Die Apps sind eigene Werke im Sinne der ODbL (§ 4.3), der Hinweis im Seitenfuß
 
 Neue Ansichten mit OSM-Daten brauchen den Hinweis ebenfalls.
 
+Die Info-Seite nennt außerdem die Lizenz des Codes (PolyForm Strict 1.0.0, siehe `LICENSE` und README „Lizenz“) mit Kontaktadresse für Anfragen.
+
 ## Werkzeuge auf dem Mac
 
 - Xcode 27 ist installiert, aber `xcode-select` zeigt auf die Command Line Tools. Für `xcodebuild` braucht es `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer` oder `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer` pro Aufruf.

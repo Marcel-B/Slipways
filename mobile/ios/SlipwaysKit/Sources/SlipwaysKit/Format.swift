@@ -83,6 +83,8 @@ public enum Links {
     public static let osmCopyright = URL(string: "https://www.openstreetmap.org/copyright")!
     public static let pegelonline = URL(string: "https://www.pegelonline.wsv.de/")!
     public static let pegelonlineLicence = URL(string: "https://www.govdata.de/dl-de/zero-2-0")!
+    public static let licence = URL(string: "https://polyformproject.org/licenses/strict/1.0.0")!
+    public static let licenceContact = URL(string: "mailto:slipways@marcelbenders.com")!
 
     /// "Daten © OpenStreetMap-Mitwirkende (ODbL)", required next to every map and list with imported entries.
     public static let osmAttribution = "Daten © OpenStreetMap-Mitwirkende (ODbL)"
