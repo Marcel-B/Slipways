@@ -80,7 +80,17 @@ tailscale serve status
 
 Das braucht HTTPS-Zertifikate im Tailnet (Admin-Konsole → DNS → HTTPS Certificates). Der Metrik-Port der API beantwortet nichts außer `/metrics`. Für einen LXC erledigt das `add-tailscale.sh` mit `TS_METRICS=1`.
 
-Danach im Monitoring-LXC das Ziel anlegen. Prometheus liest die Datei binnen einer Minute:
+Danach im Monitoring-LXC das Ziel anlegen. Das erledigt ein Skript: Es prüft, ob `/metrics` über Tailscale erreichbar ist, schreibt die Datei und wartet, bis Prometheus das Ziel als `up` führt.
+
+```bash
+# im Monitoring-LXC als root
+curl -fsSLO https://raw.githubusercontent.com/Marcel-B/Slipways/master/deploy/monitoring/add-prometheus-target.sh
+bash add-prometheus-target.sh
+# oder aus der Proxmox-Shell:
+curl -fsSL https://raw.githubusercontent.com/Marcel-B/Slipways/master/deploy/monitoring/add-prometheus-target.sh | pct exec <CTID> -- bash -s
+```
+
+Die Datei, die es anlegt (Prometheus liest sie binnen einer Minute):
 
 ```yaml
 # /opt/monitoring/prometheus/targets/slipways.yml
@@ -93,14 +103,21 @@ Danach im Monitoring-LXC das Ziel anlegen. Prometheus liest die Datei binnen ein
 
 Prüfen unter `http://monitoring:9090/targets`: Dort muss `slipways` als `up` stehen.
 
-**Logs.** Auf slipways-1 in `/opt/slipways/.env` eintragen und den Stack neu starten (`cd /opt/slipways && docker compose up -d`):
+**Logs.** Auf slipways-1 trägt ein Skript die Werte in `/opt/slipways/.env` ein und startet die API neu (einige Sekunden nicht erreichbar):
+
+```bash
+# auf slipways-1 als root
+bash /opt/slipways/deploy/lxc/setup-loki.sh
+```
+
+Das Skript prüft zuerst vom Server und dann aus dem API-Container heraus, ob Loki antwortet (`/ready`). Ob der Container den Tailscale-Namen `monitoring` auflösen kann, hängt davon ab, welchen DNS-Server Docker vom Server übernimmt. Mit systemd-resolved (`127.0.0.53`) nimmt Docker einen öffentlichen DNS-Server, und MagicDNS-Namen gehen nicht. Dann trägt das Skript die 100.x-Adresse von `monitoring` ein. Als `host`-Label nimmt es den Namen im Tailnet (`slipways-1`). Am Ende wartet es, bis `slipways_loki_lines_pushed_total` steigt. Von Hand wären es diese Einträge, danach `docker compose up -d`:
 
 ```
 SLIPWAYS_LOKI_URL=http://monitoring:3100
 SLIPWAYS_MONITORING_HOST=slipways-1
 ```
 
-Ohne `SLIPWAYS_MONITORING_HOST` steht in Loki `host="unknown"`. Die API läuft im Docker-Container. Ob sie den Tailscale-Namen `monitoring` auflösen kann, hängt davon ab, welchen DNS-Server Docker vom Server übernimmt. Mit systemd-resolved (`127.0.0.53`) nimmt Docker einen öffentlichen DNS-Server, und MagicDNS-Namen gehen nicht. Kommen keine Zeilen an (`slipways_loki_lines_dropped_total{reason="push_failed"}` steigt, im Log steht „Loki is unreachable“), statt des Namens die 100.x-Adresse von `monitoring` eintragen (`tailscale ip -4` im Monitoring-LXC).
+Ohne `SLIPWAYS_MONITORING_HOST` steht in Loki `host="unknown"`. Kommen später keine Zeilen mehr an, steigt `slipways_loki_lines_dropped_total{reason="push_failed"}`, und im Log steht „Loki is unreachable“.
 
 **Absichern.** slipways.de ist öffentlich erreichbar und zugleich im Tailnet. Damit ein übernommener Server nicht das ganze Tailnet erreicht, sollte slipways-1 in der Tailscale-Policy einen Tag bekommen und nur zu Loki dürfen. Eigene Geräte, auch `monitoring`, dürfen weiter zu slipways-1:
 
