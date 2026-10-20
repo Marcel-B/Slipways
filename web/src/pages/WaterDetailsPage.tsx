@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router'
 import { api, ApiError } from '../api/client'
 import type { WaterDetails } from '../api/types'
 import { LazyMarkerMap } from '../components/LazyMarkerMap'
-import { markerColors, slipwayMarker, type MapMarker, type MarkerKind } from '../components/mapMarkers'
+import { markerColors, shapeStyle, slipwayMarker, type MapMarker, type MarkerKind } from '../components/mapMarkers'
 import { formatMeasuredAt, formatWaterLevel } from '../components/waterLevel'
 import { WaterLevelText } from '../components/WaterLevelText'
 import { count } from './count'
@@ -82,8 +82,21 @@ export function WaterDetailsPage() {
 
       {water.bounds ? (
         <>
-          <LazyMarkerMap markers={mapMarkers} bounds={water.bounds} />
+          <LazyMarkerMap
+            markers={mapMarkers}
+            bounds={water.bounds}
+            shape={water.shape ? { id: water.id, geometry: water.shape } : undefined}
+          />
           <ul className="legend muted">
+            {water.shape && (
+              <li>
+                <span className="legend-line" style={{ background: shapeStyle.color }} />
+                Verlauf aus{' '}
+                <a href={`https://www.openstreetmap.org/${water.osmElements[0]}`} target="_blank" rel="noreferrer">
+                  OpenStreetMap
+                </a>
+              </li>
+            )}
             {legend
               .filter(([kind]) => mapMarkers.some((m) => m.kind === kind))
               .map(([kind, label]) => (

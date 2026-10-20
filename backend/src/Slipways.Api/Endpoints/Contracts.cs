@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace Slipways.Api.Endpoints;
 
 public record WaterDto(Guid Id, string Name);
@@ -23,11 +25,18 @@ public record WaterSummaryDto(
 
 public record GaugeReadingDto(Guid StationId, string StationName, WaterLevelDto WaterLevel);
 
+/// <summary>
+/// <paramref name="Shape"/> is a simplified GeoJSON geometry of the water from OpenStreetMap (ODbL), made of
+/// <paramref name="OsmElements"/> such as "relation/123924"; null when the water has none.
+/// <paramref name="Bounds"/> covers the shape and everything on the water.
+/// </summary>
 public record WaterDetailsDto(
     Guid Id,
     string Name,
     string? Shortname,
     BoundsDto? Bounds,
+    JsonElement? Shape,
+    IReadOnlyList<string> OsmElements,
     IReadOnlyList<SlipwaySummaryDto> Slipways,
     IReadOnlyList<StationDto> Stations,
     IReadOnlyList<MarinaDto> Marinas);

@@ -1,11 +1,18 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { WaterSummary } from '../api/types'
+import type { WaterDetails, WaterSummary } from '../api/types'
+import type { MarkerMap } from '../components/MarkerMap'
 import { WatersPage } from './WatersPage'
 
-vi.mock('../components/LazyMarkerMap', () => ({ LazyMarkerMap: () => null }))
+const mapProps = vi.hoisted(() => [] as Parameters<typeof MarkerMap>[0][])
+vi.mock('../components/LazyMarkerMap', () => ({
+  LazyMarkerMap: (props: Parameters<typeof MarkerMap>[0]) => {
+    mapProps.push(props)
+    return null
+  },
+}))
 
 const waters: WaterSummary[] = [
   {
@@ -52,7 +59,10 @@ function renderAt(url: string) {
 }
 
 describe('WatersPage', () => {
-  afterEach(() => vi.unstubAllGlobals())
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    mapProps.length = 0
+  })
 
   it('lists waters with what lies on them', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(waters), { status: 200 }))
@@ -76,6 +86,47 @@ describe('WatersPage', () => {
 
     expect(await screen.findByText('412 cm · hoch')).toHaveClass('level-high')
     expect(screen.getByText(/Pegel STADE/)).toBeInTheDocument()
+  })
+
+  it('puts waters with a position on the map', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(waters), { status: 200 })))
+
+    renderAt('/waters')
+
+    await screen.findByText('Donau')
+    expect(mapProps.at(-1)?.markers.map((m) => m.title)).toEqual(['Donau', 'Schwinge'])
+    expect(mapProps.at(-1)?.markers[0].to).toBe(`/waters/${waters[0].id}`)
+  })
+
+  it('highlights the shape of the water whose marker is selected', async () => {
+    const donau: WaterDetails = {
+      id: waters[0].id,
+      name: 'Donau',
+      shortname: 'DONAU',
+      bounds: null,
+      shape: { type: 'LineString', coordinates: [[11.9, 48.9], [13.5, 48.6]] },
+      osmElements: ['relation/89652'],
+      slipways: [],
+      stations: [],
+      marinas: [],
+    }
+    const fetchMock = vi.fn((url: string) =>
+      Promise.resolve(new Response(JSON.stringify(url.endsWith(donau.id) ? donau : waters), { status: 200 })),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    renderAt('/waters')
+    await screen.findByText('Donau')
+    expect(mapProps.at(-1)?.shape).toBeUndefined()
+
+    const map = mapProps.at(-1)!
+    act(() => map.onSelect?.(map.markers[0]))
+
+    await waitFor(() => expect(mapProps.at(-1)?.shape).toEqual({ id: donau.id, geometry: donau.shape }))
+    expect(fetchMock).toHaveBeenCalledWith(`/api/waters/${donau.id}`, expect.anything())
+
+    act(() => mapProps.at(-1)!.onSelect?.(null))
+    expect(mapProps.at(-1)?.shape).toBeUndefined()
   })
 
   it('passes the search term from the URL to the API', async () => {

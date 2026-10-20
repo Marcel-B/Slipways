@@ -100,7 +100,8 @@ public static class SeedData
             Manufacturers = manufacturersByService[s.Id].Distinct().Select(id => manufacturers[id]).ToList(),
         }));
 
-        db.Stations.AddRange(Load<StationSeed>("stations").Select(s => new Station
+        // A few stations have no coordinates (0/0) in the original data, and PEGELONLINE has none for them either.
+        db.Stations.AddRange(Load<StationSeed>("stations").Where(s => s.Latitude != 0 || s.Longitude != 0).Select(s => new Station
         {
             Id = s.Id,
             Created = s.Created,
@@ -135,6 +136,11 @@ public static class SeedData
 
     private static Manufacturer Manufacturer(string id, string name) =>
         new() { Id = Guid.Parse(id), Created = ManufacturersCreated, Name = name };
+
+    /// <summary>OpenStreetMap elements of waters by short name; an empty list marks a water that has no shape.</summary>
+    internal static IReadOnlyDictionary<string, IReadOnlyList<string>> WaterShapes() =>
+        Load<WaterShapeSeed>("waterShapes")
+            .ToDictionary(w => w.Shortname, w => (IReadOnlyList<string>)w.Osm, StringComparer.OrdinalIgnoreCase);
 
     internal static string ToTitleCase(string value) =>
         CultureInfo.GetCultureInfo("de-DE").TextInfo.ToTitleCase(value.Trim().ToLowerInvariant());
@@ -174,6 +180,8 @@ public static class SeedData
         : SeedBase(Id, Created, Updated);
 
     private sealed record ManufacturerServiceSeed(Guid ServiceFk, Guid ManufacturerFk);
+
+    private sealed record WaterShapeSeed(string Shortname, List<string> Osm);
 
     private sealed record StationSeed(
         Guid Id, DateTime Created, DateTime? Updated, string? Longname, string? Shortname, string? Number,

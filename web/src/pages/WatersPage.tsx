@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { useDeferredValue } from 'react'
+import { useDeferredValue, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { api } from '../api/client'
 import type { WaterSummary } from '../api/types'
@@ -37,6 +37,14 @@ export function WatersPage() {
     queryFn: ({ signal }) => api.waters(deferredSearch, signal),
     placeholderData: keepPreviousData,
   })
+  // The shape comes with the details, which the details page then finds in the cache.
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const { data: selected } = useQuery({
+    queryKey: ['water', selectedId],
+    queryFn: ({ signal }) => api.water(selectedId!, signal),
+    enabled: selectedId !== null,
+  })
+  const shape = selected?.id === selectedId && selected?.shape ? { id: selected.id, geometry: selected.shape } : undefined
 
   return (
     <div className="overview">
@@ -74,7 +82,11 @@ export function WatersPage() {
         )}
       </section>
       <section className="map-panel">
-        <LazyMarkerMap markers={waterMarkers(waters ?? [])} />
+        <LazyMarkerMap
+          markers={waterMarkers(waters ?? [])}
+          shape={shape}
+          onSelect={(marker) => setSelectedId(marker?.id ?? null)}
+        />
       </section>
     </div>
   )

@@ -1,3 +1,5 @@
+import type { Geometry } from 'geojson'
+
 export interface Water {
   id: string
   name: string
@@ -84,7 +86,12 @@ export interface Marina {
 
 export interface WaterDetails extends Water {
   shortname: string | null
+  /** Covers the shape and everything on the water. */
   bounds: Bounds | null
+  /** Simplified course or area from OpenStreetMap; null when the water has none. */
+  shape: Geometry | null
+  /** OpenStreetMap elements of the shape, such as "relation/123924". */
+  osmElements: string[]
   slipways: SlipwaySummary[]
   stations: Station[]
   marinas: Marina[]
