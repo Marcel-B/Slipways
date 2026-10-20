@@ -6,6 +6,8 @@ Slipways sammelt Slipanlagen (Bootsrampen) an deutschen und niederländischen Ge
 | --- | --- | --- |
 | Backend | [`backend/`](backend) | .NET 10, ASP.NET Core Minimal APIs, EF Core mit PostgreSQL, ASP.NET Identity |
 | Web | [`web/`](web) | React 19, Vite, TypeScript, TanStack Query, React Router, Leaflet |
+| Android | [`mobile/android/`](mobile/android) | Kotlin, Jetpack Compose, Material 3, Ktor |
+| iOS | [`mobile/ios/`](mobile/ios) | SwiftUI, MapKit, Swift Package `SlipwaysKit` |
 
 ## Lokal starten
 
@@ -48,6 +50,30 @@ cd backend
 dotnet tool restore
 dotnet ef migrations add <Name> --project src/Slipways.Infrastructure --startup-project src/Slipways.Api --output-dir Persistence/Migrations
 ```
+
+## Mobile-Apps
+
+Beide Apps sprechen mit der lokalen API aus `docker compose up` (Port 5080).
+
+Android (Android Studio oder JDK 17+ mit Android SDK):
+
+```sh
+cd mobile/android
+./gradlew :shared:test :app:assembleDebug
+```
+
+Im Emulator erreicht die Debug-Version die API unter `http://10.0.2.2:5080`. API-Client und Login-Logik liegen im reinen Kotlin-Modul `shared`, die Oberfläche in `app`.
+
+iOS (Xcode 26 und [XcodeGen](https://github.com/yonaskolb/XcodeGen), `brew install xcodegen`):
+
+```sh
+cd mobile/ios
+xcodegen generate      # erzeugt Slipways.xcodeproj aus project.yml
+open Slipways.xcodeproj
+swift test --package-path SlipwaysKit
+```
+
+Im Simulator nutzt die Debug-Version `http://localhost:5080`. API-Client und Login-Logik liegen im Swift-Package `SlipwaysKit`, das Token im Schlüsselbund.
 
 ## API-Überblick
 
