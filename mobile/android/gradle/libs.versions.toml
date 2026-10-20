@@ -1,5 +1,5 @@
 [versions]
-agp = "9.4.1"
+agp = "9.3.1"
 kotlin = "2.4.21"
 compileSdk = "37"
 minSdk = "26"
@@ -10,6 +10,7 @@ coreKtx = "1.19.1"
 coroutines = "1.11.0"
 ktor = "3.6.0"
 lifecycle = "2.11.0"
+maplibre = "13.7.1"
 navigation = "2.10.2"
 serialization = "1.11.0"
 
@@ -28,6 +29,7 @@ androidx-navigation-compose = { module = "androidx.navigation:navigation-compose
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
+maplibre-android = { module = "org.maplibre.gl:android-sdk", version.ref = "maplibre" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }

@@ -30,4 +30,5 @@ Beide Apps laden wieder, haben Gewässer, Pegel, OSM-Hinweis und Info-Seite. Auf
 
 1. **App Store.** Es fehlen App-Icon (`Assets.xcassets`), Signing-Team (`DEVELOPMENT_TEAM`) und Screenshots. `ITSAppUsesNonExemptEncryption = NO` ist eingetragen. Ein Privacy-Manifest braucht die App erst, wenn sie z. B. `UserDefaults` nutzt.
 2. **Google Play.** Es fehlen ein Release-Signing, ein adaptives Icon (bisher nur ein Vektor-Platzhalter) und Screenshots.
-3. **Übersichtskarte (optional).** Eine Karte aller Slipanlagen bräuchte Clustering. `/api/slipways` liefert alles ohne Seitenaufteilung, rund 1 MB. Unter Android gäbe es dafür nur eine Kartenbibliothek mit eigenem Kachel-Server (Datenschutzseite anpassen) oder Google Maps mit API-Schlüssel.
+3. **AGP von Hand anheben.** Dependabot hebt das Android Gradle Plugin nur noch um Patch-Versionen an, weil eine neue Minor-Version (z. B. 9.4) erst mit einer passenden stabilen Android-Studio-Version öffnet. Stand: AGP 9.3.1. Sobald Android Studio die nächste Minor-Version unterstützt, in `mobile/android/gradle/libs.versions.toml` anheben.
+4. **Clustering (optional).** Die Übersicht in den Apps zeigt Pins und Liste erst, wenn höchstens 250 Einträge im Ausschnitt liegen (`Overview.limit`). Mit Clustering (MapKit bzw. `GeoJsonSource` mit `cluster`) ließen sich auch weiter herausgezoomt alle zeigen.

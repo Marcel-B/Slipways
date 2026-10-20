@@ -20,6 +20,12 @@ updates:
     directory: /mobile/android
     schedule:
       interval: weekly
+    # A new AGP minor needs a matching stable Android Studio; raise it by hand (docs/offene-punkte.md).
+    ignore:
+      - dependency-name: "com.android.application"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "com.android.tools.build:gradle"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
     groups:
       android:
         patterns: ["*"]
