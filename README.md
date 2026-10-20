@@ -85,7 +85,9 @@ Einstellungen (Abschnitt `Osm`):
 | `BusyBackoff`, `MaxAttempts` | `00:00:30`, `4` | Erste Wartezeit (verdoppelt sich) und Versuche, wenn Overpass ausgelastet ist |
 | `BaseUrl` | `https://overpass-api.de/api/` | Overpass-Server; für viel Last besser eine eigene Instanz |
 
-overpass-api.de spricht nur noch TLS 1.3. .NET auf macOS kann das nur über das Network-Framework; lokal auf dem Mac deshalb mit `DOTNET_SYSTEM_NET_SECURITY_USENETWORKFRAMEWORK=1` starten oder `Osm__Enabled=false` setzen. Im Linux-Container ist nichts zu tun.
+overpass-api.de spricht nur noch TLS 1.3. .NET auf macOS kann das nur über das Network-Framework; lokal auf dem Mac deshalb mit `DOTNET_SYSTEM_NET_SECURITY_USENETWORKFRAMEWORK=1` starten oder `Osm__Enabled=false` setzen. Im Linux-Container sollte es ohne Zutun gehen (OpenSSL), getestet ist das noch nicht.
+
+Was beim Import noch offen ist, steht in [`docs/offene-punkte.md`](docs/offene-punkte.md).
 
 ## Entwickeln ohne Docker
 
