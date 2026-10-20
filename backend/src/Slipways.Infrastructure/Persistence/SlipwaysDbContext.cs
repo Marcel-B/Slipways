@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Slipways.Domain;
 using Slipways.Infrastructure.Identity;
 
@@ -15,6 +16,12 @@ public class SlipwaysDbContext(DbContextOptions<SlipwaysDbContext> options)
     public DbSet<Manufacturer> Manufacturers => Set<Manufacturer>();
     public DbSet<Service> Services => Set<Service>();
     public DbSet<Station> Stations => Set<Station>();
+
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        // SQLite stores DateTime as text without a kind; every timestamp in this database is UTC.
+        configurationBuilder.Properties<DateTime>().HaveConversion<UtcDateTimeConverter>();
+    }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -54,7 +61,13 @@ public class SlipwaysDbContext(DbContextOptions<SlipwaysDbContext> options)
         builder.Entity<Station>(e =>
         {
             e.Property(x => x.Name).HasMaxLength(200);
+            e.Property(x => x.WaterLevelState).HasMaxLength(20);
+            e.HasIndex(x => x.ExternalId).IsUnique();
             e.HasOne(x => x.Water).WithMany().HasForeignKey(x => x.WaterId).OnDelete(DeleteBehavior.Restrict);
         });
     }
+
+    private sealed class UtcDateTimeConverter() : ValueConverter<DateTime, DateTime>(
+        value => value.Kind == DateTimeKind.Local ? value.ToUniversalTime() : value,
+        value => DateTime.SpecifyKind(value, DateTimeKind.Utc));
 }
