@@ -69,8 +69,8 @@ dotnet ef migrations add <Name> --project src/Slipways.Infrastructure --startup-
 | GET | `/api/slipways/{id}` | Details einer Slipanlage |
 | GET | `/api/waters`, `/api/marinas`, `/api/extras`, `/api/services` | Stammdaten |
 | GET | `/api/stations?waterId=` | Pegelstationen mit aktuellem Wasserstand (`waterLevel`, in cm) |
-| POST | `/api/account/register`, `/api/account/login`, `/api/account/refresh` | Konto und Bearer-Token (ASP.NET Identity) |
-| GET | `/api/account/me` | Angemeldeter Benutzer |
+| POST | `/api/account/register`, `/api/account/login`, `/api/account/refresh` | Konto und Bearer-Token (ASP.NET Identity), nur mit `Accounts__Enabled=true` |
+| GET | `/api/account/me` | Angemeldeter Benutzer, nur mit `Accounts__Enabled=true` |
 | GET | `/health` | Health-Check |
 
 ## Datenquellen und Lizenzen

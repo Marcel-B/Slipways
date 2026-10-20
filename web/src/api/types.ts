@@ -26,16 +26,3 @@ export interface SlipwayDetails extends SlipwaySummary {
   created: string
   updated: string | null
 }
-
-export interface User {
-  id: string
-  email: string
-  displayName: string | null
-}
-
-export interface AccessToken {
-  tokenType: string
-  accessToken: string
-  expiresIn: number
-  refreshToken: string
-}

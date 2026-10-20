@@ -2,13 +2,27 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Authentication.BearerToken;
+using Microsoft.AspNetCore.Hosting;
 using Slipways.Api.Endpoints;
 
 namespace Slipways.Api.Tests;
 
 public class AccountEndpointsTests(SlipwaysApiFactory factory) : IClassFixture<SlipwaysApiFactory>
 {
-    private readonly HttpClient _client = factory.CreateClient();
+    private readonly HttpClient _client = factory
+        .WithWebHostBuilder(builder => builder.UseSetting("Accounts:Enabled", "true"))
+        .CreateClient();
+
+    [Fact]
+    public async Task Accounts_are_disabled_by_default()
+    {
+        var response = await factory.CreateClient().PostAsJsonAsync(
+            "/api/account/register",
+            new { email = "skipper@example.com", password = "Slipway-2026!" },
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
 
     [Fact]
     public async Task Me_requires_authentication()
