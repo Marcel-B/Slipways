@@ -17,6 +17,24 @@ describe('legal pages', () => {
     expect(await screen.findByRole('heading', { level: 1, name: heading })).toBeInTheDocument()
   })
 
+  it('names the operator without placeholders', async () => {
+    renderAt('/impressum')
+    const address = (await screen.findByText(/Scheiblerstraße 111/)).closest('address')
+    expect(address).toHaveTextContent('Marcel BendersScheiblerstraße 11147800 KrefeldDeutschland')
+    expect(screen.getByRole('link', { name: 'slipways@marcelbenders.com' })).toHaveAttribute(
+      'href',
+      'mailto:slipways@marcelbenders.com',
+    )
+    expect(screen.queryByText(/Telefon/)).not.toBeInTheDocument()
+    expect(document.querySelector('mark.placeholder')).toBeNull()
+  })
+
+  it.each(['/datenschutz', '/support'])('%s has no placeholders left', async (url) => {
+    renderAt(url)
+    await screen.findByRole('heading', { level: 1 })
+    expect(document.querySelector('mark.placeholder')).toBeNull()
+  })
+
   it('links the legal pages in the footer', async () => {
     renderAt('/impressum')
     const footer = (await screen.findByRole('contentinfo')) as HTMLElement
