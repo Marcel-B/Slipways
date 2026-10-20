@@ -1,6 +1,7 @@
-# Betrieb im Proxmox-LXC, ergänzt compose.yaml (eingebunden über COMPOSE_FILE in der .env im Repo-Root):
+# Betrieb auf einem Server (Produktion slipways.de, Test-Stage im Proxmox-LXC), ergänzt compose.yaml
+# (eingebunden über COMPOSE_FILE in der .env im Repo-Root):
 #   COMPOSE_FILE=compose.yaml:deploy/compose.lxc.yaml
-# Werte stehen in der .env, die deploy/proxmox/create-lxc.sh anlegt.
+# Werte stehen in der .env (im LXC legt sie deploy/proxmox/create-lxc.sh an).
 
 # Container-Logs rotieren, damit Fehlermeldungen mit IP-Adressen nicht unbegrenzt liegen bleiben (siehe /datenschutz)
 x-logging: &logging
@@ -14,9 +15,14 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: ${SLIPWAYS_ENVIRONMENT:-Production}
       TZ: Europe/Berlin
-    # Nur lokal für Health-Check und Updater; von außen geht es über das Web unter /api
+      # Logs an Loki, z. B. SLIPWAYS_LOKI_URL=http://monitoring:3100 und SLIPWAYS_MONITORING_HOST=slipways-1; leer: aus
+      Monitoring__Loki__Url: ${SLIPWAYS_LOKI_URL:-}
+      Monitoring__Loki__Host: ${SLIPWAYS_MONITORING_HOST:-unknown}
+    # Nur lokal für Health-Check und Updater; von außen geht es über das Web unter /api.
+    # /metrics nur lokal; ins Tailnet bringt es "tailscale serve" (siehe deploy/README.md, „Überwachung“).
     ports: !override
       - "127.0.0.1:${SLIPWAYS_API_PORT:-5080}:8080"
+      - "127.0.0.1:${SLIPWAYS_METRICS_PORT:-9464}:9464"
     restart: unless-stopped
     logging: *logging
 

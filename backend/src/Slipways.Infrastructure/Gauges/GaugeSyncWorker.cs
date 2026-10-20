@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Slipways.Infrastructure.Monitoring;
 
 namespace Slipways.Infrastructure.Gauges;
 
@@ -23,7 +24,9 @@ public sealed class GaugeSyncWorker(
             try
             {
                 await using var scope = scopes.CreateAsyncScope();
-                var result = await scope.ServiceProvider.GetRequiredService<GaugeSync>().RunAsync(stoppingToken);
+                var result = await SlipwaysMetrics.MeasureJobAsync("gauges", time,
+                    () => scope.ServiceProvider.GetRequiredService<GaugeSync>().RunAsync(stoppingToken), stoppingToken);
+                SlipwaysMetrics.WaterLevelsUpdated.Inc(result.WaterLevelsUpdated);
                 logger.LogInformation(
                     "Gauge sync finished: {WaterLevels} water levels updated, {Stations} stations and {Waters} waters added",
                     result.WaterLevelsUpdated, result.StationsAdded, result.WatersAdded);

@@ -66,6 +66,55 @@ CTID=<CTID> TS_AUTHKEY=tskey-auth-… bash add-tailscale.sh
 
 Mehrmals aufrufen schadet nicht. Tailscale startet ohne `--accept-routes`, damit ein Subnet-Router im Tailnet das LAN nicht umleitet.
 
+## Überwachung
+
+Prometheus und Loki laufen im gemeinsamen Monitoring-LXC `monitoring` (Steckbrief und Quelle: [`Marcel-B/YuE-UI` → `deploy/monitoring/`](https://github.com/Marcel-B/YuE-UI/tree/main/deploy/monitoring)). Angebunden ist nur die Produktion slipways.de (im Tailnet `slipways-1`), nicht die Test-Stage im Proxmox-LXC, damit sich die Daten nicht mischen. Was die API misst, steht im [README](../README.md#überwachung).
+
+**Messwerte.** Mit `deploy/compose.lxc.yaml` gibt die API `/metrics` nur auf `127.0.0.1:9464` frei (`SLIPWAYS_METRICS_PORT`). Ins Tailnet bringt es `tailscale serve`, mit HTTPS und nur für Geräte im Tailnet. Auf slipways-1 läuft Tailscale direkt auf dem Server:
+
+```bash
+# auf slipways-1 als root; die Einstellung überlebt Neustarts
+tailscale serve --bg --https=9464 http://127.0.0.1:9464
+tailscale serve status
+```
+
+Das braucht HTTPS-Zertifikate im Tailnet (Admin-Konsole → DNS → HTTPS Certificates). Der Metrik-Port der API beantwortet nichts außer `/metrics`. Für einen LXC erledigt das `add-tailscale.sh` mit `TS_METRICS=1`.
+
+Danach im Monitoring-LXC das Ziel anlegen. Prometheus liest die Datei binnen einer Minute:
+
+```yaml
+# /opt/monitoring/prometheus/targets/slipways.yml
+- targets: [slipways-1.<tailnet>.ts.net:9464]
+  labels:
+    app: slipways
+    __scheme__: https
+    __metrics_path__: /metrics
+```
+
+Prüfen unter `http://monitoring:9090/targets`: Dort muss `slipways` als `up` stehen.
+
+**Logs.** Auf slipways-1 in `/opt/slipways/.env` eintragen und den Stack neu starten (`cd /opt/slipways && docker compose up -d`):
+
+```
+SLIPWAYS_LOKI_URL=http://monitoring:3100
+SLIPWAYS_MONITORING_HOST=slipways-1
+```
+
+Ohne `SLIPWAYS_MONITORING_HOST` steht in Loki `host="unknown"`. Die API läuft im Docker-Container. Ob sie den Tailscale-Namen `monitoring` auflösen kann, hängt davon ab, welchen DNS-Server Docker vom Server übernimmt. Mit systemd-resolved (`127.0.0.53`) nimmt Docker einen öffentlichen DNS-Server, und MagicDNS-Namen gehen nicht. Kommen keine Zeilen an (`slipways_loki_lines_dropped_total{reason="push_failed"}` steigt, im Log steht „Loki is unreachable“), statt des Namens die 100.x-Adresse von `monitoring` eintragen (`tailscale ip -4` im Monitoring-LXC).
+
+**Absichern.** slipways.de ist öffentlich erreichbar und zugleich im Tailnet. Damit ein übernommener Server nicht das ganze Tailnet erreicht, sollte slipways-1 in der Tailscale-Policy einen Tag bekommen und nur zu Loki dürfen. Eigene Geräte, auch `monitoring`, dürfen weiter zu slipways-1:
+
+```json
+"tagOwners": { "tag:slipways": ["autogroup:admin"] },
+"hosts":     { "monitoring": "100.x.y.z" },
+"grants": [
+  { "src": ["autogroup:member"], "dst": ["*"],          "ip": ["*"] },
+  { "src": ["tag:slipways"],     "dst": ["monitoring"], "ip": ["tcp:3100"] }
+]
+```
+
+Den Tag vergibt `tailscale up --advertise-tags=tag:slipways` auf slipways-1, oder ein Auth-Key mit Tag. Gilt das Gleiche für die Test-Stage im LXC, kommt dort hinzu: Der LXC hängt über `vmbr0` direkt im Heimnetz. Davon trennt ihn nur ein eigenes VLAN oder eine Firewall-Regel in Proxmox.
+
 ## Auto-Update
 
 Der systemd-Timer `slipways-update.timer` startet alle 5 Minuten `lxc/slipways-update.sh`. Gibt es auf dem Branch neue Commits, holt das Skript sie, baut die Images neu (mit frischen Basis-Images), sichert die Datenbank lokal nach `/var/lib/slipways/backups/pre-update.db` und startet den Stack neu. Die API spielt Migrationen beim Start selbst ein.

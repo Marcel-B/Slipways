@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
+using Slipways.Infrastructure.Monitoring;
 
 namespace Slipways.Infrastructure.Osm;
 
@@ -26,6 +27,7 @@ public sealed class OverpassClient(HttpClient http, IOptions<OsmOptions> options
             using var response = await http.PostAsync("interpreter", new FormUrlEncodedContent([new("data", query)]), cancellationToken);
             if (IsBusy(response.StatusCode) && attempt < options.Value.MaxAttempts)
             {
+                SlipwaysMetrics.OverpassBusyResponses.Inc();
                 await Task.Delay(backoff, time, cancellationToken);
                 backoff *= 2;
                 continue;

@@ -7,6 +7,9 @@
 #   TS_AUTHKEY=tskey-auth-…   ohne Schlüssel zeigt Tailscale einen Login-Link an
 #   TS_HOSTNAME=slipways      Name im Tailnet (Standard: Hostname des LXC)
 #   TS_SERVE=1                zusätzlich HTTPS über "tailscale serve" (MagicDNS und HTTPS-Zertifikate im Tailnet an)
+#   TS_METRICS=1              /metrics für Prometheus per "tailscale serve" auf https://<name>:9464/metrics
+#                             (nur im Tailnet; der Metrik-Port der API beantwortet nichts außer /metrics;
+#                             braucht ebenfalls HTTPS-Zertifikate im Tailnet)
 #
 # Das Skript ist eigenständig, damit es auch ohne Checkout auf dem Proxmox-Host läuft.
 # create-lxc.sh ruft es mit TAILSCALE=1 auch für neue Container auf.
@@ -16,6 +19,7 @@ CTID="${CTID:-${1:-}}"
 TS_AUTHKEY="${TS_AUTHKEY:-}"
 TS_HOSTNAME="${TS_HOSTNAME:-}"
 TS_SERVE="${TS_SERVE:-0}"
+TS_METRICS="${TS_METRICS:-0}"
 
 info() { echo -e "\e[1;34m==>\e[0m $*"; }
 fail() { echo -e "\e[1;31mFehler:\e[0m $*" >&2; exit 1; }
@@ -53,11 +57,14 @@ pct exec "$CTID" -- test -c /dev/net/tun || fail "/dev/net/tun fehlt im Containe
 
 PORT="$(pct exec "$CTID" -- sed -n 's/^SLIPWAYS_PORT=//p' /opt/slipways/.env 2>/dev/null || true)"
 PORT="${PORT:-80}"
+METRICS_PORT="$(pct exec "$CTID" -- sed -n 's/^SLIPWAYS_METRICS_PORT=//p' /opt/slipways/.env 2>/dev/null || true)"
+METRICS_PORT="${METRICS_PORT:-9464}"
 
 info "Tailscale installieren und anmelden"
 # shellcheck disable=SC2016 # der Befehl läuft im Container, dort werden die Variablen ersetzt
 pct exec "$CTID" -- env \
   TS_AUTHKEY="$TS_AUTHKEY" TS_HOSTNAME="$TS_HOSTNAME" TS_SERVE="$TS_SERVE" PORT="$PORT" \
+  TS_METRICS="$TS_METRICS" METRICS_PORT="$METRICS_PORT" \
   bash -euo pipefail -c '
     export DEBIAN_FRONTEND=noninteractive
     if ! command -v tailscale >/dev/null; then
@@ -80,6 +87,11 @@ pct exec "$CTID" -- env \
     if [[ "$TS_SERVE" == 1 ]]; then
       tailscale serve --bg "http://127.0.0.1:$PORT" >/dev/null
     fi
+
+    # Eigener Port nur für /metrics; die API selbst bleibt lokal.
+    if [[ "$TS_METRICS" == 1 ]]; then
+      tailscale serve --bg --https=9464 "http://127.0.0.1:$METRICS_PORT" >/dev/null
+    fi
   ' || fail "Tailscale ließ sich nicht einrichten."
 
 TS_IP="$(pct exec "$CTID" -- tailscale ip -4 | head -n1)"
@@ -91,5 +103,6 @@ info "Tailscale läuft"
 echo "  Slipways über Tailscale:  http://${TS_NAME}${SUFFIX}"
 echo "                            http://${TS_IP}${SUFFIX}"
 [[ "$TS_SERVE" == 1 ]] && echo "  mit HTTPS:                https://${TS_NAME}"
+[[ "$TS_METRICS" == 1 ]] && echo "  Metriken für Prometheus:  https://${TS_NAME}:9464/metrics"
 echo
 echo "  Die API liegt unter /api. Auf dem Gerät muss dafür Tailscale verbunden sein."

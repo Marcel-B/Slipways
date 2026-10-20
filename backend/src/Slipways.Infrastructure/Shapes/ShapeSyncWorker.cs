@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Slipways.Infrastructure.Monitoring;
 
 namespace Slipways.Infrastructure.Shapes;
 
@@ -23,7 +24,8 @@ public sealed class ShapeSyncWorker(
             try
             {
                 await using var scope = scopes.CreateAsyncScope();
-                var result = await scope.ServiceProvider.GetRequiredService<ShapeSync>().RunAsync(stoppingToken);
+                var result = await SlipwaysMetrics.MeasureJobAsync("shapes", time,
+                    () => scope.ServiceProvider.GetRequiredService<ShapeSync>().RunAsync(stoppingToken), stoppingToken);
                 logger.LogInformation(
                     "Shape sync finished: {Assignments} assignments changed, {Shapes} shapes updated",
                     result.AssignmentsChanged, result.ShapesUpdated);
