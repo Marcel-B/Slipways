@@ -110,7 +110,7 @@ dotnet ef migrations add <Name> --project src/Slipways.Infrastructure --startup-
 | Gewässerverläufe (`shape`) | [OpenStreetMap](https://www.openstreetmap.org/copyright) über Nominatim | [ODbL 1.0](https://opendatacommons.org/licenses/odbl/) | Namensnennung (Seitenfuß, Link zum OSM-Element auf der Detailseite); die API gibt die Formen weiter, sie stehen deshalb selbst unter ODbL (Share-Alike) |
 | Slipanlagen, Marinas, Motorservices (Seed) | von Hand erfasst (2019/20) | eigene Daten | – |
 
-Die Web-Oberfläche nennt die Quellen im Seitenfuß. Für einen geplanten Import von Slipanlagen und Marinas aus OpenStreetMap gilt zusätzlich: Die ODbL verlangt Namensnennung, und wer eine Datenbank mit OSM-Daten weitergibt, muss sie unter ODbL weitergeben (Share-Alike). Importierte OSM-Einträge werden deshalb mit Quelle und OSM-ID getrennt von den eigenen Daten gehalten.
+Die Web-Oberfläche nennt die Quellen im Seitenfuß. Die ausführliche Recherche zu weiteren offenen Quellen (OSM, eHYD, BAFU, Rijkswaterstaat u. a.) steht in [`docs/datenquellen.md`](docs/datenquellen.md). Für einen geplanten Import von Slipanlagen und Marinas aus OpenStreetMap gilt zusätzlich: Die ODbL verlangt Namensnennung, und wer eine Datenbank mit OSM-Daten weitergibt, muss sie unter ODbL weitergeben (Share-Alike). Importierte OSM-Einträge werden deshalb mit Quelle und OSM-ID getrennt von den eigenen Daten gehalten.
 
 ## Betrieb
 
