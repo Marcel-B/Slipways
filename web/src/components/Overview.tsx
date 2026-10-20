@@ -2,8 +2,17 @@ import { List, MapIcon } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 
 /** List and map side by side; on narrow screens one at a time, with a switch between them. */
-export function Overview({ list, map }: { list: ReactNode; map: ReactNode }) {
-  const [view, setView] = useState<'list' | 'map'>('list')
+export function Overview({
+  list,
+  map,
+  initialView = 'list',
+}: {
+  list: ReactNode
+  map: ReactNode
+  /** Which of the two a narrow screen starts with. */
+  initialView?: 'list' | 'map'
+}) {
+  const [view, setView] = useState(initialView)
 
   return (
     <div className="overview" data-view={view}>
