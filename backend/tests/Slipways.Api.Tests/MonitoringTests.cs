@@ -42,6 +42,7 @@ public sealed class MetricsEndpointTests : IAsyncLifetime
         Assert.Contains("slipways_places", metrics);
         Assert.Contains("process_cpu_seconds_total", metrics);
         Assert.Contains("process_resident_memory_bytes", metrics);
+        Assert.DoesNotMatch("(?m)^slipways_osm_missing_elements ", metrics);
         Assert.Equal(HttpStatusCode.NotFound, api.StatusCode);
     }
 }

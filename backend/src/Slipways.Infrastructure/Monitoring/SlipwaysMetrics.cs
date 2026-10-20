@@ -30,8 +30,10 @@ public static class SlipwaysMetrics
         "Places changed by the OpenStreetMap import, by kind (slipway, marina) and change (added, updated, linked).",
         "kind", "change");
 
+    // Absent until the first import is done, so a dashboard does not read 0 as "nothing missing" before that.
     public static readonly Gauge OsmMissingElements = Metrics.CreateGauge(
-        "slipways_osm_missing_elements", "Places whose OpenStreetMap element the last import no longer found.");
+        "slipways_osm_missing_elements", "Places whose OpenStreetMap element the last import no longer found.",
+        new GaugeConfiguration { SuppressInitialValue = true });
 
     public static readonly Counter OverpassBusyResponses = Metrics.CreateCounter(
         "slipways_overpass_busy_responses_total", "Overpass answers that it is busy (429, 502, 503, 504), each followed by a retry.");
