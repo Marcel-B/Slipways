@@ -194,6 +194,7 @@ export function MarinaDetailsPage() {
             center={[marina.latitude, marina.longitude]}
             zoom={14}
             highlightedId={marina.id}
+            introZoom
           />
         </div>
       </div>
