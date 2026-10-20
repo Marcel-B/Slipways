@@ -130,7 +130,11 @@ data class Marina(
     val water: Water? = null,
     val source: Source = Source.MANUAL,
     val osmElement: String? = null,
-)
+) {
+    /** "Hafenstraße 1, 93309 Kelheim" */
+    val address: String
+        get() = listOfNotNull(street, Format.place(postalCode, city)).joinToString(", ")
+}
 
 @Serializable
 data class Station(

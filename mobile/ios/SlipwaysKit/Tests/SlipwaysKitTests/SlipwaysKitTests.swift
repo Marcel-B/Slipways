@@ -204,3 +204,20 @@ private let marina = """
     #expect(abs(single.latitudeDelta - 0.02) < 0.0001)
     #expect(MapArea.fitting([]) == nil)
 }
+
+@Test func clustersEntriesInGridCells() throws {
+    let points = [(latitude: 48.90, longitude: 11.90), (latitude: 48.91, longitude: 11.91), (latitude: 52.4, longitude: 13.0), (latitude: 60.0, longitude: 11.9)]
+
+    let clusters = Overview.clusters(points, in: .start) { $0 }
+
+    #expect(clusters.map(\.items.count).sorted() == [1, 2])
+    let kelheim = try #require(clusters.first { $0.items.count == 2 })
+    #expect(abs(kelheim.latitude - 48.905) < 0.0001)
+    #expect(Overview.clusters(points, in: .start) { $0 }.map(\.id) == clusters.map(\.id))
+}
+
+@Test func linksPhoneAndMail() {
+    #expect(Links.phone("+49 9441 12-34")?.absoluteString == "tel:+4994411234")
+    #expect(Links.phone("unbekannt") == nil)
+    #expect(Links.mail(" hafen@example.org ")?.absoluteString == "mailto:hafen@example.org")
+}

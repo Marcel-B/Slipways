@@ -147,6 +147,11 @@ public struct Marina: Codable, Hashable, Identifiable, Sendable {
     public let water: Water?
     public let source: Source
     public let osmElement: String?
+
+    /// "Hafenstraße 1, 93309 Kelheim"
+    public var address: String {
+        [street, Format.place(postalCode, city)].compactMap { $0 }.joined(separator: ", ")
+    }
 }
 
 public struct Station: Codable, Hashable, Identifiable, Sendable {
