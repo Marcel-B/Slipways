@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Slipways.Api/Slipways.Api.csproj" />
+    <Project Path="src/Slipways.Domain/Slipways.Domain.csproj" />
+    <Project Path="src/Slipways.Infrastructure/Slipways.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Slipways.Api.Tests/Slipways.Api.Tests.csproj" />
+  </Folder>
+</Solution>
