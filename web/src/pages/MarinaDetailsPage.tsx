@@ -22,7 +22,11 @@ import {
 import { Fragment, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router'
 import { api, ApiError } from '../api/client'
-import type { PlaceInfo } from '../api/types'
+import type { MarinaDetails, PlaceInfo } from '../api/types'
+import { Contribute, Contributed, EditButton } from '../contribute/Contribute'
+import { useSuggest } from '../contribute/useSuggest'
+import { fromUsers } from '../contribute/fields'
+import { latest, sentFields } from '../contribute/storage'
 import { LazyMarkerMap } from '../components/LazyMarkerMap'
 import { marinaMarker, slipwayMarker } from '../components/mapMarkers'
 import { NearestGauge } from '../components/NearestGauge'
@@ -44,19 +48,48 @@ export function MarinaDetailsPage() {
   if (isPending) return <p className="muted">Lade…</p>
   if (error instanceof ApiError && error.status === 404) return <p>Diese Marina gibt es nicht.</p>
   if (error || !marina) return <p className="error">Marina konnte nicht geladen werden.</p>
+  return <MarinaDetailsView marina={marina} />
+}
 
-  // Details from the marina's website only fill gaps; our own and OpenStreetMap's values come first.
+function MarinaDetailsView({ marina }: { marina: MarinaDetails }) {
+  // Values from users win; details from the marina's website only fill gaps after our own and OpenStreetMap's.
   const fromWebsite = (field: string) => marina.infos.find((i) => i.field === field && i.source === 'website')
-  const openingHours = marina.openingHours ?? fromWebsite('opening_hours')
-  const phone = marina.phone ?? fromWebsite('phone')
-  const email = marina.email ?? fromWebsite('email')
+  const pick = (field: string, own: string | null): string | PlaceInfo | null =>
+    fromUsers(marina.infos, field) ?? own ?? fromWebsite(field) ?? null
+  const openingHours = pick('opening_hours', marina.openingHours)
+  const phone = pick('phone', marina.phone)
+  const email = pick('email', marina.email)
+  const operator = pick('operator', marina.operator)
+  const access = pick('access', marina.access)
+  const fee = pick('fee', marina.fee)
+  const text = (value: string | PlaceInfo | null) => (typeof value === 'string' ? value : (value?.value ?? null))
+  const values = {
+    opening_hours: text(openingHours),
+    phone: text(phone),
+    email: text(email),
+    operator: text(operator),
+    access: text(access),
+    fee: text(fee),
+  }
+  const place = { type: 'marina' as const, id: marina.id, name: marina.name, source: marina.source }
+  const suggest = useSuggest(place, values)
+  const sent = sentFields('marina', marina.id, latest(...marina.infos.filter((i) => i.source === 'user').map((i) => i.retrieved)))
+  const edit = (field: string) => <EditButton field={field} onEdit={suggest.open} />
+  const sourced = (field: string, value: string | PlaceInfo, render: (v: string) => ReactNode = (v) => v) => (
+    <span className="fact-value">
+      <span>
+        <Sourced value={value} pending={sent.has(field)} render={render} />
+      </span>
+      {edit(field)}
+    </span>
+  )
 
   const address = [marina.street, [marina.postalCode, marina.city].filter(Boolean).join(' ')].filter(Boolean).join(', ')
   const facts: [LucideIcon, string, ReactNode][] = [
     [MapPin, 'Adresse', address || null],
-    [Building2, 'Betreiber', marina.operator],
-    [DoorOpen, 'Zugang', marina.access && accessLabel(marina.access)],
-    [Clock, 'Öffnungszeiten', openingHours && <Sourced key="hours" value={openingHours} render={(v) => v} />],
+    [Building2, 'Betreiber', operator && sourced('operator', operator)],
+    [DoorOpen, 'Zugang', access && sourced('access', access, accessLabel)],
+    [Clock, 'Öffnungszeiten', openingHours && sourced('opening_hours', openingHours)],
   ]
   const position = `${marina.latitude},${marina.longitude}`
 
@@ -78,11 +111,12 @@ export function MarinaDetailsPage() {
                 <Waves size={14} /> {marina.water.name}
               </Link>
             )}
-            {marina.fee && (
-              <span className={`chip chip-${marina.fee === 'no' ? 'free' : 'paid'}`}>
-                <Coins size={14} /> {feeLabel(marina.fee)}
+            {values.fee && (
+              <span className={`chip chip-${values.fee === 'no' ? 'free' : 'paid'}`}>
+                <Coins size={14} /> {feeLabel(values.fee)}
               </span>
             )}
+            {values.fee && edit('fee')}
           </div>
         </div>
       </header>
@@ -105,9 +139,7 @@ export function MarinaDetailsPage() {
                 <dt>
                   <Phone size={16} /> Telefon
                 </dt>
-                <dd>
-                  <Sourced value={phone} render={(v) => <a href={`tel:${v.replace(/[^\d+]/g, '')}`}>{v}</a>} />
-                </dd>
+                <dd>{sourced('phone', phone, (v) => <a href={`tel:${v.replace(/[^\d+]/g, '')}`}>{v}</a>)}</dd>
               </>
             )}
             {email && (
@@ -115,9 +147,7 @@ export function MarinaDetailsPage() {
                 <dt>
                   <Mail size={16} /> E-Mail
                 </dt>
-                <dd>
-                  <Sourced value={email} render={(v) => <a href={`mailto:${v}`}>{v}</a>} />
-                </dd>
+                <dd>{sourced('email', email, (v) => <a href={`mailto:${v}`}>{v}</a>)}</dd>
               </>
             )}
             {marina.url && (
@@ -176,6 +206,15 @@ export function MarinaDetailsPage() {
             </section>
           )}
 
+          <Contribute
+            place={place}
+            values={values}
+            infos={marina.infos}
+            osmElement={marina.osmElement}
+            sent={sent}
+            onSuggest={suggest.open}
+          />
+
           {marina.water && <NearestGauge position={marina} waterId={marina.water.id} />}
 
           <div className="actions">
@@ -207,13 +246,27 @@ export function MarinaDetailsPage() {
           />
         </div>
       </div>
+      {suggest.dialog}
     </article>
   )
 }
 
-/** A value of the marina itself, or one from its website with where and when it was read. */
-function Sourced({ value, render }: { value: string | PlaceInfo; render: (value: string) => ReactNode }) {
-  if (typeof value === 'string') return render(value)
+/** A value of the marina itself, or one from users or its website with where and when it was read. */
+function Sourced({
+  value,
+  pending,
+  render,
+}: {
+  value: string | PlaceInfo
+  pending: boolean
+  render: (value: string) => ReactNode
+}) {
+  if (typeof value === 'string' || value.source === 'user')
+    return (
+      <Contributed info={typeof value === 'string' ? undefined : value} pending={pending}>
+        {render(typeof value === 'string' ? value : value.value)}
+      </Contributed>
+    )
   const date = new Date(value.retrieved).toLocaleDateString('de-DE')
   return (
     <>

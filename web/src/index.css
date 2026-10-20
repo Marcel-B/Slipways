@@ -1090,3 +1090,345 @@ a.item:hover .item-chevron {
   background: #ffe08a;
   border-radius: 3px;
 }
+
+/* Contributions from users */
+
+.hero-link {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  text-decoration: none;
+  opacity: 0.9;
+}
+
+.hero-link:hover {
+  text-decoration: underline;
+  opacity: 1;
+}
+
+@media (min-width: 900px) {
+  .hero-link {
+    grid-column: 1;
+  }
+}
+
+.fact-value {
+  display: flex;
+  gap: 0.4rem;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.edit-button,
+.icon-button {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  padding: 0.3rem;
+  color: var(--muted);
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-radius: 8px;
+}
+
+.edit-button:hover,
+.edit-button:focus-visible,
+.icon-button:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* Pencils are quiet until hovered on screens with a mouse; on touch screens they always show. */
+@media (hover: hover) {
+  .facts .edit-button {
+    opacity: 0;
+  }
+
+  .facts dd:hover .edit-button,
+  .facts .edit-button:focus-visible {
+    opacity: 1;
+  }
+}
+
+.chips .edit-button {
+  color: inherit;
+}
+
+.fact-source.pending {
+  color: var(--warning);
+}
+
+.button-small {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.panel h2 {
+  margin-top: 0;
+}
+
+.missing p {
+  margin-top: 0;
+}
+
+.missing-list,
+.fact-list,
+.tips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.fact-list li {
+  display: inline-flex;
+  gap: 0.3rem;
+  align-items: center;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.9rem;
+  background: var(--surface-muted);
+  border-radius: 999px;
+}
+
+.fact-list .yes svg {
+  color: var(--free);
+}
+
+.fact-list .no {
+  color: var(--muted);
+}
+
+.contribute-facts .fact-source {
+  margin-bottom: 0.75rem;
+}
+
+.tips {
+  flex-direction: column;
+}
+
+.tips p {
+  margin: 0;
+}
+
+.contribute-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* The form: a dialog in the middle of the screen, a sheet from the bottom on phones. */
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(10 20 30 / 45%);
+}
+
+.sheet {
+  width: min(100%, 32rem);
+  max-height: calc(100dvh - 2rem);
+  padding: 1.25rem;
+  overflow-y: auto;
+  background: var(--surface);
+  border-radius: calc(var(--radius) + 4px);
+  box-shadow: var(--shadow);
+}
+
+@media (max-width: 600px) {
+  .sheet-backdrop {
+    place-items: end stretch;
+    padding: 0;
+  }
+
+  .sheet {
+    width: 100%;
+    max-height: 90dvh;
+    padding-bottom: calc(1.25rem + env(safe-area-inset-bottom));
+    border-radius: calc(var(--radius) + 4px) calc(var(--radius) + 4px) 0 0;
+  }
+}
+
+.sheet-head {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.sheet-head h2,
+.sheet-head p {
+  margin: 0;
+}
+
+.suggest-form {
+  display: grid;
+  gap: 0.9rem;
+  align-content: start;
+}
+
+.field {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.field > span,
+.field legend {
+  font-weight: 600;
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent-soft);
+}
+
+.facts-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+}
+
+.facts-picker legend {
+  margin-bottom: 0.3rem;
+}
+
+.check,
+.consent {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.check input,
+.consent input {
+  flex: none;
+  width: auto;
+  margin-top: 0.25rem;
+}
+
+.consent {
+  font-size: 0.9rem;
+}
+
+.sheet-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.proof-state {
+  display: inline-flex;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+.small {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin {
+    animation: none;
+  }
+}
+
+.sheet-done {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: start;
+}
+
+.sheet-done p {
+  margin: 0;
+}
+
+.done-icon,
+.status-line.accepted svg {
+  color: var(--free);
+}
+
+.status-line.rejected svg {
+  color: var(--error);
+}
+
+.status-line {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  font-weight: 600;
+}
+
+.nearby {
+  padding: 0.75rem 1rem;
+  background: var(--buoy-soft);
+  border-radius: 10px;
+}
+
+.nearby p {
+  margin: 0 0 0.4rem;
+}
+
+.nearby ul {
+  margin: 0 0 0.75rem;
+  padding-left: 1.2rem;
+}
+
+.narrow {
+  max-width: 40rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

@@ -19,10 +19,12 @@ services:
       Monitoring__Loki__Url: ${SLIPWAYS_LOKI_URL:-}
       Monitoring__Loki__Host: ${SLIPWAYS_MONITORING_HOST:-unknown}
     # Nur lokal für Health-Check und Updater; von außen geht es über das Web unter /api.
-    # /metrics nur lokal; ins Tailnet bringt es "tailscale serve" (siehe deploy/README.md, „Überwachung“).
+    # /metrics und die Moderation nur lokal; ins Tailnet bringt sie "tailscale serve" (siehe deploy/README.md,
+    # „Überwachung“ und „Moderation“).
     ports: !override
       - "127.0.0.1:${SLIPWAYS_API_PORT:-5080}:8080"
       - "127.0.0.1:${SLIPWAYS_METRICS_PORT:-9464}:9464"
+      - "127.0.0.1:${SLIPWAYS_MODERATION_PORT:-9465}:9465"
     restart: unless-stopped
     logging: *logging
 

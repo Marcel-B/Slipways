@@ -1,0 +1,47 @@
+:root {
+  color-scheme: light dark;
+  --bg: #f6f7f9;
+  --card: #fff;
+  --text: #1c2430;
+  --muted: #5f6b7a;
+  --line: #dde2e8;
+  --accent: #0b6bcb;
+  --ok: #1d7f45;
+  --bad: #b3261e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #12161c;
+    --card: #1b2129;
+    --text: #e6eaf0;
+    --muted: #9aa6b4;
+    --line: #2c3540;
+    --accent: #5aa7f0;
+    --ok: #4cc27c;
+    --bad: #f07167;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; font: 15px/1.5 system-ui, sans-serif; background: var(--bg); color: var(--text); }
+header { padding: 16px; border-bottom: 1px solid var(--line); background: var(--card); position: sticky; top: 0; }
+h1 { margin: 0 0 8px; font-size: 20px; }
+nav { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+button.accept { background: var(--ok); border-color: var(--ok); color: #fff; }
+button.reject { color: var(--bad); border-color: var(--bad); }
+button:disabled { opacity: .5; cursor: default; }
+main { max-width: 900px; margin: 0 auto; padding: 16px; }
+#list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+.card h2 { margin: 0 0 4px; font-size: 17px; }
+.meta { color: var(--muted); font-size: 13px; margin: 0 0 8px; }
+.kind { display: inline-block; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; color: var(--accent); }
+table { border-collapse: collapse; width: 100%; margin: 8px 0; }
+th, td { text-align: left; padding: 4px 8px 4px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 500; font-size: 13px; }
+.text { white-space: pre-wrap; background: var(--bg); border-radius: 8px; padding: 8px 12px; margin: 8px 0; }
+.warn { color: var(--bad); }
+.actions { display: flex; gap: 8px; margin-top: 12px; }
+a { color: var(--accent); }
+#message:empty { display: none; }

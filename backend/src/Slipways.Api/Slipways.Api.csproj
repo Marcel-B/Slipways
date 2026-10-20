@@ -11,6 +11,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The moderation page, served by ModerationEndpoints on the moderation port only. -->
+    <EmbeddedResource Include="Moderation\*" LogicalName="Slipways.Api.Moderation.%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Slipways.Infrastructure\Slipways.Infrastructure.csproj" />
   </ItemGroup>
 

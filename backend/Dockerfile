@@ -17,6 +17,6 @@ COPY --from=build /app .
 RUN mkdir /data /keys && chown $APP_UID /data /keys
 USER $APP_UID
 # 8080 for the app, 9464 only for /metrics (see Monitoring:MetricsPort)
-ENV ASPNETCORE_HTTP_PORTS="8080;9464"
-EXPOSE 8080 9464
+ENV ASPNETCORE_HTTP_PORTS="8080;9464;9465"
+EXPOSE 8080 9464 9465
 ENTRYPOINT ["dotnet", "Slipways.Api.dll"]

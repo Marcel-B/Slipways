@@ -42,6 +42,8 @@ public static class SeoEndpoints
         ["datenschutz"] = new($"Datenschutz · {SiteName}",
             "Welche Daten slipways.de und die Slipways-Apps verarbeiten.", "datenschutz"),
         ["support"] = new($"Support · {SiteName}", "Hilfe und Kontakt zu Slipways.", "support"),
+        // A form, nothing to find in a search.
+        ["slipways/neu"] = new($"Slipanlage vorschlagen · {SiteName}", "Eine fehlende Slipanlage ohne Konto vorschlagen.", null),
     };
 
     public static IEndpointRouteBuilder MapSeoEndpoints(this IEndpointRouteBuilder app)

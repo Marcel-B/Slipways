@@ -103,7 +103,8 @@ public record SlipwayDetailsDto(
     string Source,
     string? OsmElement,
     DateTime Created,
-    DateTime? Updated);
+    DateTime? Updated,
+    IReadOnlyList<PlaceInfoDto> Infos);
 
 /// <summary>Fields and <paramref name="Source"/> as in <see cref="SlipwayDetailsDto"/>.</summary>
 public record MarinaDto(
@@ -152,7 +153,8 @@ public record MarinaDetailsDto(
 
 /// <summary>
 /// A detail such as a phone number from <paramref name="Source"/> ("website": read from <paramref name="SourceUrl"/>),
-/// as it was on <paramref name="Retrieved"/>. <paramref name="Field"/> is "phone", "email" or "opening_hours".
+/// or "user" (an accepted suggestion), as it was on <paramref name="Retrieved"/>. <paramref name="Field"/> is e.g.
+/// "phone", "email", "opening_hours", "fee" or "tip"; values from users win over the place's own fields.
 /// </summary>
 public record PlaceInfoDto(string Field, string Value, string Source, string? SourceUrl, DateTime Retrieved);
 
@@ -186,3 +188,69 @@ public record StationDto(
 public record WaterLevelDto(double Value, DateTime MeasuredAt, string? State);
 
 public record UserDto(string Id, string Email, string? DisplayName);
+
+/// <summary>A proof-of-work challenge in the format of ALTCHA; see <see cref="SuggestionRequestDto.Proof"/>.</summary>
+public record ProofChallengeDto(string Algorithm, string Challenge, int MaxNumber, string Salt, string Signature);
+
+/// <summary>The challenge as it came, with the <paramref name="Number"/> for which SHA-256(salt + number) is the challenge.</summary>
+public record ProofSolutionDto(string Algorithm, string Challenge, int Number, string Salt, string Signature);
+
+/// <summary>
+/// A suggestion from a user. <paramref name="Kind"/> is "new_slipway" (with <paramref name="Name"/> and position),
+/// "edit" (with <paramref name="Fields"/>), "tip" or "report" (with <paramref name="Text"/>); the last three need
+/// <paramref name="PlaceType"/> ("slipway" or "marina") and <paramref name="PlaceId"/>. For the others,
+/// <paramref name="Text"/> is an optional note for the moderator. <paramref name="Homepage"/> must stay empty: forms
+/// hide it from people, so only bots fill it in.
+/// </summary>
+public record SuggestionRequestDto(
+    string Kind,
+    string? PlaceType,
+    Guid? PlaceId,
+    string? Name,
+    double? Latitude,
+    double? Longitude,
+    Dictionary<string, string>? Fields,
+    string? Text,
+    bool ConfirmNew,
+    string? Homepage,
+    ProofSolutionDto? Proof);
+
+/// <summary><paramref name="Token"/> is shown only once; with it the sender can look at or withdraw the suggestion.</summary>
+public record SuggestionCreatedDto(Guid Id, string Token);
+
+/// <summary>Slipways close to a suggested new one; sent with 409, after which the sender may confirm with ConfirmNew.</summary>
+public record NearbySlipwaysDto(IReadOnlyList<NearbySlipwayDto> Slipways);
+
+/// <summary><paramref name="Distance"/> in metres.</summary>
+public record NearbySlipwayDto(Guid Id, string Name, double Distance, string Source);
+
+/// <summary><paramref name="Status"/> is "pending", "accepted" or "rejected".</summary>
+public record SuggestionStatusDto(Guid Id, string Kind, string Status, DateTime Created, DateTime? Decided);
+
+/// <summary>Values from users on places imported from OpenStreetMap, published under the ODbL like the places themselves.</summary>
+public record OdblContributionsDto(string License, string Attribution, IReadOnlyList<OdblContributionDto> Values);
+
+/// <summary><paramref name="OsmElement"/> such as "node/123".</summary>
+public record OdblContributionDto(string PlaceType, string OsmElement, string Field, string Value, DateTime Retrieved);
+
+/// <summary>A suggestion as the moderator sees it.</summary>
+public record ModerationSuggestionDto(
+    Guid Id,
+    string Kind,
+    string Status,
+    DateTime Created,
+    DateTime? Decided,
+    string? PlaceType,
+    Guid? PlaceId,
+    string? PlaceName,
+    string? PlaceSource,
+    string? Name,
+    double? Latitude,
+    double? Longitude,
+    IReadOnlyList<ModerationFieldDto> Fields,
+    string? Text,
+    bool FromServer,
+    IReadOnlyList<NearbySlipwayDto> Nearby);
+
+/// <summary><paramref name="Current"/> is what the place shows now: a value from users if there is one, else its own.</summary>
+public record ModerationFieldDto(string Field, string Value, string? Current);

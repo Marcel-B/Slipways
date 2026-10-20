@@ -44,6 +44,7 @@ export interface SlipwayDetails extends SlipwaySummary, OsmTags {
   osmElement: string | null
   created: string
   updated: string | null
+  infos: PlaceInfo[]
 }
 
 export interface Position {
@@ -103,12 +104,12 @@ export interface Marina extends OsmTags {
   osmElement: string | null
 }
 
-/** A detail from another source than the place's own fields, e.g. read from its website. */
+/** A detail from another source than the place's own fields, e.g. read from its website or sent in by a user. */
 export interface PlaceInfo {
-  field: 'phone' | 'email' | 'opening_hours' | (string & {})
+  field: 'phone' | 'email' | 'opening_hours' | 'fee' | 'tip' | (string & {})
   value: string
-  /** "website" for details read from the place's home page. */
-  source: string
+  /** "website" for details read from the place's home page, "user" for accepted suggestions. */
+  source: 'website' | 'user' | (string & {})
   sourceUrl: string | null
   retrieved: string
 }
@@ -132,4 +133,58 @@ export interface WaterDetails extends Water {
   slipways: SlipwaySummary[]
   stations: Station[]
   marinas: Marina[]
+}
+
+export type PlaceType = 'slipway' | 'marina'
+
+/** A proof-of-work challenge in the format of ALTCHA. */
+export interface ProofChallenge {
+  algorithm: string
+  challenge: string
+  maxNumber: number
+  salt: string
+  signature: string
+}
+
+export interface ProofSolution extends Omit<ProofChallenge, 'maxNumber'> {
+  number: number
+}
+
+export type SuggestionKind = 'new_slipway' | 'edit' | 'tip' | 'report'
+
+export interface SuggestionRequest {
+  kind: SuggestionKind
+  placeType?: PlaceType
+  placeId?: string
+  name?: string
+  latitude?: number
+  longitude?: number
+  fields?: Record<string, string>
+  text?: string
+  confirmNew?: boolean
+  /** Hidden from people; only bots fill it in. */
+  homepage?: string
+  proof?: ProofSolution
+}
+
+/** `token` is shown only once; with it the sender can look at or withdraw the suggestion. */
+export interface SuggestionCreated {
+  id: string
+  token: string
+}
+
+export interface NearbySlipway {
+  id: string
+  name: string
+  /** In metres. */
+  distance: number
+  source: Source
+}
+
+export interface SuggestionStatus {
+  id: string
+  kind: SuggestionKind
+  status: 'pending' | 'accepted' | 'rejected'
+  created: string
+  decided: string | null
 }
