@@ -34,7 +34,7 @@ public class CatalogEndpointsTests(SlipwaysApiFactory factory) : IClassFixture<S
 
         Assert.NotNull(slipways);
         Assert.Contains(slipways, s => s.Id == KelheimId);
-        Assert.All(slipways, s => Assert.Contains("kelheim", $"{s.Name} {s.City} {s.Water.Name}", StringComparison.OrdinalIgnoreCase));
+        Assert.All(slipways, s => Assert.Contains("kelheim", $"{s.Name} {s.City} {s.Water?.Name}", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -133,7 +133,7 @@ public class CatalogEndpointsTests(SlipwaysApiFactory factory) : IClassFixture<S
         Assert.Equal(17, water.Stations.Count);
         Assert.Equal(4, water.Marinas.Count);
         Assert.All(water.Stations, s => Assert.Equal(DonauId, s.Water.Id));
-        Assert.All(water.Marinas, m => Assert.Equal(DonauId, m.Water.Id));
+        Assert.All(water.Marinas, m => Assert.Equal(DonauId, m.Water?.Id));
 
         Assert.NotNull(water.Bounds);
         Assert.All(water.Slipways, s =>

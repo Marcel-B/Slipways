@@ -20,6 +20,7 @@ public sealed class SlipwaysApiFactory : WebApplicationFactory<Program>, IAsyncL
         builder.UseSetting("Database:InitializeOnStartup", "false");
         builder.UseSetting("Pegelonline:Enabled", "false");
         builder.UseSetting("Nominatim:Enabled", "false");
+        builder.UseSetting("Osm:Enabled", "false");
 
         builder.ConfigureServices(services =>
         {

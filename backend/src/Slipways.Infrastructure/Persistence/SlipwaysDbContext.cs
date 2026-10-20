@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Slipways.Domain;
 using Slipways.Infrastructure.Identity;
@@ -38,6 +39,7 @@ public class SlipwaysDbContext(DbContextOptions<SlipwaysDbContext> options)
         {
             e.Property(x => x.Name).HasMaxLength(200);
             e.Property(x => x.Costs).HasPrecision(8, 2);
+            ConfigureSource(e);
             e.HasOne(x => x.Water).WithMany().HasForeignKey(x => x.WaterId).OnDelete(DeleteBehavior.Restrict);
             e.HasOne(x => x.Marina).WithMany(x => x.Slipways).HasForeignKey(x => x.MarinaId).OnDelete(DeleteBehavior.SetNull);
             e.HasMany(x => x.Extras).WithMany(x => x.Slipways).UsingEntity("SlipwayExtras");
@@ -46,6 +48,7 @@ public class SlipwaysDbContext(DbContextOptions<SlipwaysDbContext> options)
         builder.Entity<Marina>(e =>
         {
             e.Property(x => x.Name).HasMaxLength(200);
+            ConfigureSource(e);
             e.HasOne(x => x.Water).WithMany().HasForeignKey(x => x.WaterId).OnDelete(DeleteBehavior.Restrict);
         });
 
@@ -66,6 +69,14 @@ public class SlipwaysDbContext(DbContextOptions<SlipwaysDbContext> options)
             e.HasIndex(x => x.ExternalId).IsUnique();
             e.HasOne(x => x.Water).WithMany().HasForeignKey(x => x.WaterId).OnDelete(DeleteBehavior.Restrict);
         });
+    }
+
+    private static void ConfigureSource<T>(EntityTypeBuilder<T> e) where T : class, IOsmPlace
+    {
+        // Rows from before the OpenStreetMap import were all entered by hand.
+        e.Property(x => x.Source).HasMaxLength(10).HasDefaultValue(Sources.Manual);
+        e.Property(x => x.OsmType).HasMaxLength(10);
+        e.HasIndex(x => new { x.OsmType, x.OsmId }).IsUnique();
     }
 
     private sealed class UtcDateTimeConverter() : ValueConverter<DateTime, DateTime>(

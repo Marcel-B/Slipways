@@ -14,7 +14,7 @@ Abgeleitet aus den Feldnamen und Inhalten der Dateien in `backend/src/Slipways.I
 ## Slipanlagen
 
 **OpenStreetMap, `leisure=slipway`** ist die einzige große offene Quelle.
-- Weltweit rund 47.000 Objekte (Diary-Auswertung Jan. 2026: ca. 28.000 nur Knoten, 16.800 nur Wege, 2.800 beides). Zahlen für DACH müsste man per Overpass zählen (steht noch aus).
+- Weltweit rund 47.000 Objekte (Diary-Auswertung Jan. 2026: ca. 28.000 nur Knoten, 16.800 nur Wege, 2.800 beides). Overpass-Zählung vom 20.10.2026 (`nwr`, Knoten/Wege/Relationen): DE 3.342 (2.589/750/3), AT 391, CH 447, NL 916; Marinas DE 2.727, AT 199, CH 446, NL 1.224.
 - Nützliche Zusatz-Tags: `name`, `fee`, `opening_hours`, `access`, `surface`, `trailer`, `boat`, `operator`, `website`. Häufig ist nur der Punkt ohne weitere Attribute erfasst.
 - Lizenz: **ODbL 1.0**. Kommerzielle Nutzung ist erlaubt, Pflicht ist die Namensnennung "© OpenStreetMap-Mitwirkende". Eine *Datenbank*, die OSM-Daten mit eigenen Daten vermischt, muss bei Weitergabe ebenfalls unter ODbL stehen (Share-Alike). Für die App heißt das: OSM-Slips getrennt halten (eigene Tabelle oder `Source`-Spalte mit OSM-ID) oder akzeptieren, dass die Slip-Datenbank als Ganzes ODbL wird.
 - Zugriff:
@@ -51,7 +51,7 @@ Abgeleitet aus den Feldnamen und Inhalten der Dateien in `backend/src/Slipways.I
 
 ## Empfehlung
 
-1. Slipanlagen und Marinas aus OSM importieren (Geofabrik DACH + Osmium, regelmäßiger Job) und in einer getrennten Quelle mit OSM-ID halten, damit die ODbL-Pflichten sauber bleiben. Eigene, von Nutzern erfasste Bewertungen/Kommentare als separate Daten daneben.
+1. Slipanlagen und Marinas aus OSM importieren und in einer getrennten Quelle mit OSM-ID halten, damit die ODbL-Pflichten sauber bleiben. Eigene, von Nutzern erfasste Bewertungen/Kommentare als separate Daten daneben. **Umgesetzt** über Overpass statt Geofabrik (`OsmImportWorker`, alle 30 Tage, DE/AT/CH/NL, `Source`-Spalte mit OSM-Element; siehe README).
 2. Pegel und Gewässer per Backend-Job aus PEGELONLINE holen (DE, **umgesetzt in #57**: `GaugeSyncWorker`, alle 15 Minuten), danach eHYD (AT) und BAFU (CH) ergänzen.
 3. Attribution in Web und App einbauen (Web-Seitenfuß und README-Abschnitt seit #57) ("© OpenStreetMap-Mitwirkende", "PEGELONLINE/WSV", "ehyd.gv.at", "BAFU").
 
@@ -66,7 +66,7 @@ Abgeleitet aus den Feldnamen und Inhalten der Dateien in `backend/src/Slipways.I
 - ELWIS: [Inland-ENC](https://elwis.de/DE/dynamisch/IENC)
 - EFAS: [Hydrological data collection FAQ](https://european-flood.emergency.copernicus.eu/sites/default/files/2023-09/FAQ%20CEMS%20EFAS%20hydrological%20data%20collection_September2023.pdf)
 
-Hinweis: PEGELONLINE-Lizenz direkt beim Anbieter bestätigt. eHYD und BAFU stammen aus Katalog-Einträgen (die Seiten sind JavaScript-Apps und ließen sich nicht auslesen). Eine Zählung der Slipanlagen in DACH über Overpass steht noch aus.
+Hinweis: PEGELONLINE-Lizenz direkt beim Anbieter bestätigt. eHYD und BAFU stammen aus Katalog-Einträgen (die Seiten sind JavaScript-Apps und ließen sich nicht auslesen). Die Zählung über Overpass ist inzwischen nachgeholt (siehe oben).
 
 ## Nachtrag: slipanlage.info (geprüft 20.10.2026)
 

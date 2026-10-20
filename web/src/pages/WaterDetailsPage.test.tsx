@@ -39,6 +39,7 @@ const water: WaterDetails = {
       city: 'Kelheim',
       country: 'DE',
       water: donau,
+      source: 'manual',
     },
   ],
   stations: [
