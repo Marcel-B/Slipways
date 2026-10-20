@@ -22,7 +22,7 @@ Der Import selbst ist im README beschrieben (Abschnitt „Slipanlagen und Marina
 
 ## Optik des Webs (PR #69, 20.10.2026)
 
-1. **Kartenstil.** Die Karte nutzt weiter die bunten OSM-Standardkacheln, auf denen die Pins wenig hervorstechen. Ruhiger wäre z. B. OpenFreeMap (Vektorkacheln, ohne Schlüssel, braucht MapLibre GL bzw. `@maplibre/maplibre-gl-leaflet`). Jeder neue Kachel-Server muss in die Datenschutzseite. Entscheidung steht aus, Recherche in den Projektdateien unter `recherche/ui-framework-und-design.md`.
+1. **Kartenstil.** Die Karte nutzt weiter die bunten OSM-Standardkacheln, auf denen die Pins wenig hervorstechen. Ruhiger wäre z. B. OpenFreeMap (Vektorkacheln, ohne Schlüssel, braucht MapLibre GL bzw. `@maplibre/maplibre-gl-leaflet`). Jeder neue Kachel-Server muss in die Datenschutzseite und in die Content-Security-Policy (`web/security-headers.conf`). Entscheidung steht aus, Recherche in den Projektdateien unter `recherche/ui-framework-und-design.md`.
 
 ## Mobile-Apps (20.10.2026)
 

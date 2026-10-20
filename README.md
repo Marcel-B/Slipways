@@ -192,6 +192,15 @@ Gegen die lokale API: im Schema unter Run > Arguments die Umgebungsvariable `SLI
 | GET | `/api/account/me` | Angemeldeter Benutzer, nur mit `Accounts__Enabled=true` |
 | GET | `/health` | Health-Check |
 
+## Absicherung
+
+Die API ist bewusst ohne Anmeldung lesbar, Web und Apps brauchen keinen Schlüssel. Schreibende Endpunkte gibt es nur mit `Accounts:Enabled=true`.
+
+- **Erreichbar von außen** ist nur `/api/…` über nginx (und Caddy). `/health`, `/metrics` und die API-Doku hängen nicht daran; `/metrics` antwortet nur auf dem eigenen Port, Scalar und `/openapi` gibt es nur im Modus `Development`.
+- **Rate-Limit:** Jede Client-Adresse (IPv6 je /64) hat für `/api/…` einen Token-Bucket mit 120 Anfragen, der sich um 60 je 10 Sekunden auffüllt (`RateLimit:TokenLimit`, `TokensPerPeriod`, `ReplenishmentPeriod`, abschalten mit `RateLimit:Enabled=false`). Darüber antwortet die API mit `429` und `Retry-After`. Die Grenzen sind großzügig, weil sich viele App-Nutzer eine Adresse teilen können (Mobilfunk). Ein Abruf aller Daten bleibt möglich, denn `/api/slipways` liefert alles in einer Antwort; das Limit schützt vor Überlastung, nicht vor dem Kopieren. Die Client-Adresse kommt aus `X-Forwarded-For`, dem die API nur von Adressen aus privaten Netzen (Docker) traut, höchstens zwei Stationen weit (Caddy, nginx). Caddy ersetzt einen mitgeschickten `X-Forwarded-For`, deshalb kann ein Client sich keine fremde Adresse geben.
+- **CORS** ist nicht eingerichtet: Fremde Websites können die API im Browser nicht lesen. Die Apps betrifft das nicht.
+- **Header:** nginx setzt für alle Antworten Content-Security-Policy, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` und `Permissions-Policy` (`web/security-headers.conf`), Caddy dazu HSTS. Die CSP erlaubt nur eigene Skripte; deshalb steht das Theme-Skript in `web/public/theme.js` statt inline in `index.html`. Ein neuer Kachel-Server oder eine andere externe Quelle muss dort eingetragen werden.
+
 ## Datenquellen und Lizenzen
 
 | Daten | Quelle | Lizenz | Pflichten |
