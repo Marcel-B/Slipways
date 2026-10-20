@@ -95,9 +95,9 @@ Die API liefert Messwerte für Prometheus unter `/metrics`, aber nur auf einem e
 
 | Messwert | Bedeutung |
 | --- | --- |
-| `slipways_job_runs_total{job, result}` | Läufe der Hintergrund-Jobs `gauges`, `shapes`, `osm`, nach `success`/`failure` |
-| `slipways_job_duration_seconds{job}` | Dauer der Läufe (Histogramm) |
-| `slipways_job_last_success_timestamp_seconds{job}` | Zeitpunkt des letzten erfolgreichen Laufs |
+| `slipways_job_runs_total{task, result}` | Läufe der Hintergrund-Jobs `gauges`, `shapes`, `osm`, nach `success`/`failure` |
+| `slipways_job_duration_seconds{task}` | Dauer der Läufe (Histogramm) |
+| `slipways_job_last_success_timestamp_seconds{task}` | Zeitpunkt des letzten erfolgreichen Laufs |
 | `slipways_gauge_water_levels_updated_total` | übernommene Wasserstände |
 | `slipways_osm_import_changes_total{kind, change}` | OSM-Import: `added`/`updated`/`linked` je `slipway`/`marina` |
 | `slipways_osm_missing_elements` | Einträge, deren OSM-Element der letzte Import nicht mehr fand |
@@ -108,7 +108,7 @@ Die API liefert Messwerte für Prometheus unter `/metrics`, aber nur auf einem e
 | `http_requests_received_total`, `http_request_duration_seconds` | Anfragen nach Route-Vorlage, Methode und Statuscode (prometheus-net) |
 | `process_*`, `dotnet_*` | Prozess und Laufzeit, darunter `process_resident_memory_bytes` |
 
-Labels haben nur wenige feste Werte. Benutzer, Inhalte und IDs kommen nicht vor.
+Labels haben nur wenige feste Werte. Das Label der Jobs heißt `task`, weil Prometheus `job` selbst vergibt. Benutzer, Inhalte und IDs kommen nicht vor.
 
 Mit `Monitoring:Loki:Url` (z. B. `http://monitoring:3100`) schickt die API ihre Logzeilen zusätzlich an Loki, mit den Labels `app=slipways`, `host` (`Monitoring:Loki:Host`), `level` und `source` (`api`, `http`, `db`, `gauges`, `shapes`, `osm`, `http-client`). Die Zeilen werden alle 2 Sekunden gebündelt verschickt. Ist Loki nicht erreichbar, verwirft die API sie, statt zu warten. Das Konsolen-Log bleibt vollständig. Ohne Url ist der Versand aus. Angebunden ist nur slipways.de; Einrichten: [`deploy/README.md`](deploy/README.md#überwachung).
 
