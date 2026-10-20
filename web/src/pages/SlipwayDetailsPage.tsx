@@ -28,6 +28,7 @@ import { LazyMarkerMap } from '../components/LazyMarkerMap'
 import { slipwayMarker } from '../components/mapMarkers'
 import { NearestGauge } from '../components/NearestGauge'
 import { accessLabel, feeLabel, osmUrl, surfaceLabel } from '../components/osmTags'
+import { placeTitle } from './pageTitle'
 
 const currency = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' })
 
@@ -68,6 +69,7 @@ export function SlipwayDetailsPage() {
 
   return (
     <article className="details">
+      <title>{`${placeTitle(slipway.name, slipway.city)} · Slipways`}</title>
       <Link to="/" className="back">
         <ArrowLeft size={16} /> Alle Slipanlagen
       </Link>

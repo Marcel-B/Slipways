@@ -38,6 +38,7 @@ export function SlipwaysPage() {
 
   return (
     <>
+      <title>Slipways · Slipanlagen, Marinas und Pegel</title>
       <section className="hero">
         <h1>Slipanlagen finden</h1>
         <p className="hero-lead">

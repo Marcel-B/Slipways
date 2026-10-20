@@ -4,7 +4,11 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Slipways</title>
+    <!-- In production nginx replaces the block with the title, description, canonical link and structured data of the
+         requested page (server side include, see nginx.conf); without nginx, e.g. in "npm run dev", it stays as is. -->
+    <!--# block name="seo" --><title>Slipways · Slipanlagen, Marinas und Pegel</title>
+    <meta name="description" content="Slipanlagen, Marinas und Pegelstände in Deutschland, Österreich, der Schweiz und den Niederlanden auf einer Karte." /><!--# endblock -->
+    <!--# include virtual="/seo-head$request_uri" stub="seo" -->
     <!-- Sets the theme before the first paint; a file of its own, so the Content-Security-Policy needs no inline scripts. -->
     <script src="/theme.js"></script>
   </head>

@@ -38,6 +38,7 @@ export function MarinasPage() {
 
   return (
     <>
+      <title>Marinas · Slipways</title>
       <section className="hero">
         <h1>Marinas</h1>
         <p className="hero-lead">Häfen und Marinas an Flüssen, Seen und Kanälen, mit den Slipanlagen, die zu ihnen gehören.</p>
