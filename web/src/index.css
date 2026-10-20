@@ -191,3 +191,39 @@ h1 {
   background: var(--surface);
   border-left: 4px solid var(--accent);
 }
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.legal {
+  max-width: 760px;
+}
+
+.legal h2 {
+  margin: 1.5rem 0 0.5rem;
+  font-size: 1.15rem;
+}
+
+.legal address {
+  font-style: normal;
+}
+
+.faq dt {
+  margin-top: 0.75rem;
+  font-weight: 600;
+}
+
+.faq dd {
+  margin: 0;
+}
+
+.placeholder {
+  padding: 0 0.2rem;
+  color: #000;
+  background: #ffe08a;
+  border-radius: 3px;
+}

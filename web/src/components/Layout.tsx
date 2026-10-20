@@ -18,6 +18,11 @@ export function Layout() {
         <Outlet />
       </main>
       <footer className="footer muted">
+        <nav className="footer-links">
+          <Link to="/impressum">Impressum</Link>
+          <Link to="/datenschutz">Datenschutz</Link>
+          <Link to="/support">Support</Link>
+        </nav>
         Kartendaten ©{' '}
         <a href="https://www.openstreetmap.org/copyright">OpenStreetMap-Mitwirkende</a> (ODbL) · Pegelstände{' '}
         <a href="https://www.pegelonline.wsv.de/">PEGELONLINE</a> der WSV (DL-DE-&gt;Zero-2.0)
