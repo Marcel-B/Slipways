@@ -40,7 +40,7 @@ struct InfoView: View {
             }
 
             Section("Lizenz") {
-                Text("© 2019–2026 Marcel Benders. Die App steht unter der PolyForm Strict License 1.0.0: Nutzen ist erlaubt, Weitergeben, Ändern und kommerzielle Nutzung nur nach Rückfrage. Die Daten aus OpenStreetMap (ODbL) und PEGELONLINE (DL-DE->Zero-2.0) stehen unter ihren eigenen Lizenzen.")
+                Text("© 2019–2026 Marcel Benders. Quellcode unter der PolyForm Strict License 1.0.0. Nutzung über persönliche, nicht-kommerzielle Zwecke hinaus nur nach Rückfrage. Die Daten aus OpenStreetMap (ODbL) und PEGELONLINE (DL-DE->Zero-2.0) stehen unter ihren eigenen Lizenzen.")
                     .font(.subheadline)
                 Link(destination: Links.licence) { Label("PolyForm Strict License 1.0.0", systemImage: "doc.text") }
                 Link(destination: Links.licenceContact) { Label("slipways@marcelbenders.com", systemImage: "envelope") }

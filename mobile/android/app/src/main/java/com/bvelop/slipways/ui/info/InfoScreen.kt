@@ -42,8 +42,8 @@ fun InfoScreen() {
 
             Heading("Lizenz")
             Text(
-                "© 2019–2026 Marcel Benders. Die App steht unter der PolyForm Strict License 1.0.0: Nutzen ist erlaubt, " +
-                    "Weitergeben, Ändern und kommerzielle Nutzung nur nach Rückfrage. Die Daten aus OpenStreetMap (ODbL) " +
+                "© 2019–2026 Marcel Benders. Quellcode unter der PolyForm Strict License 1.0.0. Nutzung über persönliche, " +
+                    "nicht-kommerzielle Zwecke hinaus nur nach Rückfrage. Die Daten aus OpenStreetMap (ODbL) " +
                     "und PEGELONLINE (DL-DE->Zero-2.0) stehen unter ihren eigenen Lizenzen.",
             )
             LinkText("PolyForm Strict License 1.0.0", Links.LICENCE)

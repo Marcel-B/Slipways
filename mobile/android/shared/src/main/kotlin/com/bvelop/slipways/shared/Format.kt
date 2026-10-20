@@ -88,7 +88,7 @@ object Links {
     const val SUPPORT = "https://slipways.de/support"
     const val OSM_COPYRIGHT = "https://www.openstreetmap.org/copyright"
     const val PEGELONLINE = "https://www.pegelonline.wsv.de/"
-    const val LICENCE = "https://polyformproject.org/licenses/strict/1.0.0"
+    const val LICENCE = "https://github.com/Marcel-B/Slipways/blob/master/LICENSE"
     const val LICENCE_CONTACT = "mailto:slipways@marcelbenders.com"
 
     /** Required next to every list or page with imported entries. */
