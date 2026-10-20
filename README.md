@@ -177,6 +177,18 @@ dotnet ef migrations add <Name> --project src/Slipways.Infrastructure --startup-
 
 Die Web-Oberfläche nennt die Quellen im Seitenfuß. Die ausführliche Recherche zu weiteren offenen Quellen (OSM, eHYD, BAFU, Rijkswaterstaat u. a.) steht in [`docs/datenquellen.md`](docs/datenquellen.md). Für den Import von Slipanlagen und Marinas aus OpenStreetMap gilt zusätzlich: Die ODbL verlangt Namensnennung, und wer eine Datenbank mit OSM-Daten weitergibt, muss sie unter ODbL weitergeben (Share-Alike). Importierte Einträge tragen deshalb `Source = osm` und ihr OSM-Element und bleiben von den eigenen Daten getrennt: Der Import kopiert keine OSM-Werte in eigene Einträge, sondern hinterlegt dort höchstens das OSM-Element. Die API liefert bei Slipanlagen und Marinas `source` (`manual` oder `osm`) und, falls vorhanden, `osmElement` (z. B. `node/123`) mit.
 
+## Lizenz
+
+Slipways ist **source-available**, aber nicht Open Source im Sinne der OSI: Der Code ist öffentlich einsehbar, jede weitere Nutzung braucht eine Erlaubnis. Es gilt die [PolyForm Strict License 1.0.0](LICENSE).
+
+- **Erlaubt ohne Rückfrage:** Code lesen, lokal ausprobieren und für nicht-kommerzielle, persönliche Zwecke nutzen (Lernen, Testen, Hobby).
+- **Nur nach Rückfrage:** kommerzielle Nutzung, Änderungen weitergeben, Forks oder Kopien veröffentlichen, eine eigene Instanz öffentlich betreiben, Teile in andere Projekte übernehmen.
+- **Anfragen** an Marcel Benders, slipways@marcelbenders.com. Eine Erlaubnis gilt nur schriftlich.
+
+Die eigenen Daten (von Hand erfasste Slipanlagen, Marinas und Motorservices mit `Source = manual`) gehören ebenfalls dazu. Nicht unter diese Lizenz fallen die Daten Dritter: OpenStreetMap-Daten bleiben unter ODbL 1.0, PEGELONLINE-Daten unter DL-DE->Zero-2.0 (siehe „Datenquellen und Lizenzen“). Abhängigkeiten behalten ihre eigenen Lizenzen.
+
+Beiträge (Pull Requests) sind willkommen; wer beiträgt, erklärt sich damit einverstanden, dass der Beitrag unter dieser Lizenz steht und Marcel Benders ihn auch anders lizenzieren darf.
+
 ## Betrieb
 
 Die Produktion läuft auf slipways.de (im Tailnet `slipways-1`) mit Caddy für HTTPS ([`deploy/README.md`](deploy/README.md#https-mit-eigener-domain)). Eine Test-Stage läuft auf Proxmox in einem LXC mit Tailscale und nächtlicher Nextcloud-Sicherung. Beide spielen jeden neuen Stand auf `master` selbst ein (siehe [`deploy/README.md`](deploy/README.md)).
