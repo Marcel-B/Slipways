@@ -7,8 +7,11 @@ import type { Marina } from '../api/types'
 import { LazyMarkerMap } from '../components/LazyMarkerMap'
 import { ListSkeleton } from '../components/ListSkeleton'
 import { marinaMarker } from '../components/mapMarkers'
+import { boundsOf, listedInView, type MapView } from '../components/mapView'
 import { Overview } from '../components/Overview'
 import { SearchField } from '../components/SearchField'
+import { ZoomHint } from '../components/ZoomHint'
+import { count } from './count'
 
 export function MarinasPage() {
   const [params, setParams] = useSearchParams()
@@ -18,6 +21,7 @@ export function MarinasPage() {
     data: marinas,
     error,
     isPending,
+    isPlaceholderData,
   } = useQuery({
     queryKey: ['marinas', deferredSearch],
     queryFn: ({ signal }) => api.marinas(deferredSearch, signal),
@@ -25,6 +29,12 @@ export function MarinasPage() {
   })
   const markers = useMemo(() => (marinas ?? []).map(marinaMarker), [marinas])
   const [hoveredId, setHoveredId] = useState<string | null>(null)
+  const [view, setView] = useState<MapView | null>(null)
+  // While a new search loads, the previous results stand in; they only count as hits once they belong to it.
+  const searching = deferredSearch !== '' && !isPlaceholderData
+  const listed = useMemo(() => marinas && listedInView(marinas, view, searching), [marinas, view, searching])
+  // A search moves the map to its hits, so they are on screen next to the list.
+  const focus = useMemo(() => (searching && marinas ? boundsOf(marinas) : null), [marinas, searching])
 
   return (
     <>
@@ -43,16 +53,30 @@ export function MarinasPage() {
           <>
             {error && <p className="error">Marinas konnten nicht geladen werden: {error.message}</p>}
             {isPending && <ListSkeleton />}
-            {marinas && (
+            {marinas && !listed && <ZoomHint total={marinas.length} singular="Marina" plural="Marinas" />}
+            {listed && (
               <>
-                <p className="list-count">{marinas.length} Marinas</p>
-                {marinas.length === 0 && <p className="empty">Keine Marina passt zu dieser Suche.</p>}
-                <MarinaList marinas={marinas} onHover={setHoveredId} />
+                <p className="list-count">
+                  {searching
+                    ? count(listed.length, 'Treffer', 'Treffer')
+                    : `${count(listed.length, 'Marina', 'Marinas')} im Kartenausschnitt`}
+                </p>
+                {listed.length === 0 && (
+                  <p className="empty">
+                    {searching
+                      ? 'Keine Marina passt zu dieser Suche.'
+                      : 'Hier liegt keine Marina. Verschiebe die Karte oder zoome heraus.'}
+                  </p>
+                )}
+                <MarinaList marinas={listed} onHover={setHoveredId} />
               </>
             )}
           </>
         }
-        map={<LazyMarkerMap markers={markers} cluster highlightedId={hoveredId} />}
+        initialView="map"
+        map={
+          <LazyMarkerMap markers={markers} cluster highlightedId={hoveredId} onViewChange={setView} focus={focus} />
+        }
       />
     </>
   )

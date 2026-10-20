@@ -82,9 +82,16 @@ describe('MarinasPage', () => {
 
     expect(await screen.findByRole('link', { name: /Yachthafen Kelheim/ })).toHaveAttribute('href', `/marinas/${marina.id}`)
     expect(screen.getByText('Donau · 93309 Kelheim')).toBeInTheDocument()
-    expect(screen.getByText('1 Marinas')).toBeInTheDocument()
+    expect(screen.getByText('1 Treffer')).toBeInTheDocument()
     expect(fetch).toHaveBeenCalledWith('/api/marinas?search=kelheim', expect.anything())
     expect(mapProps.at(-1)?.markers.map((m) => m.kind)).toEqual(['marina'])
+  })
+
+  it('asks to zoom in instead of listing all marinas of the country', async () => {
+    renderAt('/marinas', [marina])
+
+    expect(await screen.findByText('1 Marina auf der Karte.')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Yachthafen Kelheim/ })).not.toBeInTheDocument()
   })
 
   it('shows a marina with its slipways', async () => {
