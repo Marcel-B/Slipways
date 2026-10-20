@@ -112,6 +112,15 @@ public sealed class OsmImportTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Records_its_success_for_the_schedule()
+    {
+        await CreateImport().RunAsync(TestContext.Current.CancellationToken);
+
+        var state = await _db.JobStates.AsNoTracking().SingleAsync(TestContext.Current.CancellationToken);
+        Assert.Equal((OsmImportSchedule.JobName, _time.GetUtcNow().UtcDateTime, (DateTime?)null), (state.Name, state.LastSuccess, state.LastFailure));
+    }
+
+    [Fact]
     public async Task Links_manual_places_closer_than_50_m_instead_of_adding_them()
     {
         var kelheimBefore = await _db.Slipways.AsNoTracking().Include(s => s.Extras).SingleAsync(s => s.Id == KelheimId, TestContext.Current.CancellationToken);

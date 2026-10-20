@@ -17,6 +17,7 @@ public class SlipwaysDbContext(DbContextOptions<SlipwaysDbContext> options)
     public DbSet<Manufacturer> Manufacturers => Set<Manufacturer>();
     public DbSet<Service> Services => Set<Service>();
     public DbSet<Station> Stations => Set<Station>();
+    public DbSet<JobState> JobStates => Set<JobState>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
@@ -61,6 +62,12 @@ public class SlipwaysDbContext(DbContextOptions<SlipwaysDbContext> options)
         });
 
         builder.Entity<Service>(e => e.Property(x => x.Name).HasMaxLength(200));
+
+        builder.Entity<JobState>(e =>
+        {
+            e.HasKey(x => x.Name);
+            e.Property(x => x.Name).HasMaxLength(50);
+        });
 
         builder.Entity<Station>(e =>
         {
