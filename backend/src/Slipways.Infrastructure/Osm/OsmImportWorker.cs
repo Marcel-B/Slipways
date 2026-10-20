@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Slipways.Infrastructure.Monitoring;
 
 namespace Slipways.Infrastructure.Osm;
 
@@ -26,7 +27,11 @@ public sealed class OsmImportWorker(
             try
             {
                 await using var scope = scopes.CreateAsyncScope();
-                var result = await scope.ServiceProvider.GetRequiredService<OsmImport>().RunAsync(stoppingToken);
+                var result = await SlipwaysMetrics.MeasureJobAsync("osm", time,
+                    () => scope.ServiceProvider.GetRequiredService<OsmImport>().RunAsync(stoppingToken), stoppingToken);
+                Record("slipway", result.Slipways);
+                Record("marina", result.Marinas);
+                SlipwaysMetrics.OsmMissingElements.Set(result.Missing.Count);
                 logger.LogInformation(
                     "OpenStreetMap import finished: slipways {SlipwaysAdded} added, {SlipwaysUpdated} updated, {SlipwaysLinked} linked; " +
                     "marinas {MarinasAdded} added, {MarinasUpdated} updated, {MarinasLinked} linked",
@@ -46,5 +51,12 @@ public sealed class OsmImportWorker(
 
             await Task.Delay(wait, time, stoppingToken);
         }
+    }
+
+    private static void Record(string kind, OsmImportCounts counts)
+    {
+        SlipwaysMetrics.OsmImportChanges.WithLabels(kind, "added").Inc(counts.Added);
+        SlipwaysMetrics.OsmImportChanges.WithLabels(kind, "updated").Inc(counts.Updated);
+        SlipwaysMetrics.OsmImportChanges.WithLabels(kind, "linked").Inc(counts.Linked);
     }
 }

@@ -31,6 +31,7 @@ NEXTCLOUD_APP_PASSWORD="${NEXTCLOUD_APP_PASSWORD:-}"
 TAILSCALE="${TAILSCALE:-1}"                # 0: ohne Tailscale
 TS_AUTHKEY="${TS_AUTHKEY:-}"               # optional, sonst zeigt Tailscale einen Login-Link an
 TS_SERVE="${TS_SERVE:-0}"                  # 1: zusätzlich HTTPS über "tailscale serve"
+TS_METRICS="${TS_METRICS:-0}"              # 1: /metrics für Prometheus über "tailscale serve" auf Port 9464
 
 info() { echo -e "\e[1;34m==>\e[0m $*"; }
 fail() { echo -e "\e[1;31mFehler:\e[0m $*" >&2; exit 1; }
@@ -133,7 +134,7 @@ if [[ "$TAILSCALE" == 1 ]]; then
   # Das Skript aus dem gerade geklonten Stand nehmen, damit create-lxc.sh allein auf dem Host reicht
   TS_SCRIPT="$(mktemp)"
   pct exec "$CTID" -- cat /opt/slipways/deploy/proxmox/add-tailscale.sh > "$TS_SCRIPT"
-  CTID="$CTID" TS_AUTHKEY="$TS_AUTHKEY" TS_HOSTNAME="$CT_HOSTNAME" TS_SERVE="$TS_SERVE" bash "$TS_SCRIPT" \
+  CTID="$CTID" TS_AUTHKEY="$TS_AUTHKEY" TS_HOSTNAME="$CT_HOSTNAME" TS_SERVE="$TS_SERVE" TS_METRICS="$TS_METRICS" bash "$TS_SCRIPT" \
     || echo "Tailscale ließ sich nicht einrichten; später mit add-tailscale.sh nachholen."
   rm -f "$TS_SCRIPT"
 fi

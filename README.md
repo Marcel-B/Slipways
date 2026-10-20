@@ -89,6 +89,29 @@ overpass-api.de spricht nur noch TLS 1.3. .NET auf macOS kann das nur über das 
 
 Was beim Import noch offen ist, steht in [`docs/offene-punkte.md`](docs/offene-punkte.md).
 
+## Überwachung
+
+Die API liefert Messwerte für Prometheus unter `/metrics`, aber nur auf einem eigenen Port (`Monitoring:MetricsPort`, Standard 9464). Dieser Port beantwortet nichts anderes, und die übrigen Ports beantworten `/metrics` nicht. Entscheidend ist der Port, auf dem die Verbindung ankommt, nicht der `Host`-Header. Lokal: http://localhost:9464/metrics.
+
+| Messwert | Bedeutung |
+| --- | --- |
+| `slipways_job_runs_total{job, result}` | Läufe der Hintergrund-Jobs `gauges`, `shapes`, `osm`, nach `success`/`failure` |
+| `slipways_job_duration_seconds{job}` | Dauer der Läufe (Histogramm) |
+| `slipways_job_last_success_timestamp_seconds{job}` | Zeitpunkt des letzten erfolgreichen Laufs |
+| `slipways_gauge_water_levels_updated_total` | übernommene Wasserstände |
+| `slipways_osm_import_changes_total{kind, change}` | OSM-Import: `added`/`updated`/`linked` je `slipway`/`marina` |
+| `slipways_osm_missing_elements` | Einträge, deren OSM-Element der letzte Import nicht mehr fand |
+| `slipways_overpass_busy_responses_total` | „Overpass ausgelastet“, jeweils mit neuem Versuch |
+| `slipways_places{kind, source}` | Slipanlagen, Marinas und Pegel in der Datenbank (jede Minute gezählt) |
+| `slipways_database_size_bytes` | Größe der SQLite-Datei samt WAL |
+| `slipways_loki_lines_pushed_total`, `slipways_loki_lines_dropped_total{reason}` | Logzeilen an Loki bzw. verworfen (`queue_full`, `push_failed`) |
+| `http_requests_received_total`, `http_request_duration_seconds` | Anfragen nach Route-Vorlage, Methode und Statuscode (prometheus-net) |
+| `process_*`, `dotnet_*` | Prozess und Laufzeit, darunter `process_resident_memory_bytes` |
+
+Labels haben nur wenige feste Werte. Benutzer, Inhalte und IDs kommen nicht vor.
+
+Mit `Monitoring:Loki:Url` (z. B. `http://monitoring:3100`) schickt die API ihre Logzeilen zusätzlich an Loki, mit den Labels `app=slipways`, `host` (`Monitoring:Loki:Host`), `level` und `source` (`api`, `http`, `db`, `gauges`, `shapes`, `osm`, `http-client`). Die Zeilen werden alle 2 Sekunden gebündelt verschickt. Ist Loki nicht erreichbar, verwirft die API sie, statt zu warten. Das Konsolen-Log bleibt vollständig. Ohne Url ist der Versand aus. Einrichten im LXC: [`deploy/README.md`](deploy/README.md#überwachung).
+
 ## Entwickeln ohne Docker
 
 Backend (braucht nur das .NET 10 SDK; die Datenbank `slipways.db` entsteht im Arbeitsverzeichnis):

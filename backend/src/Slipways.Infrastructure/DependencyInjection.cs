@@ -4,9 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Slipways.Infrastructure.Gauges;
 using Slipways.Infrastructure.Identity;
+using Slipways.Infrastructure.Monitoring;
 using Slipways.Infrastructure.Osm;
 using Slipways.Infrastructure.Persistence;
 using Slipways.Infrastructure.Shapes;
@@ -66,6 +68,22 @@ public static class DependencyInjection
             .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler { AutomaticDecompression = DecompressionMethods.All });
         services.AddScoped<OsmImport>();
         services.AddHostedService<OsmImportWorker>();
+
+        services.AddOptions<MonitoringOptions>().Bind(configuration.GetSection(MonitoringOptions.SectionName));
+        services.AddHostedService<CatalogMetricsWorker>();
+        if (configuration[$"{MonitoringOptions.SectionName}:Loki:Url"] is { Length: > 0 } lokiUrl)
+        {
+            services.AddSingleton<LokiLogQueue>();
+            services.AddSingleton<ILoggerProvider, LokiLoggerProvider>();
+            services.AddHttpClient(LokiShipper.HttpClientName, http =>
+                {
+                    http.BaseAddress = new Uri(lokiUrl);
+                    http.Timeout = TimeSpan.FromSeconds(10);
+                    http.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgent);
+                })
+                .RemoveAllLoggers();
+            services.AddHostedService<LokiShipper>();
+        }
 
         return services;
     }

@@ -22,7 +22,8 @@ Migrationen werden mit `dotnet ef migrations add <Name> --project src/Slipways.I
 - Datenbankneutral bleiben: keine providerspezifischen SQL- oder Spatial-Features. Geometrie wird im Speicher gerechnet (z. B. `WaterLocator`).
 - Hintergrund-Jobs für externe Quellen folgen einem Muster: `…Options` (eigener Konfigurationsabschnitt mit `Enabled`, `BaseUrl`, `Interval`), typisierter `…Client`, ein `…Sync`/`…Import` mit dem Abgleich und ein `…Worker`. Beispiele: `Gauges/` (PEGELONLINE), `Shapes/` (Nominatim), `Osm/` (Overpass). Clients rufen externe Dienste nie selbst auf.
 - Externe Dienste schonen: eigener User-Agent (`DependencyInjection.UserAgent`), keine parallelen Anfragen, Pausen und Backoff gemäß den Nutzungsregeln.
-- Tests sind xUnit v3 in `backend/tests/Slipways.Api.Tests`: In-Memory-SQLite mit echten Seed-Daten, externe Dienste über einen Stub-`HttpMessageHandler` mit kleinen JSON-Fixtures (Vorlage `GaugeSyncTests`). Für jeden neuen Job in `SlipwaysApiFactory` `…:Enabled=false` setzen.
+- Messwerte stehen in `Infrastructure/Monitoring/SlipwaysMetrics.cs`: Präfix `slipways_`, Zähler auf `_total`, Dauern in `_seconds`, Labels nur mit wenigen festen Werten, nie Benutzer, Inhalte oder IDs (`/metrics` hat keinen Login). Ein neuer Job läuft über `SlipwaysMetrics.MeasureJobAsync` und kommt in `SlipwaysMetrics.Jobs`. Neue Messwerte in die Tabelle im README-Abschnitt „Überwachung“ eintragen.
+- Tests sind xUnit v3 in `backend/tests/Slipways.Api.Tests`: In-Memory-SQLite mit echten Seed-Daten, externe Dienste über einen Stub-`HttpMessageHandler` mit kleinen JSON-Fixtures (Vorlage `GaugeSyncTests`). Für jeden neuen Job in `SlipwaysApiFactory` `…:Enabled=false` setzen. Messwerte sind statisch und prozessweit; Tests prüfen deshalb Differenzen oder eigene Label-Werte.
 
 ## Lizenzen
 

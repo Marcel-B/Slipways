@@ -2,6 +2,17 @@
 
 Was bei einer Umsetzung offen geblieben ist und noch eine Entscheidung oder Arbeit braucht. Erledigte Punkte hier löschen.
 
+## Überwachung (Branch `feature/monitoring`, 20.10.2026)
+
+Beschrieben in README („Überwachung“) und `deploy/README.md` („Überwachung“).
+
+1. **Im LXC noch nicht eingerichtet.** `TS_METRICS=1 bash add-tailscale.sh`, das Prometheus-Ziel `slipways.yml` im Monitoring-LXC und `SLIPWAYS_LOKI_URL` in `/opt/slipways/.env` fehlen noch. Danach prüfen: `slipways` als `up` unter `http://monitoring:9090/targets`, Zeilen mit `{app="slipways"}` in Grafana.
+2. **Ungetestet:** ob `tailscale serve --https=9464` neben Dockers Bindung an `127.0.0.1:9464` startet (sollte, andere Adresse), und ob der API-Container `monitoring` per MagicDNS auflöst. Wenn nicht, die 100.x-Adresse nehmen (siehe `deploy/README.md`).
+3. **Tailscale-Policy.** Slipways ist öffentlich und im Tailnet. Vorschlag in `deploy/README.md`: `tag:slipways`, nur `tcp:3100` zu `monitoring`. Die aktuelle Policy kenne ich nicht. Das LAN trennt das nicht (eigenes VLAN oder Proxmox-Firewall).
+4. **Steckbrief im YuE-UI-Repo.** Die Tabelle „Angebundene Apps“ in `deploy/monitoring/` von `Marcel-B/YuE-UI` um Slipways ergänzen, sobald es läuft.
+5. **Dashboard fehlt.** Ein `Slipways`-Dashboard (JSON in `deploy/monitoring/grafana/dashboards/` im YuE-UI-Repo) ist noch nicht gebaut. Sinnvoll: Alter des letzten Erfolgs je Job, Fehlläufe, Anfragen und 5xx je Route, Speicher, Einträge nach Quelle.
+6. **Alarme** (z. B. `time() - slipways_job_last_success_timestamp_seconds{job="gauges"} > 3600`) gibt es noch nicht. Der Steckbrief nennt auch keinen Alertmanager.
+
 ## OpenStreetMap-Import (Branch `feature/osm-import`, 20.10.2026)
 
 Der Import selbst ist im README beschrieben (Abschnitt „Slipanlagen und Marinas aus OpenStreetMap“), der Code liegt in `backend/src/Slipways.Infrastructure/Osm/`.

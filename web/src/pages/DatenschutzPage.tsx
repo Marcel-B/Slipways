@@ -27,7 +27,10 @@ export function DatenschutzPage() {
       </p>
       <p>
         Wir führen keine Zugriffsprotokolle. Technische Fehlermeldungen des Servers können im Einzelfall die IP-Adresse enthalten; sie
-        werden in begrenztem Umfang gespeichert und fortlaufend automatisch überschrieben.
+        werden in begrenztem Umfang gespeichert und fortlaufend automatisch überschrieben. Eine Kopie der Server-Meldungen liegt auf
+        unserem eigenen Überwachungsserver, um Störungen zu erkennen, und wird dort nach 30 Tagen automatisch gelöscht. Für die
+        Überwachung erfassen wir außerdem Kennzahlen des Servers (z. B. Anzahl und Dauer der Anfragen, Speicherverbrauch), die keine
+        personenbezogenen Daten enthalten.
       </p>
       <p>
         Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO. Unser berechtigtes Interesse liegt darin, die Website und die Apps

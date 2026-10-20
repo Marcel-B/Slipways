@@ -21,6 +21,7 @@ public sealed class SlipwaysApiFactory : WebApplicationFactory<Program>, IAsyncL
         builder.UseSetting("Pegelonline:Enabled", "false");
         builder.UseSetting("Nominatim:Enabled", "false");
         builder.UseSetting("Osm:Enabled", "false");
+        builder.UseSetting("Monitoring:CatalogMetricsEnabled", "false");
 
         builder.ConfigureServices(services =>
         {

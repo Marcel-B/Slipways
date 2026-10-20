@@ -66,6 +66,52 @@ CTID=<CTID> TS_AUTHKEY=tskey-auth-… bash add-tailscale.sh
 
 Mehrmals aufrufen schadet nicht. Tailscale startet ohne `--accept-routes`, damit ein Subnet-Router im Tailnet das LAN nicht umleitet.
 
+## Überwachung
+
+Prometheus und Loki laufen im gemeinsamen Monitoring-LXC `monitoring` (Steckbrief und Quelle: [`Marcel-B/YuE-UI` → `deploy/monitoring/`](https://github.com/Marcel-B/YuE-UI/tree/main/deploy/monitoring)). Was die API misst, steht im [README](../README.md#überwachung).
+
+**Messwerte.** Die API gibt `/metrics` nur auf `127.0.0.1:9464` im LXC frei (`SLIPWAYS_METRICS_PORT`). Ins Tailnet bringt es `tailscale serve`, mit HTTPS und nur für Geräte im Tailnet:
+
+```bash
+# in der Proxmox-Shell als root
+CTID=<CTID> TS_METRICS=1 bash add-tailscale.sh
+```
+
+Danach im Monitoring-LXC das Ziel anlegen. Prometheus liest die Datei binnen einer Minute:
+
+```yaml
+# /opt/monitoring/prometheus/targets/slipways.yml
+- targets: [slipways.<tailnet>.ts.net:9464]
+  labels:
+    app: slipways
+    __scheme__: https
+    __metrics_path__: /metrics
+```
+
+Prüfen unter `http://monitoring:9090/targets`: Dort muss `slipways` als `up` stehen.
+
+**Logs.** In `/opt/slipways/.env` eintragen und den Stack neu starten (`docker compose up -d`):
+
+```
+SLIPWAYS_LOKI_URL=http://monitoring:3100
+SLIPWAYS_MONITORING_HOST=proxmox
+```
+
+Die API läuft im Docker-Container. Ob sie den Tailscale-Namen `monitoring` auflösen kann, hängt davon ab, welchen DNS-Server Docker aus dem LXC übernimmt. Kommen keine Zeilen an (`slipways_loki_lines_dropped_total{reason="push_failed"}` steigt, im Log steht „Loki is unreachable“), statt des Namens die 100.x-Adresse von `monitoring` eintragen (`tailscale ip -4` im Monitoring-LXC).
+
+**Absichern.** Slipways ist von außen erreichbar und zugleich im Tailnet. Damit ein übernommener Slipways-Container nicht das ganze Tailnet erreicht, sollte Slipways in der Tailscale-Policy einen Tag bekommen und nur zu Loki dürfen. Eigene Geräte, auch `monitoring`, dürfen weiter zu Slipways:
+
+```json
+"tagOwners": { "tag:slipways": ["autogroup:admin"] },
+"hosts":     { "monitoring": "100.x.y.z" },
+"grants": [
+  { "src": ["autogroup:member"], "dst": ["*"],          "ip": ["*"] },
+  { "src": ["tag:slipways"],     "dst": ["monitoring"], "ip": ["tcp:3100"] }
+]
+```
+
+Den Tag vergibt `tailscale up --advertise-tags=tag:slipways` im LXC, oder ein Auth-Key mit Tag. Vom Heimnetz trennt das den LXC nicht, er hängt über `vmbr0` direkt im LAN. Dafür braucht es ein eigenes VLAN oder eine Firewall-Regel in Proxmox.
+
 ## Auto-Update
 
 Der systemd-Timer `slipways-update.timer` startet alle 5 Minuten `lxc/slipways-update.sh`. Gibt es auf dem Branch neue Commits, holt das Skript sie, baut die Images neu (mit frischen Basis-Images), sichert die Datenbank lokal nach `/var/lib/slipways/backups/pre-update.db` und startet den Stack neu. Die API spielt Migrationen beim Start selbst ein.

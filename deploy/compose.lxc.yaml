@@ -14,9 +14,14 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: ${SLIPWAYS_ENVIRONMENT:-Production}
       TZ: Europe/Berlin
-    # Nur lokal für Health-Check und Updater; von außen geht es über das Web unter /api
+      # Logs an Loki, z. B. SLIPWAYS_LOKI_URL=http://monitoring:3100; leer: aus
+      Monitoring__Loki__Url: ${SLIPWAYS_LOKI_URL:-}
+      Monitoring__Loki__Host: ${SLIPWAYS_MONITORING_HOST:-proxmox}
+    # Nur lokal für Health-Check und Updater; von außen geht es über das Web unter /api.
+    # /metrics nur lokal; ins Tailnet bringt es "tailscale serve" (deploy/proxmox/add-tailscale.sh, TS_METRICS=1).
     ports: !override
       - "127.0.0.1:${SLIPWAYS_API_PORT:-5080}:8080"
+      - "127.0.0.1:${SLIPWAYS_METRICS_PORT:-9464}:9464"
     restart: unless-stopped
     logging: *logging
 

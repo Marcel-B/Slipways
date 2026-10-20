@@ -16,5 +16,7 @@ COPY --from=build /app .
 # Volume mount points for the SQLite database and data protection keys, writable by the non-root app user.
 RUN mkdir /data /keys && chown $APP_UID /data /keys
 USER $APP_UID
-EXPOSE 8080
+# 8080 for the app, 9464 only for /metrics (see Monitoring:MetricsPort)
+ENV ASPNETCORE_HTTP_PORTS="8080;9464"
+EXPOSE 8080 9464
 ENTRYPOINT ["dotnet", "Slipways.Api.dll"]
