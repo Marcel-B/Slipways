@@ -41,6 +41,20 @@ Alle über Umgebungsvariablen beim Aufruf:
 
 Im LXC liegt alles unter `/opt/slipways`. Die Einstellungen des Stacks stehen in `/opt/slipways/.env` (nur root lesbar). Die Datenbank ist die SQLite-Datei `slipways.db` im Docker-Volume `slipways_api-data`. `deploy/compose.lxc.yaml` ergänzt `compose.yaml` für den Betrieb: Production-Modus (ohne Scalar), API nur lokal auf `127.0.0.1:5080`, Neustart nach einem Reboot.
 
+## HTTPS mit eigener Domain
+
+Für einen öffentlichen Server mit eigener Domain (z. B. ein Hetzner-Cloud-Server mit Debian) steht Caddy vor der Web-App: `deploy/compose.https.yaml` startet ihn auf Port 80 und 443, `deploy/Caddyfile` leitet alles an die Web-App weiter. Caddy holt das Zertifikat selbst bei Let's Encrypt und erneuert es, HTTP und `www.` leiten auf `https://<domain>` um. Die Web-App ist dann nur noch über Caddy erreichbar.
+
+1. Beim Domain-Anbieter einen A-Eintrag (IPv4) und einen AAAA-Eintrag (IPv6) für die Domain und für `www` auf den Server setzen.
+2. In `/opt/slipways/.env` die Datei ergänzen und die Domain eintragen:
+   ```
+   COMPOSE_FILE=compose.yaml:deploy/compose.lxc.yaml:deploy/compose.https.yaml
+   SLIPWAYS_DOMAIN=slipways.de
+   ```
+3. `cd /opt/slipways && docker compose up -d --remove-orphans`, das Zertifikat ist nach einigen Sekunden da (`docker compose logs caddy`).
+
+Die Zertifikate liegen im Volume `slipways_caddy-data`. Ports 80 und 443 (TCP, für HTTP/3 auch UDP 443) müssen von außen erreichbar sein.
+
 ## Tailscale
 
 Tailscale läuft direkt im LXC, kein Sidecar-Container. `create-lxc.sh` reicht dafür `/dev/net/tun` durch und ruft `proxmox/add-tailscale.sh` auf. Für einen bestehenden Container, auch nachträglich:
