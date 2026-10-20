@@ -393,6 +393,71 @@ svg {
   outline-offset: 2px;
 }
 
+/* Slim bar with title, search and a link, used where the map should start high. */
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.toolbar h1 {
+  width: 100%;
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.toolbar .search {
+  flex: 1;
+  max-width: none;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.toolbar .search input {
+  padding-top: 0.7rem;
+  padding-bottom: 0.7rem;
+}
+
+.toolbar-link {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+  align-self: stretch;
+  padding: 0 0.85rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+  white-space: nowrap;
+  background: var(--accent-soft);
+  border-radius: 12px;
+}
+
+.toolbar-link:hover {
+  text-decoration: underline;
+}
+
+/* On phones the link shows only its icon. */
+@media (max-width: 600px) {
+  .toolbar-link span {
+    display: none;
+  }
+}
+
+@media (min-width: 601px) {
+  .toolbar-link {
+    padding: 0 1rem;
+  }
+
+  .toolbar h1 {
+    width: auto;
+    font-size: 1.35rem;
+    white-space: nowrap;
+  }
+}
+
 /* List and map */
 
 .overview {
@@ -607,6 +672,15 @@ a.item:hover .item-chevron {
 @media (min-width: 900px) {
   .map-panel .map {
     height: max(420px, calc(100vh - 15rem));
+  }
+
+  /* The search bar is about 4rem lower than a hero band. */
+  .toolbar + .overview .map-panel .map {
+    height: max(420px, calc(100vh - 11rem));
+  }
+
+  .toolbar + .overview .list-panel .item-list {
+    max-height: calc(100vh - 14rem);
   }
 }
 
@@ -1092,29 +1166,6 @@ a.item:hover .item-chevron {
 }
 
 /* Contributions from users */
-
-.hero-link {
-  display: inline-flex;
-  gap: 0.4rem;
-  align-items: center;
-  margin-top: 0.75rem;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #fff;
-  text-decoration: none;
-  opacity: 0.9;
-}
-
-.hero-link:hover {
-  text-decoration: underline;
-  opacity: 1;
-}
-
-@media (min-width: 900px) {
-  .hero-link {
-    grid-column: 1;
-  }
-}
 
 .fact-value {
   display: flex;
