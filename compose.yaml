@@ -1,0 +1,45 @@
+# Local development stack: docker compose up --build
+# Web: http://localhost:8080  API docs: http://localhost:5080/scalar
+name: slipways
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: slipways
+      POSTGRES_USER: slipways
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-slipways}
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U slipways -d slipways"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: ./backend
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Slipways: Host=db;Port=5432;Database=slipways;Username=slipways;Password=${POSTGRES_PASSWORD:-slipways};GSS Encryption Mode=Disable
+      DataProtection__KeysPath: /keys
+    ports:
+      - "5080:8080"
+    volumes:
+      - api-keys:/keys
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build: ./web
+    ports:
+      - "8080:8080"
+    depends_on:
+      - api
+
+volumes:
+  db-data:
+  api-keys:

@@ -1,0 +1,42 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Slipways.Infrastructure.Identity;
+using Slipways.Infrastructure.Persistence;
+
+namespace Slipways.Infrastructure;
+
+public static class DependencyInjection
+{
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    {
+        var connectionString = configuration.GetConnectionString("Slipways")
+            ?? throw new InvalidOperationException("Connection string 'Slipways' is not configured.");
+
+        services.AddDbContext<SlipwaysDbContext>(options => options.UseNpgsql(connectionString));
+
+        services.AddIdentityApiEndpoints<AppUser>(options =>
+            {
+                options.User.RequireUniqueEmail = true;
+                options.Password.RequiredLength = 8;
+            })
+            .AddEntityFrameworkStores<SlipwaysDbContext>();
+
+        return services;
+    }
+
+    /// <summary>Applies pending migrations (or creates the schema for non-relational test setups) and seeds an empty database.</summary>
+    public static async Task InitializeDatabaseAsync(this IServiceProvider services, CancellationToken cancellationToken = default)
+    {
+        await using var scope = services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<SlipwaysDbContext>();
+
+        if (db.Database.IsNpgsql())
+            await db.Database.MigrateAsync(cancellationToken);
+        else
+            await db.Database.EnsureCreatedAsync(cancellationToken);
+
+        await SeedData.SeedAsync(db, cancellationToken);
+    }
+}
