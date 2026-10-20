@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { Anchor, ArrowLeft, ChevronRight, Ruler, Sailboat, Waves } from 'lucide-react'
 import { Link, useParams } from 'react-router'
 import { api, ApiError } from '../api/client'
 import type { WaterDetails } from '../api/types'
@@ -61,23 +62,39 @@ export function WaterDetailsPage() {
 
   return (
     <article className="details">
-      <p>
-        <Link to="/waters">← Alle Gewässer</Link>
-      </p>
-      <h1>{water.name}</h1>
-      <dl className="facts">
-        {water.shortname && water.shortname.toLowerCase() !== water.name.toLowerCase() && (
-          <>
-            <dt>Kurzname</dt>
-            <dd>{water.shortname}</dd>
-          </>
-        )}
-        <dt>Slipanlagen</dt>
-        <dd>{water.slipways.length}</dd>
-        <dt>Pegel</dt>
-        <dd>{water.stations.length}</dd>
-        <dt>Marinas</dt>
-        <dd>{water.marinas.length}</dd>
+      <Link to="/waters" className="back">
+        <ArrowLeft size={16} /> Alle Gewässer
+      </Link>
+      <header className="details-head">
+        <span className="details-icon details-icon-water">
+          <Waves size={26} />
+        </span>
+        <div>
+          <h1>{water.name}</h1>
+          {water.shortname && water.shortname.toLowerCase() !== water.name.toLowerCase() && (
+            <p className="muted details-sub">Kurzname {water.shortname}</p>
+          )}
+        </div>
+      </header>
+      <dl className="stats">
+        <div>
+          <dt>
+            <Sailboat size={16} /> Slipanlagen
+          </dt>
+          <dd>{water.slipways.length}</dd>
+        </div>
+        <div>
+          <dt>
+            <Ruler size={16} /> Pegel
+          </dt>
+          <dd>{water.stations.length}</dd>
+        </div>
+        <div>
+          <dt>
+            <Anchor size={16} /> Marinas
+          </dt>
+          <dd>{water.marinas.length}</dd>
+        </div>
       </dl>
 
       {water.bounds ? (
@@ -101,7 +118,7 @@ export function WaterDetailsPage() {
               .filter(([kind]) => mapMarkers.some((m) => m.kind === kind))
               .map(([kind, label]) => (
                 <li key={kind}>
-                  <span className="legend-dot" style={{ background: markerColors[kind].fillColor }} />
+                  <span className="legend-dot" style={{ background: markerColors[kind].color }} />
                   {label}
                 </li>
               ))}
@@ -112,14 +129,20 @@ export function WaterDetailsPage() {
       )}
 
       {water.slipways.length > 0 && (
-        <section>
+        <section className="panel">
           <h2>{count(water.slipways.length, 'Slipanlage', 'Slipanlagen')}</h2>
           <ul className="item-list">
             {water.slipways.map((s) => (
               <li key={s.id}>
-                <Link to={`/slipways/${s.id}`}>
-                  <strong>{s.name}</strong>
-                  <span className="muted">{[s.postalCode, s.city].filter(Boolean).join(' ')}</span>
+                <Link to={`/slipways/${s.id}`} className="item">
+                  <span className="item-icon">
+                    <Sailboat size={18} />
+                  </span>
+                  <span className="item-text">
+                    <strong>{s.name}</strong>
+                    <span className="muted">{[s.postalCode, s.city].filter(Boolean).join(' ')}</span>
+                  </span>
+                  <ChevronRight size={18} className="item-chevron" />
                 </Link>
               </li>
             ))}
@@ -128,7 +151,7 @@ export function WaterDetailsPage() {
       )}
 
       {water.stations.length > 0 && (
-        <section>
+        <section className="panel">
           <h2>{count(water.stations.length, 'Pegel', 'Pegel')}</h2>
           <div className="table-scroll">
             <table className="table">
@@ -156,12 +179,16 @@ export function WaterDetailsPage() {
       )}
 
       {water.marinas.length > 0 && (
-        <section>
+        <section className="panel">
           <h2>{count(water.marinas.length, 'Marina', 'Marinas')}</h2>
           <ul className="item-list">
             {water.marinas.map((m) => (
               <li key={m.id}>
-                <div>
+                <div className="item">
+                  <span className="item-icon item-icon-marina">
+                    <Anchor size={18} />
+                  </span>
+                  <span className="item-text">
                   <strong>
                     {m.url ? (
                       <a href={m.url} target="_blank" rel="noreferrer">
@@ -172,6 +199,7 @@ export function WaterDetailsPage() {
                     )}
                   </strong>
                   <span className="muted">{[m.street, [m.postalCode, m.city].filter(Boolean).join(' ')].filter(Boolean).join(', ')}</span>
+                  </span>
                 </div>
               </li>
             ))}

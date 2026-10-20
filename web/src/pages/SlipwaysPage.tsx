@@ -1,9 +1,14 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { useDeferredValue } from 'react'
+import { ChevronRight, Sailboat } from 'lucide-react'
+import { memo, useDeferredValue, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { api } from '../api/client'
+import type { SlipwaySummary } from '../api/types'
 import { LazyMarkerMap } from '../components/LazyMarkerMap'
+import { ListSkeleton } from '../components/ListSkeleton'
 import { slipwayMarker } from '../components/mapMarkers'
+import { Overview } from '../components/Overview'
+import { SearchField } from '../components/SearchField'
 
 export function SlipwaysPage() {
   const [params, setParams] = useSearchParams()
@@ -18,42 +23,69 @@ export function SlipwaysPage() {
     queryFn: ({ signal }) => api.slipways(deferredSearch, signal),
     placeholderData: keepPreviousData,
   })
+  const markers = useMemo(() => (slipways ?? []).map(slipwayMarker), [slipways])
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
 
   return (
-    <div className="overview">
-      <section className="panel">
-        <h1>Slipanlagen</h1>
-        <input
-          type="search"
-          className="search"
-          placeholder="Nach Name, Ort oder Gewässer suchen"
-          aria-label="Slipanlagen durchsuchen"
+    <>
+      <section className="hero">
+        <h1>Slipanlagen finden</h1>
+        <p className="hero-lead">
+          Slipanlagen an Flüssen, Seen und Kanälen in Deutschland, mit aktuellen Pegelständen von PEGELONLINE.
+        </p>
+        <SearchField
           value={search}
-          onChange={(e) => setParams(e.target.value ? { q: e.target.value } : {}, { replace: true })}
+          onChange={(value) => setParams(value ? { q: value } : {}, { replace: true })}
+          placeholder="Nach Name, Ort oder Gewässer suchen"
+          label="Slipanlagen durchsuchen"
         />
-        {error && <p className="error">Slipanlagen konnten nicht geladen werden: {error.message}</p>}
-        {isPending && <p className="muted">Lade…</p>}
-        {slipways && (
+      </section>
+      <Overview
+        list={
           <>
-            <p className="muted">{slipways.length} Slipanlagen</p>
-            <ul className="item-list">
-              {slipways.map((s) => (
-                <li key={s.id}>
-                  <Link to={`/slipways/${s.id}`}>
-                    <strong>{s.name}</strong>
-                    <span className="muted">
-                      {[s.water?.name, [s.postalCode, s.city].filter(Boolean).join(' ')].filter(Boolean).join(' · ')}
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            {error && <p className="error">Slipanlagen konnten nicht geladen werden: {error.message}</p>}
+            {isPending && <ListSkeleton />}
+            {slipways && (
+              <>
+                <p className="list-count">{slipways.length} Slipanlagen</p>
+                {slipways.length === 0 && <p className="empty">Keine Slipanlage passt zu dieser Suche.</p>}
+                <SlipwayList slipways={slipways} onHover={setHoveredId} />
+              </>
+            )}
           </>
-        )}
-      </section>
-      <section className="map-panel">
-        <LazyMarkerMap markers={(slipways ?? []).map(slipwayMarker)} />
-      </section>
-    </div>
+        }
+        map={<LazyMarkerMap markers={markers} cluster highlightedId={hoveredId} />}
+      />
+    </>
   )
 }
+
+// Thousands of entries: memoised, so hovering one (which re-renders the page for the map) does not re-render the list.
+const SlipwayList = memo(function SlipwayList({
+  slipways,
+  onHover,
+}: {
+  slipways: SlipwaySummary[]
+  onHover: (id: string | null) => void
+}) {
+  return (
+    <ul className="item-list">
+      {slipways.map((s) => (
+        <li key={s.id} onMouseEnter={() => onHover(s.id)} onMouseLeave={() => onHover(null)}>
+          <Link to={`/slipways/${s.id}`} className="item">
+            <span className="item-icon">
+              <Sailboat size={18} />
+            </span>
+            <span className="item-text">
+              <strong>{s.name}</strong>
+              <span className="muted">
+                {[s.water?.name, [s.postalCode, s.city].filter(Boolean).join(' ')].filter(Boolean).join(' · ')}
+              </span>
+            </span>
+            <ChevronRight size={18} className="item-chevron" />
+          </Link>
+        </li>
+      ))}
+    </ul>
+  )
+})

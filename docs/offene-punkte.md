@@ -12,3 +12,7 @@ Der Import selbst ist im README beschrieben (Abschnitt „Slipanlagen und Marina
 4. **Karibische Niederlande.** Die Abfrage nutzt die Fläche `ISO3166-1=NL`, `admin_level=2` (Relation 2323309). Sie umfasst vermutlich auch Bonaire, Sint Eustatius und Saba, dann kämen ein paar karibische Einträge mit. Nicht geprüft; bei Bedarf nach Breitengrad filtern (alles südlich von 50° N bei NL verwerfen).
 5. **TLS im Container nicht geprüft.** overpass-api.de akzeptiert nur TLS 1.3. Auf macOS braucht .NET dafür `DOTNET_SYSTEM_NET_SECURITY_USENETWORKFRAMEWORK=1` (siehe README). Im Linux-Container (OpenSSL) sollte es ohne Zutun gehen, getestet ist das nicht. Nach dem ersten Deploy im Log auf „OpenStreetMap import finished“ bzw. „failed“ achten.
 6. **Schwelle für die Gewässerzuordnung.** 300 m zum vereinfachten Verlauf (`OsmImport.WaterDistance`) sind ein Schätzwert. Bei breiten Flüssen, deren Verlauf als Mittellinie vorliegt, kann das zu knapp sein, bei kleinen Seen neben großen Flüssen zu großzügig. Nach dem ersten vollen Import stichprobenartig prüfen.
+
+## Optik des Webs (PR #69, 20.10.2026)
+
+1. **Kartenstil.** Die Karte nutzt weiter die bunten OSM-Standardkacheln, auf denen die Pins wenig hervorstechen. Ruhiger wäre z. B. OpenFreeMap (Vektorkacheln, ohne Schlüssel, braucht MapLibre GL bzw. `@maplibre/maplibre-gl-leaflet`). Jeder neue Kachel-Server muss in die Datenschutzseite. Entscheidung steht aus, Recherche in den Projektdateien unter `recherche/ui-framework-und-design.md`.
