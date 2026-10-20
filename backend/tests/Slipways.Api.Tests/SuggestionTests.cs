@@ -94,10 +94,10 @@ public sealed class SuggestionTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Rejects_new_slipways_outside_the_covered_countries()
+    public async Task Rejects_new_slipways_outside_europe()
     {
-        var request = new SuggestionRequestDto(SuggestionKinds.NewSlipway, null, null, "Slip in Rom",
-            41.9, 12.5, null, null, true, null, null);
+        var request = new SuggestionRequestDto(SuggestionKinds.NewSlipway, null, null, "Slip auf Réunion",
+            -20.94, 55.29, null, null, true, null, null);
 
         Assert.Equal(HttpStatusCode.BadRequest, (await SubmitAsync(request)).StatusCode);
     }

@@ -42,9 +42,6 @@ public sealed class SuggestionService(SlipwaysDbContext db, IOptions<SuggestionO
     /// <summary>Metres around a new slipway within which places we have are shown to the sender first.</summary>
     public const double NearbyDistance = 100;
 
-    // Germany, Austria, Switzerland and the Netherlands with a margin; the countries the OpenStreetMap import covers.
-    private const double South = 45.5, North = 55.5, West = 2.5, East = 17.5;
-
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     public async Task<SubmitResult> SubmitAsync(SuggestionInput input, CancellationToken cancellationToken = default)
@@ -56,8 +53,9 @@ public sealed class SuggestionService(SlipwaysDbContext db, IOptions<SuggestionO
             {
                 if (SuggestionFields.CleanText(input.Name, SuggestionFields.MaxNameLength) is not { } name)
                     return new SubmitResult.Invalid("Bitte einen Namen ohne Links angeben.");
-                if (input is not { Latitude: >= South and <= North, Longitude: >= West and <= East })
-                    return new SubmitResult.Invalid("Die Position liegt außerhalb von Deutschland, Österreich, der Schweiz und den Niederlanden.");
+                // The OpenStreetMap import covers countries all over Europe.
+                if (input is not { Latitude: { } lat, Longitude: { } lon } || !OsmImport.InEurope(lat, lon))
+                    return new SubmitResult.Invalid("Die Position liegt außerhalb von Europa.");
                 var (latitude, longitude) = (input.Latitude.Value, input.Longitude.Value);
 
                 if (await PendingNewSlipwayNearAsync(latitude, longitude, cancellationToken))

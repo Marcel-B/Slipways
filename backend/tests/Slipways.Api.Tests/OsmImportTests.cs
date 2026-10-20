@@ -208,6 +208,27 @@ public sealed class OsmImportTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Skips_overseas_territories()
+    {
+        // The area of France also covers Réunion and Martinique.
+        _overpass.Respond("FR", "marina", """
+            {
+              "version": 0.6,
+              "elements": [
+                { "type": "node", "id": 5001, "lat": -20.94, "lon": 55.29, "tags": { "leisure": "marina", "name": "Port de Saint-Denis" } },
+                { "type": "node", "id": 5002, "lat": 14.6, "lon": -61.07, "tags": { "leisure": "marina", "name": "Marina du Marin" } },
+                { "type": "node", "id": 5003, "lat": 43.29, "lon": 5.37, "tags": { "leisure": "marina", "name": "Vieux-Port" } }
+              ]
+            }
+            """);
+
+        var result = await CreateImport().RunAsync("FR", TestContext.Current.CancellationToken);
+
+        Assert.Equal(1, result.Marinas.Added);
+        Assert.True(await _db.Marinas.AnyAsync(m => m.OsmId == 5003, TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
     public async Task Queries_both_kinds_of_one_country_one_after_another_with_a_timeout()
     {
         await CreateImport().RunAsync("DE", TestContext.Current.CancellationToken);

@@ -63,9 +63,16 @@ public sealed class OsmImport(SlipwaysDbContext db, OverpassClient client, IOpti
         return new OsmImportResult(slipways, marinas, missing, resolved, conflicts);
     }
 
+    /// <summary>
+    /// Whether a position lies in Europe, including the Canary Islands, the Azores and Svalbard. The area of a country
+    /// such as France or the Netherlands also covers its overseas territories, e.g. Réunion or Bonaire.
+    /// </summary>
+    public static bool InEurope(double latitude, double longitude) =>
+        latitude is >= 27 and <= 82 && longitude is >= -32 and <= 45;
+
     private async Task<List<OsmPlace>> FetchAsync(string country, string leisure, CancellationToken cancellationToken) =>
         (await client.GetElementsAsync(country, leisure, cancellationToken))
-            .Where(e => e is { Latitude: not null, Longitude: not null })
+            .Where(e => e is { Latitude: { } latitude, Longitude: { } longitude } && InEurope(latitude, longitude))
             .Select(e => new OsmPlace(e, country, e.Latitude!.Value, e.Longitude!.Value))
             .ToList();
 
