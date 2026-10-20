@@ -44,6 +44,10 @@ public struct SlipwaysAPI: Sendable {
         return try await get("api/waters", query: term.isEmpty ? [] : [URLQueryItem(name: "search", value: term)])
     }
 
+    public func marinas() async throws -> [Marina] {
+        try await get("api/marinas")
+    }
+
     public func water(id: String) async throws -> WaterDetails {
         try await get("api/waters/\(id)")
     }
