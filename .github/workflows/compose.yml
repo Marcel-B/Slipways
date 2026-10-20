@@ -9,7 +9,7 @@ jobs:
   smoke-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - run: docker compose up --build --detach --wait
       - name: API answers through the web container
         run: |
