@@ -1,12 +1,12 @@
 import { lazy, Suspense, type ComponentProps } from 'react'
 
 // Leaflet is the largest dependency, so it loads in its own chunk.
-const SlipwayMap = lazy(() => import('./SlipwayMap').then((m) => ({ default: m.SlipwayMap })))
+const MarkerMap = lazy(() => import('./MarkerMap').then((m) => ({ default: m.MarkerMap })))
 
-export function LazySlipwayMap(props: ComponentProps<typeof SlipwayMap>) {
+export function LazyMarkerMap(props: ComponentProps<typeof MarkerMap>) {
   return (
     <Suspense fallback={<div className="map" />}>
-      <SlipwayMap {...props} />
+      <MarkerMap {...props} />
     </Suspense>
   )
 }

@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router'
 import { api, ApiError } from '../api/client'
-import { LazySlipwayMap } from '../components/LazySlipwayMap'
+import { LazyMarkerMap } from '../components/LazyMarkerMap'
+import { slipwayMarker } from '../components/mapMarkers'
 
 const currency = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' })
 
@@ -32,7 +33,9 @@ export function SlipwayDetailsPage() {
       <h1>{slipway.name}</h1>
       <dl className="facts">
         <dt>Gewässer</dt>
-        <dd>{slipway.water.name}</dd>
+        <dd>
+          <Link to={`/waters/${slipway.water.id}`}>{slipway.water.name}</Link>
+        </dd>
         {address && (
           <>
             <dt>Adresse</dt>
@@ -67,7 +70,7 @@ export function SlipwayDetailsPage() {
         </dd>
       </dl>
       {slipway.comment && <p className="comment">{slipway.comment}</p>}
-      <LazySlipwayMap slipways={[slipway]} center={[slipway.latitude, slipway.longitude]} zoom={14} />
+      <LazyMarkerMap markers={[slipwayMarker(slipway)]} center={[slipway.latitude, slipway.longitude]} zoom={14} />
     </article>
   )
 }

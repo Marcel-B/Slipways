@@ -2,7 +2,8 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useDeferredValue } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { api } from '../api/client'
-import { LazySlipwayMap } from '../components/LazySlipwayMap'
+import { LazyMarkerMap } from '../components/LazyMarkerMap'
+import { slipwayMarker } from '../components/mapMarkers'
 
 export function SlipwaysPage() {
   const [params, setParams] = useSearchParams()
@@ -19,7 +20,7 @@ export function SlipwaysPage() {
   })
 
   return (
-    <div className="slipways">
+    <div className="overview">
       <section className="panel">
         <h1>Slipanlagen</h1>
         <input
@@ -35,7 +36,7 @@ export function SlipwaysPage() {
         {slipways && (
           <>
             <p className="muted">{slipways.length} Slipanlagen</p>
-            <ul className="slipway-list">
+            <ul className="item-list">
               {slipways.map((s) => (
                 <li key={s.id}>
                   <Link to={`/slipways/${s.id}`}>
@@ -51,7 +52,7 @@ export function SlipwaysPage() {
         )}
       </section>
       <section className="map-panel">
-        <LazySlipwayMap slipways={slipways ?? []} />
+        <LazyMarkerMap markers={(slipways ?? []).map(slipwayMarker)} />
       </section>
     </div>
   )
