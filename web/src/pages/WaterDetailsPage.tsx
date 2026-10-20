@@ -76,136 +76,139 @@ export function WaterDetailsPage() {
           )}
         </div>
       </header>
-      <dl className="stats">
-        <div>
-          <dt>
-            <Sailboat size={16} /> Slipanlagen
-          </dt>
-          <dd>{water.slipways.length}</dd>
-        </div>
-        <div>
-          <dt>
-            <Ruler size={16} /> Pegel
-          </dt>
-          <dd>{water.stations.length}</dd>
-        </div>
-        <div>
-          <dt>
-            <Anchor size={16} /> Marinas
-          </dt>
-          <dd>{water.marinas.length}</dd>
-        </div>
-      </dl>
+      <div className={water.bounds ? 'details-grid details-grid-water' : undefined}>
+        <div className="details-side">
+          <dl className="stats">
+            <div>
+              <dt>
+                <Sailboat size={16} /> Slipanlagen
+              </dt>
+              <dd>{water.slipways.length}</dd>
+            </div>
+            <div>
+              <dt>
+                <Ruler size={16} /> Pegel
+              </dt>
+              <dd>{water.stations.length}</dd>
+            </div>
+            <div>
+              <dt>
+                <Anchor size={16} /> Marinas
+              </dt>
+              <dd>{water.marinas.length}</dd>
+            </div>
+          </dl>
 
-      {water.bounds ? (
-        <>
-          <LazyMarkerMap
-            markers={mapMarkers}
-            bounds={water.bounds}
-            shapes={water.shape ? [{ id: water.id, geometry: water.shape, highlighted: true }] : []}
-          />
-          <ul className="legend muted">
-            {water.shape && (
-              <li>
-                <span className="legend-line" style={{ background: shapeStyle.color }} />
-                Verlauf aus{' '}
-                <a href={`https://www.openstreetmap.org/${water.osmElements[0]}`} target="_blank" rel="noreferrer">
-                  OpenStreetMap
-                </a>
-              </li>
-            )}
-            {legend
-              .filter(([kind]) => mapMarkers.some((m) => m.kind === kind))
-              .map(([kind, label]) => (
-                <li key={kind}>
-                  <span className="legend-dot" style={{ background: markerColors[kind].color }} />
-                  {label}
-                </li>
-              ))}
-          </ul>
-        </>
-      ) : (
-        <p className="muted">Zu diesem Gewässer sind noch keine Orte bekannt.</p>
-      )}
-
-      {water.slipways.length > 0 && (
-        <section className="panel">
-          <h2>{count(water.slipways.length, 'Slipanlage', 'Slipanlagen')}</h2>
-          <ul className="item-list">
-            {water.slipways.map((s) => (
-              <li key={s.id}>
-                <Link to={`/slipways/${s.id}`} className="item">
-                  <span className="item-icon">
-                    <Sailboat size={18} />
-                  </span>
-                  <span className="item-text">
-                    <strong>{s.name}</strong>
-                    <span className="muted">{[s.postalCode, s.city].filter(Boolean).join(' ')}</span>
-                  </span>
-                  <ChevronRight size={18} className="item-chevron" />
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {water.stations.length > 0 && (
-        <section className="panel">
-          <h2>{count(water.stations.length, 'Pegel', 'Pegel')}</h2>
-          <div className="table-scroll">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Pegel</th>
-                  <th>km</th>
-                  <th>Wasserstand</th>
-                  <th>Gemessen</th>
-                </tr>
-              </thead>
-              <tbody>
-                {water.stations.map((s) => (
-                  <tr key={s.id}>
-                    <td>{s.name}</td>
-                    <td>{kilometres.format(s.km)}</td>
-                    <td>{s.waterLevel ? <WaterLevelText level={s.waterLevel} /> : <span className="muted">–</span>}</td>
-                    <td>{s.waterLevel ? formatMeasuredAt(s.waterLevel) : <span className="muted">–</span>}</td>
-                  </tr>
+          {!water.bounds && <p className="muted">Zu diesem Gewässer sind noch keine Orte bekannt.</p>}
+          {water.slipways.length > 0 && (
+            <section className="panel">
+              <h2>{count(water.slipways.length, 'Slipanlage', 'Slipanlagen')}</h2>
+              <ul className="item-list">
+                {water.slipways.map((s) => (
+                  <li key={s.id}>
+                    <Link to={`/slipways/${s.id}`} className="item">
+                      <span className="item-icon">
+                        <Sailboat size={18} />
+                      </span>
+                      <span className="item-text">
+                        <strong>{s.name}</strong>
+                        <span className="muted">{[s.postalCode, s.city].filter(Boolean).join(' ')}</span>
+                      </span>
+                      <ChevronRight size={18} className="item-chevron" />
+                    </Link>
+                  </li>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
+              </ul>
+            </section>
+          )}
 
-      {water.marinas.length > 0 && (
-        <section className="panel">
-          <h2>{count(water.marinas.length, 'Marina', 'Marinas')}</h2>
-          <ul className="item-list">
-            {water.marinas.map((m) => (
-              <li key={m.id}>
-                <div className="item">
-                  <span className="item-icon item-icon-marina">
-                    <Anchor size={18} />
-                  </span>
-                  <span className="item-text">
-                  <strong>
-                    {m.url ? (
-                      <a href={m.url} target="_blank" rel="noreferrer">
-                        {m.name}
-                      </a>
-                    ) : (
-                      m.name
-                    )}
-                  </strong>
-                  <span className="muted">{[m.street, [m.postalCode, m.city].filter(Boolean).join(' ')].filter(Boolean).join(', ')}</span>
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+          {water.stations.length > 0 && (
+            <section className="panel">
+              <h2>{count(water.stations.length, 'Pegel', 'Pegel')}</h2>
+              <div className="table-scroll">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Pegel</th>
+                      <th>km</th>
+                      <th>Wasserstand</th>
+                      <th>Gemessen</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {water.stations.map((s) => (
+                      <tr key={s.id}>
+                        <td>{s.name}</td>
+                        <td>{kilometres.format(s.km)}</td>
+                        <td>{s.waterLevel ? <WaterLevelText level={s.waterLevel} /> : <span className="muted">–</span>}</td>
+                        <td>{s.waterLevel ? formatMeasuredAt(s.waterLevel) : <span className="muted">–</span>}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
+
+          {water.marinas.length > 0 && (
+            <section className="panel">
+              <h2>{count(water.marinas.length, 'Marina', 'Marinas')}</h2>
+              <ul className="item-list">
+                {water.marinas.map((m) => (
+                  <li key={m.id}>
+                    <div className="item">
+                      <span className="item-icon item-icon-marina">
+                        <Anchor size={18} />
+                      </span>
+                      <span className="item-text">
+                      <strong>
+                        {m.url ? (
+                          <a href={m.url} target="_blank" rel="noreferrer">
+                            {m.name}
+                          </a>
+                        ) : (
+                          m.name
+                        )}
+                      </strong>
+                      <span className="muted">{[m.street, [m.postalCode, m.city].filter(Boolean).join(' ')].filter(Boolean).join(', ')}</span>
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </div>
+        {water.bounds && (
+          <div className="details-map">
+            <LazyMarkerMap
+              markers={mapMarkers}
+              bounds={water.bounds}
+              shapes={water.shape ? [{ id: water.id, geometry: water.shape, highlighted: true }] : []}
+              cluster
+            />
+            <ul className="legend muted">
+              {water.shape && (
+                <li>
+                  <span className="legend-line" style={{ background: shapeStyle.color }} />
+                  Verlauf aus{' '}
+                  <a href={`https://www.openstreetmap.org/${water.osmElements[0]}`} target="_blank" rel="noreferrer">
+                    OpenStreetMap
+                  </a>
+                </li>
+              )}
+              {legend
+                .filter(([kind]) => mapMarkers.some((m) => m.kind === kind))
+                .map(([kind, label]) => (
+                  <li key={kind}>
+                    <span className="legend-dot" style={{ background: markerColors[kind].color }} />
+                    {label}
+                  </li>
+                ))}
+            </ul>
+          </div>
+        )}
+      </div>
     </article>
   )
 }
