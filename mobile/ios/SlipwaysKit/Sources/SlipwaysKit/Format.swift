@@ -93,6 +93,17 @@ public enum Links {
         URL(string: "https://www.openstreetmap.org/\(element)")
     }
 
+    /// Phone tags from OpenStreetMap look like "+49 9441 1234"; the dial link keeps only digits and the plus.
+    public static func phone(_ value: String) -> URL? {
+        let digits = value.filter { $0.isNumber || $0 == "+" }
+        return digits.isEmpty ? nil : URL(string: "tel:\(digits)")
+    }
+
+    public static func mail(_ value: String) -> URL? {
+        let text = value.trimmingCharacters(in: .whitespaces)
+        return text.isEmpty ? nil : URL(string: "mailto:\(text)")
+    }
+
     /// Website tags from OpenStreetMap sometimes lack the scheme, e.g. "www.leg-an.com".
     public static func web(_ value: String) -> URL? {
         let text = value.trimmingCharacters(in: .whitespaces)

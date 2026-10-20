@@ -8,8 +8,10 @@ struct SlipwaysApp: App {
     var body: some Scene {
         WindowGroup {
             TabView {
-                NavigationStack { OverviewView().slipwaysDestinations() }
-                    .tabItem { Label("Slipanlagen", systemImage: "map") }
+                NavigationStack { SlipwayOverviewView().slipwaysDestinations() }
+                    .tabItem { Label("Slipanlagen", systemImage: "sailboat") }
+                NavigationStack { MarinaOverviewView().slipwaysDestinations() }
+                    .tabItem { Label("Marinas", systemImage: "ferry") }
                 NavigationStack { WaterListView().slipwaysDestinations() }
                     .tabItem { Label("Gewässer", systemImage: "water.waves") }
                 NavigationStack { InfoView() }

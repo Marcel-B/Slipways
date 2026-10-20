@@ -96,6 +96,14 @@ object Links {
 
     fun osm(element: String) = "https://www.openstreetmap.org/$element"
 
+    /** Phone tags from OpenStreetMap look like "+49 9441 1234"; the dial link keeps only digits and the plus. */
+    fun phone(value: String): String? {
+        val digits = value.filter { it.isDigit() || it == '+' }
+        return if (digits.isEmpty()) null else "tel:$digits"
+    }
+
+    fun mail(value: String): String? = value.trim().takeIf { it.isNotEmpty() }?.let { "mailto:$it" }
+
     /** Website tags from OpenStreetMap sometimes lack the scheme, e.g. "www.leg-an.com". */
     fun web(value: String): String? {
         val text = value.trim()

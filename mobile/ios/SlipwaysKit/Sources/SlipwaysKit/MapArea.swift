@@ -78,6 +78,37 @@ public enum Overview {
         return result
     }
 
+    /// Groups the entries inside the area into a grid about `columns` cells wide, so a map shows a bubble with a count
+    /// instead of hundreds of pins. Cells are fixed to the coordinates, so the bubbles stay put while the map pans.
+    public static func clusters<T>(
+        _ items: [T],
+        in area: MapArea,
+        columns: Int = 6,
+        position: (T) -> (latitude: Double, longitude: Double)
+    ) -> [Cluster<T>] {
+        let width = area.longitudeDelta / Double(columns)
+        guard width > 0 else { return [] }
+        // A degree of longitude is shorter than one of latitude; this keeps the cells square on the map.
+        let height = width * cos(area.centerLatitude * .pi / 180)
+        var cells: [String: [T]] = [:]
+        for item in items {
+            let point = position(item)
+            guard area.contains(latitude: point.latitude, longitude: point.longitude) else { continue }
+            let key = "\(Int((point.latitude / height).rounded(.down))):\(Int((point.longitude / width).rounded(.down)))"
+            cells[key, default: []].append(item)
+        }
+        return cells.map { key, members in
+            let points = members.map(position)
+            return Cluster(
+                id: key,
+                latitude: points.map(\.latitude).reduce(0, +) / Double(points.count),
+                longitude: points.map(\.longitude).reduce(0, +) / Double(points.count),
+                items: members
+            )
+        }
+        .sorted { $0.id < $1.id }
+    }
+
     /// Case- and accent-insensitive match on name, city or postal code, as the API search does for slipways.
     public static func matches(_ marina: Marina, search: String) -> Bool {
         let term = search.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -87,3 +118,21 @@ public enum Overview {
         }
     }
 }
+
+/// Entries close together on the map, drawn as one bubble with their count.
+public struct Cluster<T>: Identifiable {
+    public let id: String
+    public let latitude: Double
+    public let longitude: Double
+    public let items: [T]
+}
+
+/// Something with a pin on the overview map.
+public protocol Place: Identifiable, Hashable, Sendable where ID == String {
+    var name: String { get }
+    var latitude: Double { get }
+    var longitude: Double { get }
+}
+
+extension SlipwaySummary: Place {}
+extension Marina: Place {}

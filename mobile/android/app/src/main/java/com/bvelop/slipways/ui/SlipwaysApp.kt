@@ -4,7 +4,8 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.Anchor
+import androidx.compose.material.icons.filled.DirectionsBoat
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Water
 import androidx.compose.material3.Icon
@@ -28,13 +29,15 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.bvelop.slipways.ui.details.SlipwayDetailsScreen
 import com.bvelop.slipways.ui.info.InfoScreen
-import com.bvelop.slipways.ui.overview.OverviewScreen
+import com.bvelop.slipways.ui.overview.MarinaOverviewScreen
+import com.bvelop.slipways.ui.overview.SlipwayOverviewScreen
 import com.bvelop.slipways.ui.waters.WaterDetailsScreen
 import com.bvelop.slipways.ui.waters.WaterListScreen
 
 /** Detail routes carry the tab as prefix, so a slipway opened from a water stays in the waters tab. */
 private object Routes {
     const val SLIPWAYS_TAB = "slipways"
+    const val MARINAS_TAB = "marinas"
     const val WATERS_TAB = "waters"
     const val INFO_TAB = "info"
 
@@ -44,7 +47,8 @@ private object Routes {
 }
 
 private enum class Tab(val route: String, val label: String, val icon: ImageVector) {
-    SLIPWAYS(Routes.SLIPWAYS_TAB, "Slipanlagen", Icons.Filled.Map),
+    SLIPWAYS(Routes.SLIPWAYS_TAB, "Slipanlagen", Icons.Filled.DirectionsBoat),
+    MARINAS(Routes.MARINAS_TAB, "Marinas", Icons.Filled.Anchor),
     WATERS(Routes.WATERS_TAB, "Gewässer", Icons.Filled.Water),
     INFO(Routes.INFO_TAB, "Info", Icons.Filled.Info),
 }
@@ -99,7 +103,8 @@ fun SlipwaysApp() {
                 }
             }
 
-            tab(Routes.SLIPWAYS_TAB) { openSlipway, _ -> OverviewScreen(onSlipwayClick = openSlipway) }
+            tab(Routes.SLIPWAYS_TAB) { openSlipway, _ -> SlipwayOverviewScreen(onSlipwayClick = openSlipway) }
+            tab(Routes.MARINAS_TAB) { _, openWater -> MarinaOverviewScreen(onWaterClick = openWater) }
             tab(Routes.WATERS_TAB) { _, openWater -> WaterListScreen(onWaterClick = openWater) }
             navigation(startDestination = Routes.list(Routes.INFO_TAB), route = Routes.INFO_TAB) {
                 composable(Routes.list(Routes.INFO_TAB)) { InfoScreen() }

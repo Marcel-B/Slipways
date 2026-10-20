@@ -134,6 +134,14 @@ class SlipwaysApiTest {
         assertTrue(Overview.matches(marinas.single(), " kelheim"))
         assertTrue(Overview.matches(marinas.single(), "YÁCHT"))
         assertFalse(Overview.matches(marinas.single(), "Donau"))
+        assertEquals("93309 Kelheim", marinas.single().address)
+    }
+
+    @Test
+    fun `links phone and mail`() {
+        assertEquals("tel:+4994411234", Links.phone("+49 9441 12-34"))
+        assertNull(Links.phone("unbekannt"))
+        assertEquals("mailto:hafen@example.org", Links.mail(" hafen@example.org "))
     }
 
     @Test

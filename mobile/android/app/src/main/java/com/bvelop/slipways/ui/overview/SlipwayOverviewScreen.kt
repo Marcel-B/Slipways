@@ -1,0 +1,33 @@
+package com.bvelop.slipways.ui.overview
+
+import androidx.compose.foundation.clickable
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.bvelop.slipways.shared.Position
+import com.bvelop.slipways.shared.SlipwaySummary
+
+@Composable
+fun SlipwayOverviewScreen(
+    onSlipwayClick: (String) -> Unit,
+    viewModel: PlaceOverviewViewModel<SlipwaySummary> = viewModel(factory = PlaceOverviewViewModel.Slipways),
+) {
+    PlaceOverviewScreen(
+        title = "Slipanlagen",
+        singular = "Slipanlage",
+        plural = "Slipanlagen",
+        color = "#0B5394",
+        viewModel = viewModel,
+        id = { it.id },
+        position = { Position(it.latitude, it.longitude) },
+        onSelect = { onSlipwayClick(it.id) },
+    ) { slipway ->
+        ListItem(
+            headlineContent = { Text(slipway.name) },
+            supportingContent = slipway.subtitle.takeIf { it.isNotEmpty() }?.let { text -> @Composable { Text(text) } },
+            modifier = Modifier.clickable { onSlipwayClick(slipway.id) },
+        )
+    }
+}

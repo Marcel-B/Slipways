@@ -14,13 +14,13 @@ Stand 20.10.2026. Beide Apps sind reine Lesesichten wie die Website: kein Konto,
 
 Die Modelle spiegeln `backend/src/Slipways.Api/Endpoints/Contracts.cs`. Ändert sich ein DTO, beide Clients und die Fixtures in den Tests mitziehen. Die Fixtures sind gekürzte echte Antworten, darunter eine OSM-Slipanlage ohne Gewässer. Deutsche Texte für OSM-Tags und Pegelzustände (`Labels`, `Format`) liegen im Client-Paket und entsprechen `web/src/components/osmTags.ts` bzw. `waterLevel.ts`.
 
-Beide Apps haben die Tabs Slipanlagen, Gewässer und Info. Der Tab Slipanlagen ist eine Karte mit Suchfeld; die Liste darunter zeigt nur Slipanlagen und Marinas im Kartenausschnitt (höchstens 250, sonst „Zoome hinein oder suche“) oder die Suchtreffer (`MapArea`/`Overview` im Client-Paket). Die Slipanlage zeigt dieselben Angaben wie im Web samt nächstem Pegel. Das Gewässer zeigt Pegel, Slipanlagen und Marinas, unter iOS dazu eine Karte mit Verlauf (`MapPolyline`/`MapPolygon`).
+Beide Apps haben die Tabs Slipanlagen, Marinas, Gewässer und Info. Slipanlagen und Marinas sind je eine Karte mit Suchfeld (`PlaceOverview` bzw. `PlaceOverviewScreen`); die Liste darunter zeigt nur, was im Kartenausschnitt liegt (höchstens 250, sonst „Zoome hinein oder suche“), oder die Suchtreffer (`MapArea`/`Overview` im Client-Paket). Die Suche startet erst, wenn das Tippen kurz pausiert. Volle Bereiche der Karte zeigen Blasen mit der Anzahl statt einzelner Pins (iOS: Raster in `Overview.clusters`, Android: `GeoJsonSource` mit `cluster`); ein Tipp darauf zoomt hinein. Slipanlagen werden über die API gesucht, Marinas im Gerät. Eine Marina öffnet eine kurze Übersicht (iOS: Sheet, Android: Bottom-Sheet) mit Adresse, Webseite, Telefon, E-Mail, „Route planen“ und „In Karten öffnen“. Die Slipanlage zeigt dieselben Angaben wie im Web samt nächstem Pegel. Das Gewässer zeigt Pegel, Slipanlagen und Marinas, unter iOS dazu eine Karte mit Verlauf (`MapPolyline`/`MapPolygon`).
 
 ## Lizenzhinweis
 
 Die Apps sind eigene Werke im Sinne der ODbL (§ 4.3), der Hinweis im Seitenfuß der Website gilt für sie nicht. Nach den [Attribution Guidelines der OSMF](https://osmfoundation.org/wiki/Licence/Attribution_Guidelines) steht „Daten © OpenStreetMap-Mitwirkende (ODbL)“ mit Link auf `https://www.openstreetmap.org/copyright`:
 
-- in der Ecke jeder Karte mit OSM-Einträgen oder Gewässerverlauf (iOS; MapKits „Rechtliches“ deckt OSM nicht ab; unter Android bringt der OpenFreeMap-Stil den Hinweis selbst mit),
+- in der Ecke jeder Karte mit OSM-Einträgen oder Gewässerverlauf (iOS, als Text ohne Link, damit ein Tipp in die Karte nicht den Browser öffnet; MapKits „Rechtliches“ deckt OSM nicht ab; unter Android bringt der OpenFreeMap-Stil den Hinweis selbst mit),
 - unter Listen und Detailseiten mit OSM-Einträgen,
 - vollständig auf der Info-Seite, zusammen mit PEGELONLINE (DL-DE->Zero-2.0), Impressum, Datenschutz und Support.
 

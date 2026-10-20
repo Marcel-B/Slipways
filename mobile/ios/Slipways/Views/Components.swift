@@ -16,11 +16,16 @@ extension View {
     func osmAttribution(_ shown: Bool) -> some View {
         if shown {
             overlay(alignment: .bottomTrailing) {
-                OSMAttribution()
+                // Plain text: a link here sits where people touch the map and opened the browser by mistake.
+                // The lists and the info tab link to the licence.
+                Text(Links.osmAttribution)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 3)
                     .background(.regularMaterial, in: .rect(cornerRadius: 4))
                     .padding(6)
+                    .allowsHitTesting(false)
             }
         } else {
             self
