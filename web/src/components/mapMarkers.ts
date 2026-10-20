@@ -45,7 +45,7 @@ export function slipwayMarker(slipway: SlipwaySummary): MapMarker {
     latitude: slipway.latitude,
     longitude: slipway.longitude,
     title: slipway.name,
-    subtitle: slipway.water.name,
+    subtitle: slipway.water?.name,
     to: `/slipways/${slipway.id}`,
   }
 }

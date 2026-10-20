@@ -42,7 +42,7 @@ export function SlipwaysPage() {
                   <Link to={`/slipways/${s.id}`}>
                     <strong>{s.name}</strong>
                     <span className="muted">
-                      {[s.water.name, [s.postalCode, s.city].filter(Boolean).join(' ')].filter(Boolean).join(' · ')}
+                      {[s.water?.name, [s.postalCode, s.city].filter(Boolean).join(' ')].filter(Boolean).join(' · ')}
                     </span>
                   </Link>
                 </li>

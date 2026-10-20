@@ -17,6 +17,7 @@ const slipways: SlipwaySummary[] = [
     city: 'Kelheim',
     country: 'DE',
     water: { id: 'd19708ca-ac42-4ad4-8d62-e85722f946f6', name: 'Donau' },
+    source: 'manual',
   },
 ]
 

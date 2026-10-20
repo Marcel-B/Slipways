@@ -1,3 +1,4 @@
+using System.Net;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -6,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Slipways.Infrastructure.Gauges;
 using Slipways.Infrastructure.Identity;
+using Slipways.Infrastructure.Osm;
 using Slipways.Infrastructure.Persistence;
 using Slipways.Infrastructure.Shapes;
 
@@ -13,6 +15,9 @@ namespace Slipways.Infrastructure;
 
 public static class DependencyInjection
 {
+    // PEGELONLINE, Nominatim and Overpass all ask for a user agent that identifies the application.
+    private const string UserAgent = "Slipways (+https://github.com/Marcel-B/Slipways)";
+
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         var connectionString = configuration.GetConnectionString("Slipways")
@@ -33,7 +38,7 @@ public static class DependencyInjection
         services.AddHttpClient<PegelonlineClient>((sp, http) =>
         {
             http.BaseAddress = sp.GetRequiredService<IOptions<PegelonlineOptions>>().Value.BaseUrl;
-            http.DefaultRequestHeaders.UserAgent.ParseAdd("Slipways (+https://github.com/Marcel-B/Slipways)");
+            http.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgent);
         });
         services.TryAddSingleton(TimeProvider.System);
         services.AddScoped<GaugeSync>();
@@ -43,11 +48,24 @@ public static class DependencyInjection
         services.AddHttpClient<NominatimClient>((sp, http) =>
         {
             http.BaseAddress = sp.GetRequiredService<IOptions<NominatimOptions>>().Value.BaseUrl;
-            // Nominatim's usage policy asks for a user agent that identifies the application.
-            http.DefaultRequestHeaders.UserAgent.ParseAdd("Slipways (+https://github.com/Marcel-B/Slipways)");
+            http.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgent);
         });
         services.AddScoped<ShapeSync>();
         services.AddHostedService<ShapeSyncWorker>();
+
+        services.AddOptions<OsmOptions>().Bind(configuration.GetSection(OsmOptions.SectionName));
+        services.AddHttpClient<OverpassClient>((sp, http) =>
+            {
+                var osm = sp.GetRequiredService<IOptions<OsmOptions>>().Value;
+                http.BaseAddress = osm.BaseUrl;
+                // Overpass stops a query after QueryTimeout; give the answer a little longer to arrive.
+                http.Timeout = osm.QueryTimeout + TimeSpan.FromMinutes(1);
+                http.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgent);
+            })
+            // A country's slipways are a few MB of JSON; compressed they are a fraction of that.
+            .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler { AutomaticDecompression = DecompressionMethods.All });
+        services.AddScoped<OsmImport>();
+        services.AddHostedService<OsmImportWorker>();
 
         return services;
     }

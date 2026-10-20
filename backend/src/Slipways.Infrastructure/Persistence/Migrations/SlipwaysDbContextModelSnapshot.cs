@@ -225,6 +225,9 @@ namespace Slipways.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Access")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("City")
                         .HasColumnType("TEXT");
 
@@ -232,6 +235,9 @@ namespace Slipways.Infrastructure.Persistence.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Email")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Fee")
                         .HasColumnType("TEXT");
 
                     b.Property<double>("Latitude")
@@ -245,11 +251,31 @@ namespace Slipways.Infrastructure.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("OpeningHours")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Operator")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("OsmId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("OsmType")
+                        .HasMaxLength(10)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Phone")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("PostalCode")
                         .HasColumnType("TEXT");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("manual");
 
                     b.Property<string>("Street")
                         .HasColumnType("TEXT");
@@ -260,12 +286,15 @@ namespace Slipways.Infrastructure.Persistence.Migrations
                     b.Property<string>("Url")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("WaterId")
+                    b.Property<Guid?>("WaterId")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
                     b.HasIndex("WaterId");
+
+                    b.HasIndex("OsmType", "OsmId")
+                        .IsUnique();
 
                     b.ToTable("Marinas");
                 });
@@ -322,6 +351,9 @@ namespace Slipways.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Access")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("City")
                         .HasColumnType("TEXT");
 
@@ -341,6 +373,9 @@ namespace Slipways.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("Created")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Fee")
+                        .HasColumnType("TEXT");
+
                     b.Property<double>("Latitude")
                         .HasColumnType("REAL");
 
@@ -355,6 +390,19 @@ namespace Slipways.Infrastructure.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("OpeningHours")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Operator")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("OsmId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("OsmType")
+                        .HasMaxLength(10)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("PostalCode")
                         .HasColumnType("TEXT");
 
@@ -364,13 +412,26 @@ namespace Slipways.Infrastructure.Persistence.Migrations
                     b.Property<int>("Rating")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("manual");
+
                     b.Property<string>("Street")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Surface")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("Updated")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("WaterId")
+                    b.Property<string>("Url")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("WaterId")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -378,6 +439,9 @@ namespace Slipways.Infrastructure.Persistence.Migrations
                     b.HasIndex("MarinaId");
 
                     b.HasIndex("WaterId");
+
+                    b.HasIndex("OsmType", "OsmId")
+                        .IsUnique();
 
                     b.ToTable("Slipways");
                 });
@@ -632,8 +696,7 @@ namespace Slipways.Infrastructure.Persistence.Migrations
                     b.HasOne("Slipways.Domain.Water", "Water")
                         .WithMany()
                         .HasForeignKey("WaterId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Water");
                 });
@@ -648,8 +711,7 @@ namespace Slipways.Infrastructure.Persistence.Migrations
                     b.HasOne("Slipways.Domain.Water", "Water")
                         .WithMany()
                         .HasForeignKey("WaterId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Marina");
 

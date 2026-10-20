@@ -58,6 +58,37 @@ dotnet run tools/suggest-water-shapes.cs -- http://localhost:5080 suggestions.js
 
 Die Vorschläge vor dem Übernehmen prüfen. Große internationale Flüsse findet die Suche oft nicht, weil sie in OSM mehrsprachig benannt sind; ihre Relation steht bei Wikidata (Eigenschaft P402).
 
+## Slipanlagen und Marinas aus OpenStreetMap
+
+Ein Hintergrund-Job in der API importiert beim Start und danach alle 30 Tage Slipanlagen (`leisure=slipway`) und Marinas (`leisure=marina`) aus [OpenStreetMap](https://www.openstreetmap.org/) über die [Overpass API](https://wiki.openstreetmap.org/wiki/Overpass_API), je Land und Art eine Abfrage mit `out center tags;` (Wege und Relationen bekommen so einen Mittelpunkt). Die Abfragen laufen nacheinander mit Pause dazwischen und Timeout in der Abfrage. Ist Overpass ausgelastet (429, 502, 503, 504), wiederholt der Client mit exponentiellem Backoff; scheitert der ganze Lauf, versucht der Job es nach einer Stunde erneut. Stand Oktober 2026 sind es etwa 5.100 Slipanlagen und 4.600 Marinas (DE 3.342 / 2.727, AT 391 / 199, CH 447 / 446, NL 916 / 1.224).
+
+Abgleich, getrennt für Slipanlagen und Marinas:
+
+1. Gibt es schon einen Eintrag mit demselben OSM-Element (`OsmType` + `OsmId`), werden bei importierten Einträgen (`Source = osm`) die Felder aus OSM aktualisiert. Eigene Einträge, die mit OSM verknüpft sind, bleiben unverändert.
+2. Liegt ein eigener Eintrag (`Source = manual`) näher als 50 m (Haversine), wird nur das OSM-Element an ihm hinterlegt und nichts Neues angelegt. Ist jeder eigene Eintrag in der Nähe schon mit einem anderen Element verknüpft, gilt das Element als doppelt erfasst (z. B. als Knoten und als Weg) und wird übersprungen.
+3. Sonst entsteht ein neuer Eintrag mit `Source = osm`.
+
+Übernommen werden `name` (sonst „Slipanlage“ bzw. „Marina“ und `addr:city`), `addr:street`/`addr:housenumber`, `addr:postcode`, `addr:city`, `addr:country` (sonst das abgefragte Land, nur Slipanlagen), `website` (oder `contact:website`), `operator`, `fee`, `access`, `opening_hours` und bei Slipanlagen `surface`. Eigene Angaben (Kommentar, Bewertung, Kosten, Pro/Contra, Extras, Marina, Telefon, E-Mail) überschreibt der Import nie. Was aus OSM verschwindet, löscht er nicht, sondern schreibt es ins Log.
+
+OSM kennt kein Gewässer zu einer Slipanlage. Der Import ordnet deshalb das Gewässer zu, dessen Verlauf (siehe oben) höchstens 300 m entfernt ist oder dessen Fläche den Punkt enthält, sonst bleibt `WaterId` leer. Das betrifft vor allem Seen und kleine Flüsse, die PEGELONLINE nicht kennt. Einträge ohne Gewässer bekommen bei jedem Lauf eine neue Chance.
+
+Einstellungen (Abschnitt `Osm`):
+
+| Schlüssel | Standard | Bedeutung |
+| --- | --- | --- |
+| `Enabled` | `true` | Job ein/aus |
+| `Countries` | `DE`, `AT`, `CH`, `NL` | ISO-3166-1-Codes, z. B. `Osm__Countries__0=DE` |
+| `Interval` | `30.00:00:00` | Abstand der Importe |
+| `RetryInterval` | `01:00:00` | Wartezeit nach einem gescheiterten Lauf |
+| `QueryTimeout` | `00:03:00` | Timeout in der Overpass-Abfrage |
+| `RequestSpacing` | `00:00:10` | Pause zwischen zwei Abfragen |
+| `BusyBackoff`, `MaxAttempts` | `00:00:30`, `4` | Erste Wartezeit (verdoppelt sich) und Versuche, wenn Overpass ausgelastet ist |
+| `BaseUrl` | `https://overpass-api.de/api/` | Overpass-Server; für viel Last besser eine eigene Instanz |
+
+overpass-api.de spricht nur noch TLS 1.3. .NET auf macOS kann das nur über das Network-Framework; lokal auf dem Mac deshalb mit `DOTNET_SYSTEM_NET_SECURITY_USENETWORKFRAMEWORK=1` starten oder `Osm__Enabled=false` setzen. Im Linux-Container sollte es ohne Zutun gehen (OpenSSL), getestet ist das noch nicht.
+
+Was beim Import noch offen ist, steht in [`docs/offene-punkte.md`](docs/offene-punkte.md).
+
 ## Entwickeln ohne Docker
 
 Backend (braucht nur das .NET 10 SDK; die Datenbank `slipways.db` entsteht im Arbeitsverzeichnis):
@@ -109,8 +140,9 @@ dotnet ef migrations add <Name> --project src/Slipways.Infrastructure --startup-
 | Kartenkacheln | [OpenStreetMap](https://www.openstreetmap.org/copyright) | ODbL 1.0 / CC BY-SA | „© OpenStreetMap-Mitwirkende“ sichtbar an der Karte |
 | Gewässerverläufe (`shape`) | [OpenStreetMap](https://www.openstreetmap.org/copyright) über Nominatim | [ODbL 1.0](https://opendatacommons.org/licenses/odbl/) | Namensnennung (Seitenfuß, Link zum OSM-Element auf der Detailseite); die API gibt die Formen weiter, sie stehen deshalb selbst unter ODbL (Share-Alike) |
 | Slipanlagen, Marinas, Motorservices (Seed) | von Hand erfasst (2019/20) | eigene Daten | – |
+| Slipanlagen und Marinas mit `source = osm` | [OpenStreetMap](https://www.openstreetmap.org/copyright) über Overpass | [ODbL 1.0](https://opendatacommons.org/licenses/odbl/) | Namensnennung (Seitenfuß, Quelle und Link zum OSM-Element auf der Detailseite); getrennt gehalten über `Source` und OSM-Element; die API gibt sie weiter, sie stehen deshalb selbst unter ODbL (Share-Alike) |
 
-Die Web-Oberfläche nennt die Quellen im Seitenfuß. Die ausführliche Recherche zu weiteren offenen Quellen (OSM, eHYD, BAFU, Rijkswaterstaat u. a.) steht in [`docs/datenquellen.md`](docs/datenquellen.md). Für einen geplanten Import von Slipanlagen und Marinas aus OpenStreetMap gilt zusätzlich: Die ODbL verlangt Namensnennung, und wer eine Datenbank mit OSM-Daten weitergibt, muss sie unter ODbL weitergeben (Share-Alike). Importierte OSM-Einträge werden deshalb mit Quelle und OSM-ID getrennt von den eigenen Daten gehalten.
+Die Web-Oberfläche nennt die Quellen im Seitenfuß. Die ausführliche Recherche zu weiteren offenen Quellen (OSM, eHYD, BAFU, Rijkswaterstaat u. a.) steht in [`docs/datenquellen.md`](docs/datenquellen.md). Für den Import von Slipanlagen und Marinas aus OpenStreetMap gilt zusätzlich: Die ODbL verlangt Namensnennung, und wer eine Datenbank mit OSM-Daten weitergibt, muss sie unter ODbL weitergeben (Share-Alike). Importierte Einträge tragen deshalb `Source = osm` und ihr OSM-Element und bleiben von den eigenen Daten getrennt: Der Import kopiert keine OSM-Werte in eigene Einträge, sondern hinterlegt dort höchstens das OSM-Element. Die API liefert bei Slipanlagen und Marinas `source` (`manual` oder `osm`) und, falls vorhanden, `osmElement` (z. B. `node/123`) mit.
 
 ## Betrieb
 
