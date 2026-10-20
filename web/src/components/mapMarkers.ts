@@ -11,6 +11,9 @@ export const markerColors: Record<MarkerKind, { color: string; fillColor: string
   water: { color: '#0b5394', fillColor: '#3d85c6' },
 }
 
+/** Highlights a water's course or area; orange stands out against the blue water of the map tiles. */
+export const shapeStyle = { color: '#e69138', weight: 5, opacity: 0.85, fillOpacity: 0.3 }
+
 export interface MapMarker {
   id: string
   kind: MarkerKind

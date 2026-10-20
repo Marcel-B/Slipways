@@ -31,6 +31,7 @@ public class SlipwaysDbContext(DbContextOptions<SlipwaysDbContext> options)
         {
             e.Property(x => x.Name).HasMaxLength(200);
             e.Property(x => x.Shortname).HasMaxLength(100);
+            e.PrimitiveCollection(x => x.OsmElements);
         });
 
         builder.Entity<Slipway>(e =>

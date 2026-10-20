@@ -457,6 +457,16 @@ namespace Slipways.Infrastructure.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
+                    b.PrimitiveCollection<string>("OsmElements")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Shape")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("ShapeUpdated")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Shortname")
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");

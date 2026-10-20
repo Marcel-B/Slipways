@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Slipways.Infrastructure.Persistence;
@@ -79,10 +80,10 @@ public static class CatalogEndpoints
 
         var waters = await query
             .OrderBy(w => w.Name)
-            .Select(w => new { w.Id, w.Name, w.Shortname })
+            .Select(w => new { w.Id, w.Name, w.Shortname, HasShape = w.Shape != null })
             .ToListAsync(ct);
 
-        // Waters have no geometry of their own, so their position comes from what lies on them.
+        // The position comes from what lies on a water, which is far less data than its shape.
         var slipways = (await db.Slipways.AsNoTracking()
             .Select(s => new { s.WaterId, Position = new PositionDto(s.Latitude, s.Longitude) })
             .ToListAsync(ct)).ToLookup(s => s.WaterId, s => s.Position);
@@ -101,10 +102,24 @@ public static class CatalogEndpoints
             })
             .ToListAsync(ct)).ToLookup(s => s.WaterId);
 
+        // Only waters with nothing on them fall back to their shape.
+        var bare = waters
+            .Where(w => w.HasShape && !slipways.Contains(w.Id) && !marinas.Contains(w.Id) && !stations.Contains(w.Id))
+            .Select(w => w.Id)
+            .ToList();
+        var shapes = bare.Count == 0
+            ? []
+            : await db.Waters.AsNoTracking()
+                .Where(w => bare.Contains(w.Id))
+                .Select(w => new { w.Id, w.Shape })
+                .ToDictionaryAsync(w => w.Id, w => ShapePositions(w.Shape!).ToList(), ct);
+
         return waters.Select(w =>
         {
             var waterStations = stations[w.Id].ToList();
-            var positions = slipways[w.Id].Concat(marinas[w.Id]).Concat(waterStations.Select(s => s.Position)).ToList();
+            var positions = slipways[w.Id].Concat(marinas[w.Id]).Concat(waterStations.Select(s => s.Position))
+                .Concat(shapes.GetValueOrDefault(w.Id) ?? [])
+                .ToList();
             return new WaterSummaryDto(
                 w.Id, w.Name, w.Shortname, slipways[w.Id].Count(), waterStations.Count,
                 MarkerPosition(positions),
@@ -125,10 +140,40 @@ public static class CatalogEndpoints
         var positions = slipways.Select(s => new PositionDto(s.Latitude, s.Longitude))
             .Concat(stations.Select(s => new PositionDto(s.Latitude, s.Longitude)))
             .Concat(marinas.Select(m => new PositionDto(m.Latitude, m.Longitude)))
+            .Concat(water.Shape is null ? [] : ShapePositions(water.Shape))
             .ToList();
 
         return TypedResults.Ok(new WaterDetailsDto(
-            water.Id, water.Name, water.Shortname, BoundsOf(positions), slipways, stations, marinas));
+            water.Id, water.Name, water.Shortname, BoundsOf(positions),
+            water.Shape is null ? null : JsonDocument.Parse(water.Shape).RootElement.Clone(),
+            water.OsmElements, slipways, stations, marinas));
+    }
+
+    /// <summary>Every vertex of a GeoJSON geometry.</summary>
+    private static IEnumerable<PositionDto> ShapePositions(string shape)
+    {
+        using var document = JsonDocument.Parse(shape);
+        return Vertices(document.RootElement).ToList();
+
+        static IEnumerable<PositionDto> Vertices(JsonElement element)
+        {
+            if (element.ValueKind == JsonValueKind.Object)
+            {
+                var parts = element.TryGetProperty("geometries", out var geometries) ? geometries : element.GetProperty("coordinates");
+                foreach (var vertex in Vertices(parts))
+                    yield return vertex;
+            }
+            else if (element[0].ValueKind == JsonValueKind.Number)
+            {
+                // GeoJSON puts the longitude first.
+                yield return new PositionDto(element[1].GetDouble(), element[0].GetDouble());
+            }
+            else
+            {
+                foreach (var vertex in element.EnumerateArray().SelectMany(Vertices))
+                    yield return vertex;
+            }
+        }
     }
 
     private static BoundsDto? BoundsOf(IReadOnlyCollection<PositionDto> positions) =>

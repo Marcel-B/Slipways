@@ -19,7 +19,16 @@ const donau = { id: 'd19708ca-ac42-4ad4-8d62-e85722f946f6', name: 'Donau' }
 const water: WaterDetails = {
   ...donau,
   shortname: 'DONAU',
-  bounds: { south: 48.2, west: 10.9, north: 49.0, east: 13.5 },
+  bounds: { south: 47.9, west: 8.2, north: 49.0, east: 13.5 },
+  shape: {
+    type: 'LineString',
+    coordinates: [
+      [8.2, 47.9],
+      [11.9, 48.9],
+      [13.5, 48.6],
+    ],
+  },
+  osmElements: ['relation/89652'],
   slipways: [
     {
       id: 'eac96a93-fd47-4a9a-8771-0005805b9655',
@@ -98,6 +107,29 @@ describe('WaterDetailsPage', () => {
     const map = mapProps.at(-1)
     expect(map?.bounds).toEqual(water.bounds)
     expect(map?.markers.map((m) => m.kind)).toEqual(['slipway', 'station', 'station'])
+  })
+
+  it('highlights the shape of the water and links to OpenStreetMap', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(water), { status: 200 })))
+
+    renderAt(`/waters/${water.id}`)
+
+    expect(await screen.findByRole('link', { name: 'OpenStreetMap' })).toHaveAttribute(
+      'href',
+      'https://www.openstreetmap.org/relation/89652',
+    )
+    expect(mapProps.at(-1)?.shape).toEqual({ id: water.id, geometry: water.shape })
+  })
+
+  it('shows no course without a shape', async () => {
+    const noShape: WaterDetails = { ...water, shape: null, osmElements: [] }
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(noShape), { status: 200 })))
+
+    renderAt(`/waters/${water.id}`)
+
+    expect(await screen.findByRole('heading', { name: 'Donau' })).toBeInTheDocument()
+    expect(screen.queryByText(/Verlauf/)).not.toBeInTheDocument()
+    expect(mapProps.at(-1)?.shape).toBeUndefined()
   })
 
   it('has no map when nothing on the water has coordinates', async () => {

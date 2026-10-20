@@ -153,6 +153,54 @@ public class CatalogEndpointsTests(SlipwaysApiFactory factory) : IClassFixture<S
     }
 
     [Fact]
+    public async Task Returns_the_shape_of_a_water_and_places_it_by_its_shape_when_nothing_lies_on_it()
+    {
+        const string shape = """{"type":"LineString","coordinates":[[8.2,51.2],[8.25,51.3],[8.3,51.35]]}""";
+        Guid henne;
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<SlipwaysDbContext>();
+            var water = await db.Waters.SingleAsync(w => w.Shortname == "HENNE", TestContext.Current.CancellationToken);
+            water.OsmElements = ["relation/10692053"];
+            water.Shape = shape;
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+            henne = water.Id;
+        }
+
+        var details = await _client.GetFromJsonAsync<WaterDetailsDto>($"/api/waters/{henne}", TestContext.Current.CancellationToken);
+        var waters = await _client.GetFromJsonAsync<List<WaterSummaryDto>>("/api/waters", TestContext.Current.CancellationToken);
+
+        Assert.NotNull(details);
+        Assert.Equal("LineString", details.Shape?.GetProperty("type").GetString());
+        Assert.Equal(["relation/10692053"], details.OsmElements);
+        Assert.Equal(new BoundsDto(51.2, 8.2, 51.35, 8.3), details.Bounds);
+        Assert.NotNull(waters);
+        Assert.Equal(new PositionDto(51.3, 8.25), Assert.Single(waters, w => w.Id == henne).Position);
+    }
+
+    [Fact]
+    public async Task Places_every_slipway_in_europe()
+    {
+        var slipways = await _client.GetFromJsonAsync<List<SlipwaySummaryDto>>("/api/slipways", TestContext.Current.CancellationToken);
+
+        Assert.NotNull(slipways);
+        Assert.All(slipways, s =>
+        {
+            Assert.InRange(s.Latitude, 45, 56);
+            Assert.InRange(s.Longitude, 2, 20);
+        });
+    }
+
+    [Fact]
+    public async Task Leaves_out_stations_without_coordinates()
+    {
+        var stations = await _client.GetFromJsonAsync<List<StationDto>>("/api/stations", TestContext.Current.CancellationToken);
+
+        Assert.NotNull(stations);
+        Assert.DoesNotContain(stations, s => s.Latitude == 0 && s.Longitude == 0);
+    }
+
+    [Fact]
     public async Task Returns_404_for_unknown_water()
     {
         var response = await _client.GetAsync($"/api/waters/{Guid.NewGuid()}", TestContext.Current.CancellationToken);

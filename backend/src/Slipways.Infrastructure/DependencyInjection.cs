@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using Slipways.Infrastructure.Gauges;
 using Slipways.Infrastructure.Identity;
 using Slipways.Infrastructure.Persistence;
+using Slipways.Infrastructure.Shapes;
 
 namespace Slipways.Infrastructure;
 
@@ -37,6 +38,16 @@ public static class DependencyInjection
         services.TryAddSingleton(TimeProvider.System);
         services.AddScoped<GaugeSync>();
         services.AddHostedService<GaugeSyncWorker>();
+
+        services.AddOptions<NominatimOptions>().Bind(configuration.GetSection(NominatimOptions.SectionName));
+        services.AddHttpClient<NominatimClient>((sp, http) =>
+        {
+            http.BaseAddress = sp.GetRequiredService<IOptions<NominatimOptions>>().Value.BaseUrl;
+            // Nominatim's usage policy asks for a user agent that identifies the application.
+            http.DefaultRequestHeaders.UserAgent.ParseAdd("Slipways (+https://github.com/Marcel-B/Slipways)");
+        });
+        services.AddScoped<ShapeSync>();
+        services.AddHostedService<ShapeSyncWorker>();
 
         return services;
     }
