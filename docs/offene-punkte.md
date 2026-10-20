@@ -24,8 +24,10 @@ Der Import selbst ist im README beschrieben (Abschnitt „Slipanlagen und Marina
 
 1. **Kartenstil.** Die Karte nutzt weiter die bunten OSM-Standardkacheln, auf denen die Pins wenig hervorstechen. Ruhiger wäre z. B. OpenFreeMap (Vektorkacheln, ohne Schlüssel, braucht MapLibre GL bzw. `@maplibre/maplibre-gl-leaflet`). Jeder neue Kachel-Server muss in die Datenschutzseite. Entscheidung steht aus, Recherche in den Projektdateien unter `recherche/ui-framework-und-design.md`.
 
-## iOS-App (Analyse 20.10.2026)
+## Mobile-Apps (20.10.2026)
 
-Die SwiftUI-App liegt nur auf dem ungemergten Branch `origin/claude/project-thread-kuf5cb` und lädt gegen die heutige API keine Slipanlagen mehr, weil `water` seit dem OSM-Import null sein kann. Befund, fehlende Funktionen und Vorgehen stehen in [`docs/ios-app.md`](ios-app.md).
+Beide Apps laden wieder, haben Gewässer, Pegel, OSM-Hinweis und Info-Seite. Aufbau in [`docs/mobile-apps.md`](mobile-apps.md).
 
-1. **Umfang.** Soll die Android-App aus demselben Branch mit auf Stand kommen? Reicht für den ersten PR „lauffähig und lizenzkonform“, oder sollen Gewässer und Pegel gleich mit rein? Entscheidung steht aus.
+1. **App Store.** Es fehlen App-Icon (`Assets.xcassets`), Signing-Team (`DEVELOPMENT_TEAM`) und Screenshots. `ITSAppUsesNonExemptEncryption = NO` ist eingetragen. Ein Privacy-Manifest braucht die App erst, wenn sie z. B. `UserDefaults` nutzt.
+2. **Google Play.** Es fehlen ein Release-Signing, ein adaptives Icon (bisher nur ein Vektor-Platzhalter) und Screenshots.
+3. **Übersichtskarte (optional).** Eine Karte aller Slipanlagen bräuchte Clustering. `/api/slipways` liefert alles ohne Seitenaufteilung, rund 1 MB. Unter Android gäbe es dafür nur eine Kartenbibliothek mit eigenem Kachel-Server (Datenschutzseite anpassen) oder Google Maps mit API-Schlüssel.
