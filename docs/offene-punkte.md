@@ -30,9 +30,30 @@ Beschrieben im README („Angaben von den Webseiten der Marinas“), Code in `ba
 2. **Seiten, die erst per JavaScript entstehen**, liefern nichts; ein Headless-Browser wäre zu schwer für den Server. Bewusst offen.
 3. **Slipanlagen.** Die Tabelle `PlaceInfos` kann auch Slipanlagen aufnehmen, der Job liest aber nur Marinas. Bei Slipanlagen zeigt `url` oft auf eine Gemeindeseite mit vielen Nummern, deshalb erst nach der Auswertung von Punkt 1 entscheiden.
 
+## Nutzerbeiträge (20.10.2026)
+
+Vorschläge, Proof of Work, Moderation und Abgleich nach dem OSM-Import sind im Web und im Backend umgesetzt (README „Nutzerbeiträge“, Konzept in [`nutzerbeitraege.md`](nutzerbeitraege.md)).
+
+1. **Moderation einrichten.** Auf slipways-1 einmal `tailscale serve --bg --https=9465 http://127.0.0.1:9465` ausführen (siehe `deploy/README.md`, „Moderation“). Bis dahin sammeln sich Vorschläge ungesehen. Für die Test-Stage nach Bedarf ebenso.
+2. **Alarm bei wartenden Vorschlägen** (`slipways_suggestions_pending`), sobald es Alarme gibt (siehe Überwachung, Punkt 3).
+3. **Apps (Stufe 3).** iOS und Android zeigen `infos` noch nicht und können keine Vorschläge senden. Dieselben Endpunkte nutzen, den Proof of Work nativ lösen (SHA-256 mit CryptoKit bzw. `MessageDigest`). `SlipwayDetailsDto` hat `infos` neu; die Apps ignorieren unbekannte Felder, deshalb ist das noch nicht nachgezogen.
+4. **Fotos (Stufe 4).** Von Marcel gewünscht: Upload über die Moderation, serverseitig neu kodieren (WebP, lange Kante 1600 px, Vorschau 400 px), EXIF entfernen, keine Originale, höchstens etwa 5 je Eintrag. Speicher im Volume neben der Datenbank, ins Nextcloud-Backup aufnehmen.
+5. **Bestätigungen zählen.** Fakten zeigen nur den neuesten Wert der Nutzer. Das Konzept sah „3× bestätigt“ vor; dafür bräuchte `PlaceInfos` einen Zähler, oder die Freigabe zählt gleiche Vorschläge mit.
+6. **Werte vor der Freigabe ändern.** Die Moderation kann nur annehmen oder ablehnen. Ist ein Vorschlag fast richtig, muss er abgelehnt und der Eintrag von Hand korrigiert werden.
+7. **Extras und Fakten.** Die alten `Extras` der eigenen Slipanlagen (z. B. Parkplatz, Steg) stehen neben den neuen Fakten. Zusammenführen (Extras in Fakten umschreiben) und die alten `Pro`/`Contra`/`Rating`-Werte als Tipps übernehmen oder ausblenden; Entscheidung steht aus.
+8. **Marinas: „Dein Vorschlag wird geprüft“.** Der Hinweis verschwindet bei Slipanlagen, sobald der Eintrag sich ändert. Bei eigenen Marinas fehlt `updated` in der API, dort bleibt er bis zu 30 Tage stehen.
+
 ## Optik des Webs (PR #69, 20.10.2026)
 
 1. **Kartenstil.** Die Karte nutzt weiter die bunten OSM-Standardkacheln, auf denen die Pins wenig hervorstechen. Ruhiger wäre z. B. OpenFreeMap (Vektorkacheln, ohne Schlüssel, braucht MapLibre GL bzw. `@maplibre/maplibre-gl-leaflet`). Jeder neue Kachel-Server muss in die Datenschutzseite und in die Content-Security-Policy (`web/security-headers.conf`). Entscheidung steht aus, Recherche in den Projektdateien unter `recherche/ui-framework-und-design.md`.
+
+## Suchmaschinen (20.10.2026)
+
+Beschrieben im README („Suchmaschinen“).
+
+1. **Search Console.** slipways.de bei der Google Search Console und den Bing Webmaster Tools anmelden (DNS-TXT-Eintrag bei Contabo) und `https://slipways.de/sitemap.xml` einreichen. Kann nur Marcel.
+2. **Vorschaubild.** Für Link-Vorschauen (`og:image`) gibt es noch kein Bild; das Favicon ist ein SVG und wird dafür nicht genommen. Ein PNG mit 1200×630 px nach `web/public/` legen und in `SeoEndpoints.Render` eintragen.
+3. **Inhalt ohne JavaScript.** Serverseitig kommen nur Kopfdaten; Text und Links der Seiten rendert erst React. Google und Bing führen JavaScript aus, andere Crawler sehen nur Titel und Beschreibung. Falls das nicht reicht: ein kurzer Inhalt in `#root` per zweitem Include oder Prerendering.
 
 ## Mobile-Apps (20.10.2026)
 

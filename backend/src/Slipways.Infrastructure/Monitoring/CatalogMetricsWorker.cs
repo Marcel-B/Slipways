@@ -50,6 +50,8 @@ public sealed class CatalogMetricsWorker(
             SlipwaysMetrics.Places.WithLabels("marina", source).Set(marinas.SingleOrDefault(m => m.Key == source)?.Count ?? 0);
         }
         SlipwaysMetrics.Places.WithLabels("station", "pegelonline").Set(await db.Stations.CountAsync(cancellationToken));
+        SlipwaysMetrics.SuggestionsPending.Set(
+            await db.Suggestions.CountAsync(s => s.Status == SuggestionStatuses.Pending, cancellationToken));
 
         var file = new SqliteConnectionStringBuilder(db.Database.GetConnectionString()).DataSource;
         if (file is { Length: > 0 } && file != ":memory:" && File.Exists(file))

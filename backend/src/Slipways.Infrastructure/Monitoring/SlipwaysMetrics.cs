@@ -44,6 +44,18 @@ public static class SlipwaysMetrics
         "slipways_website_checks_total",
         "Websites of marinas read for contact details, by result (found, empty, disallowed, refused, failed).", "result");
 
+    public static readonly Counter SuggestionsReceived = Metrics.CreateCounter(
+        "slipways_suggestions_received_total",
+        "Suggestions sent by users, by result (queued, invalid, proof_failed, honeypot, nearby).", "result");
+
+    public static readonly Counter SuggestionsDecided = Metrics.CreateCounter(
+        "slipways_suggestions_decided_total", "Suggestions decided by the moderator, by decision (accepted, rejected).", "decision");
+
+    public static readonly Gauge SuggestionsPending = Metrics.CreateGauge(
+        "slipways_suggestions_pending", "Suggestions waiting for moderation.");
+
+    public static readonly string[] SuggestionResults = ["queued", "invalid", "proof_failed", "honeypot", "nearby"];
+
     public static readonly Gauge Places = Metrics.CreateGauge(
         "slipways_places", "Slipways, marinas and gauge stations in the database, by kind and source.", "kind", "source");
 
@@ -75,6 +87,10 @@ public static class SlipwaysMetrics
             OsmImportChanges.WithLabels(kind, change);
         foreach (var result in WebsiteCheckResults.All)
             WebsiteChecks.WithLabels(result);
+        foreach (var result in SuggestionResults)
+            SuggestionsReceived.WithLabels(result);
+        SuggestionsDecided.WithLabels("accepted");
+        SuggestionsDecided.WithLabels("rejected");
         LokiLinesDropped.WithLabels("queue_full");
         LokiLinesDropped.WithLabels("push_failed");
 

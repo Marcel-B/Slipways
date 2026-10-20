@@ -50,4 +50,7 @@ public static class PlaceInfoFields
 
     /// <summary>Free text, e.g. "Mo-Fr 08:00-18:00", as the source states it.</summary>
     public const string OpeningHours = "opening_hours";
+
+    /// <summary>A short tip from a user; a place can have several.</summary>
+    public const string Tip = "tip";
 }

@@ -18,6 +18,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 builder.Services.AddApiRateLimiting();
+builder.Services.AddOptions<SeoOptions>().BindConfiguration(SeoOptions.SectionName);
 builder.Services.AddHealthChecks().AddDbContextCheck<SlipwaysDbContext>();
 
 // Bearer tokens are protected with data protection keys; persist them so logins survive restarts.
@@ -29,16 +30,27 @@ var app = builder.Build();
 // The client address from X-Forwarded-For, for the rate limiter; only trusted from the proxies in the Docker network.
 app.UseForwardedHeaders();
 
-// The metrics port answers nothing but /metrics, and the other ports never answer /metrics. It goes by the port the
-// connection came in on, not by the Host header, which a client could set. The port is never forwarded to the
-// public; Prometheus reaches it through "tailscale serve".
+// The metrics port answers nothing but /metrics and the moderation port nothing but the moderation; the other ports
+// answer neither. It goes by the port the connection came in on, not by the Host header, which a client could set.
+// Neither port is ever forwarded to the public; both reach the tailnet through "tailscale serve".
 var metricsPort = app.Configuration.GetValue("Monitoring:MetricsPort", new MonitoringOptions().MetricsPort);
+var moderationPort = app.Configuration.GetValue("Moderation:Port", 9465);
 app.Use(async (context, next) =>
 {
-    if ((context.Connection.LocalPort == metricsPort) != (context.Request.Path == "/metrics"))
+    var path = context.Request.Path;
+    var moderation = path.StartsWithSegments(ModerationEndpoints.PagePath) || path.StartsWithSegments(ModerationEndpoints.ApiPath);
+    if ((context.Connection.LocalPort == metricsPort) != (path == "/metrics")
+        || (context.Connection.LocalPort == moderationPort) != moderation)
     {
         context.Response.StatusCode = StatusCodes.Status404NotFound;
         return;
+    }
+    if (moderation)
+    {
+        context.Response.Headers.ContentSecurityPolicy =
+            "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; frame-ancestors 'none'; form-action 'none'";
+        context.Response.Headers.XContentTypeOptions = "nosniff";
+        context.Response.Headers.CacheControl = "no-store";
     }
     await next(context);
 });
@@ -61,6 +73,9 @@ if (app.Environment.IsDevelopment())
 app.MapHealthChecks("/health");
 app.MapMetrics();
 app.MapCatalogEndpoints();
+app.MapSeoEndpoints();
+app.MapSuggestionEndpoints();
+app.MapModerationEndpoints();
 // Accounts are off for the read-only public site; Accounts:Enabled=true brings register and login back.
 if (app.Configuration.GetValue("Accounts:Enabled", false))
     app.MapAccountEndpoints();

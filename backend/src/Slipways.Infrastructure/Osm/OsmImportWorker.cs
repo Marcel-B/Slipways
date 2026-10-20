@@ -86,6 +86,10 @@ public sealed class OsmImportWorker(
                 "marinas {MarinasAdded} added, {MarinasUpdated} updated, {MarinasLinked} linked",
                 country, result.Slipways.Added, result.Slipways.Updated, result.Slipways.Linked,
                 result.Marinas.Added, result.Marinas.Updated, result.Marinas.Linked);
+            if (result.UserValuesResolved + result.UserValuesConflicting > 0)
+                logger.LogInformation(
+                    "Values from users: {Resolved} now in OpenStreetMap as well, {Conflicting} sent back to moderation",
+                    result.UserValuesResolved, result.UserValuesConflicting);
             if (result.Missing.Count > 0)
                 logger.LogWarning(
                     "{Count} places in {Country} are no longer in OpenStreetMap and were kept: {Elements}",

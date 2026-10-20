@@ -138,6 +138,42 @@ Einstellungen (Abschnitt `Websites`; eine `BaseUrl` gibt es nicht, jede Marina h
 
 Google Maps ist bewusst keine Quelle: Auslesen verbieten die Nutzungsbedingungen, und die Places API kostet je Abfrage und erlaubt kein dauerhaftes Speichern der Inhalte.
 
+## Nutzerbeiträge
+
+Wer Slipways nutzt, kann ohne Konto Angaben ergänzen oder korrigieren, ankreuzen, was es vor Ort gibt (Fakten wie `jetty`, `toilet`, `trailer_parking`), kurze Tipps geben, Probleme melden und fehlende Slipanlagen vorschlagen. Nichts davon ist sofort öffentlich: Jeder Beitrag landet als Vorschlag in der Tabelle `Suggestions` und wird erst nach Freigabe in der Moderation übernommen. Konzept und Abwägung stehen in [`docs/nutzerbeitraege.md`](docs/nutzerbeitraege.md), der Code in `backend/src/Slipways.Infrastructure/Suggestions/`.
+
+**Missbrauchsschutz** vor der Warteschlange, ohne fremde Dienste:
+
+- **Proof of Work** im Format von [ALTCHA](https://altcha.org/): `GET /api/suggestions/challenge` liefert eine signierte Aufgabe (SHA-256, HMAC, Ablauf in `salt`), der Client sucht die Zahl dazu (im Browser per Web Worker, etwa eine Sekunde), jede Lösung gilt nur einmal. Keine Cookies, keine Daten über den Client.
+- **Rate-Limit** eigens für `POST`/`DELETE /api/suggestions`: 5 in Folge, dann einer je 10 Minuten pro Adresse (`RateLimit:SuggestionTokenLimit`, `SuggestionReplenishmentPeriod`).
+- **Honeypot-Feld** `homepage`: Wer es ausfüllt, bekommt eine Antwort wie bei Erfolg, gespeichert wird nichts.
+- **Prüfungen:** nur bekannte Felder mit festen Werten (`SuggestionFields`), Texte ohne Links und mit Längengrenzen, neue Slipanlagen nur in DE, AT, CH und NL. Liegt eine bekannte Slipanlage näher als 100 m, antwortet die API mit `409` und der Liste; erst mit `confirmNew` wird der Vorschlag angenommen.
+
+Gespeichert werden nur Inhalt, Zeitpunkt und der Hash eines Tokens, mit dem der Absender den Stand sieht und den Vorschlag zurückzieht (`/beitrag/{id}#{token}` im Web). Keine IP-Adresse, kein Name. Abgelehnte Vorschläge werden nach 30 Tagen gelöscht, angenommene nach 90 (`Suggestions:KeepRejected`, `KeepAccepted`).
+
+**Was die Freigabe macht:**
+
+| Vorschlag | eigene Einträge (`manual`) | Einträge aus OSM (`osm`) |
+| --- | --- | --- |
+| neue Slipanlage | neue Slipanlage mit `Source = manual` | – |
+| Werte für Felder mit eigener Spalte (`fee`, `costs`, `access`, `opening_hours`, `surface`, `operator`, `phone`, `email`) | in die Spalte | Zeile in `PlaceInfos` mit `Source = user` und dem OSM-Wert von damals in `BaseValue` |
+| Fakten zum Ankreuzen, Tipps (`tip`) | Zeile in `PlaceInfos` | Zeile in `PlaceInfos` |
+| Problem melden (`report`) | nur für die Moderation | nur für die Moderation |
+
+Werte von Nutzern gewinnen in Web und API über die eigenen Felder des Eintrags. Nach jedem OSM-Import gleicht der Import die Zeilen zu OSM-Einträgen ab: Hat OSM jetzt denselben Wert, fällt die Zeile weg; hat OSM sich anders geändert (weder `BaseValue` noch der Wert der Nutzer), geht der Wert als neuer Vorschlag zurück in die Moderation und bis dahin gilt OSM.
+
+**Moderation** gibt es nur im Tailnet: Die API beantwortet `/moderation` (eine kleine Seite) und `/api/moderation/…` ausschließlich auf Port 9465 (`Moderation:Port`), alle anderen Ports nie. Änderungen brauchen zusätzlich den Header `X-Moderation`, damit eine fremde Seite im Browser nichts auslösen kann. Einrichtung in [`deploy/README.md`](deploy/README.md#moderation).
+
+Einstellungen (Abschnitt `Suggestions`):
+
+| Schlüssel | Standard | Bedeutung |
+| --- | --- | --- |
+| `Enabled` | `true` | Vorschläge annehmen (aus: `503`, Angenommenes bleibt sichtbar) |
+| `ChallengeKey` | zufällig je Start | Schlüssel für die Signatur der Aufgaben |
+| `ChallengeMaxNumber` | `100000` | Größe der Aufgabe |
+| `ChallengeLifetime` | `00:10:00` | Gültigkeit einer Aufgabe |
+| `KeepRejected` / `KeepAccepted` | `30.00:00:00` / `90.00:00:00` | Aufbewahrung entschiedener Vorschläge |
+
 ## Überwachung
 
 Die API liefert Messwerte für Prometheus unter `/metrics`, aber nur auf einem eigenen Port (`Monitoring:MetricsPort`, Standard 9464). Dieser Port beantwortet nichts anderes, und die übrigen Ports beantworten `/metrics` nicht. Entscheidend ist der Port, auf dem die Verbindung ankommt, nicht der `Host`-Header. Lokal: http://localhost:9464/metrics.
@@ -152,6 +188,9 @@ Die API liefert Messwerte für Prometheus unter `/metrics`, aber nur auf einem e
 | `slipways_osm_missing_elements{country}` | Einträge, deren OSM-Element der letzte Import ihres Landes nicht mehr fand |
 | `slipways_overpass_busy_responses_total` | „Overpass ausgelastet“, jeweils mit neuem Versuch |
 | `slipways_website_checks_total{result}` | gelesene Webseiten von Marinas nach Ergebnis (`found`, `empty`, `disallowed`, `refused`, `failed`) |
+| `slipways_suggestions_received_total{result}` | eingegangene Vorschläge nach Ergebnis (`queued`, `invalid`, `proof_failed`, `honeypot`, `nearby`) |
+| `slipways_suggestions_decided_total{decision}` | Entscheidungen in der Moderation (`accepted`, `rejected`) |
+| `slipways_suggestions_pending` | Vorschläge, die auf die Moderation warten (jede Minute gezählt) |
 | `slipways_places{kind, source}` | Slipanlagen, Marinas und Pegel in der Datenbank (jede Minute gezählt) |
 | `slipways_database_size_bytes` | Größe der SQLite-Datei samt WAL |
 | `slipways_loki_lines_pushed_total`, `slipways_loki_lines_dropped_total{reason}` | Logzeilen an Loki bzw. verworfen (`queue_full`, `push_failed`) |
@@ -220,23 +259,31 @@ Gegen die lokale API: im Schema unter Run > Arguments die Umgebungsvariable `SLI
 | Methode | Pfad | Beschreibung |
 | --- | --- | --- |
 | GET | `/api/slipways?search=&waterId=` | Slipanlagen, optional gefiltert |
-| GET | `/api/slipways/{id}` | Details einer Slipanlage |
+| GET | `/api/slipways/{id}` | Details einer Slipanlage, mit `infos` (Werte von Nutzern, Fakten, Tipps) |
 | GET | `/api/waters?search=` | Gewässer mit Anzahl Slipanlagen und Pegel, Kartenposition (`position`) und dem Wasserstand, wenn es genau einen Pegel gibt (`gauge`) |
 | GET | `/api/waters/shapes?search=` | Verläufe der gefundenen Gewässer als GeoJSON-FeatureCollection für die Übersichtskarte (ODbL), Feature-ID = Gewässer-ID |
 | GET | `/api/waters/{id}` | Details eines Gewässers mit Slipanlagen, Pegeln, Marinas, Verlauf als GeoJSON (`shape`, ODbL) und Kartenausschnitt (`bounds`) |
 | GET | `/api/marinas?search=&waterId=` | Marinas, optional gefiltert nach Name, Ort oder Gewässer bzw. nach Gewässer-ID |
 | GET | `/api/marinas/{id}` | Details einer Marina mit den zugehörigen Slipanlagen |
+| GET | `/api/suggestions/challenge` | Proof-of-Work-Aufgabe für einen Vorschlag |
+| POST | `/api/suggestions` | Vorschlag senden (`202` mit `id` und `token`, `409` mit Slipanlagen in der Nähe) |
+| GET, DELETE | `/api/suggestions/{id}?token=` | Stand eines Vorschlags bzw. zurückziehen, solange er wartet |
+| GET | `/api/contributions/odbl` | Werte von Nutzern zu OSM-Einträgen, unter ODbL |
 | GET | `/api/extras`, `/api/services` | Stammdaten |
 | GET | `/api/stations?waterId=` | Pegelstationen mit aktuellem Wasserstand (`waterLevel`, in cm) |
 | POST | `/api/account/register`, `/api/account/login`, `/api/account/refresh` | Konto und Bearer-Token (ASP.NET Identity), nur mit `Accounts__Enabled=true` |
 | GET | `/api/account/me` | Angemeldeter Benutzer, nur mit `Accounts__Enabled=true` |
 | GET | `/health` | Health-Check |
 
+## Suchmaschinen
+
+Das Web ist eine Single-Page-App, deshalb setzt nginx Titel, Beschreibung, Canonical-Link, Open Graph und strukturierte Daten (schema.org als JSON-LD: `Place` für Slipanlagen, `Marina`, `BodyOfWater`, `WebSite` für die Startseite) schon serverseitig in `index.html`: Ein Server Side Include im Block `seo` holt sie von `/api/seo/head/<Pfad>`. Antwortet die API nicht (Neustart, Rate-Limit), bleiben die allgemeinen Angaben aus `index.html` stehen. Unbekannte Seiten und IDs bekommen `noindex`, weil die SPA auch für sie `200` liefert. `/sitemap.xml` baut die API aus der Datenbank (`/api/seo/sitemap`), `web/public/robots.txt` verweist darauf. Die Adresse in Canonical-Links und Sitemap steht in `Seo:SiteUrl` (Vorgabe `https://slipways.de`, die Test-Stage verweist damit auf die Produktion). Im Browser setzen die Seiten ihren Titel selbst (React-`<title>`); Slipanlagen und Marinas heißen dort wie in der API „Name in Ort“, wenn der Ort nicht schon im Namen steht.
+
 ## Absicherung
 
-Die API ist bewusst ohne Anmeldung lesbar, Web und Apps brauchen keinen Schlüssel. Schreibende Endpunkte gibt es nur mit `Accounts:Enabled=true`.
+Die API ist bewusst ohne Anmeldung lesbar, Web und Apps brauchen keinen Schlüssel. Schreiben kann man von außen nur Vorschläge, die erst nach der Moderation sichtbar werden (siehe „Nutzerbeiträge“); Konto-Endpunkte gibt es nur mit `Accounts:Enabled=true`.
 
-- **Erreichbar von außen** ist nur `/api/…` über nginx (und Caddy). `/health`, `/metrics` und die API-Doku hängen nicht daran; `/metrics` antwortet nur auf dem eigenen Port, Scalar und `/openapi` gibt es nur im Modus `Development`.
+- **Erreichbar von außen** ist nur `/api/…` über nginx (und Caddy). `/health`, `/metrics`, die Moderation und die API-Doku hängen nicht daran; `/metrics` und die Moderation antworten nur auf ihren eigenen Ports, Scalar und `/openapi` gibt es nur im Modus `Development`.
 - **Rate-Limit:** Jede Client-Adresse (IPv6 je /64) hat für `/api/…` einen Token-Bucket mit 120 Anfragen, der sich um 60 je 10 Sekunden auffüllt (`RateLimit:TokenLimit`, `TokensPerPeriod`, `ReplenishmentPeriod`, abschalten mit `RateLimit:Enabled=false`). Darüber antwortet die API mit `429` und `Retry-After`. Die Grenzen sind großzügig, weil sich viele App-Nutzer eine Adresse teilen können (Mobilfunk). Ein Abruf aller Daten bleibt möglich, denn `/api/slipways` liefert alles in einer Antwort; das Limit schützt vor Überlastung, nicht vor dem Kopieren. Die Client-Adresse kommt aus `X-Forwarded-For`, dem die API nur von Adressen aus privaten Netzen (Docker) traut, höchstens zwei Stationen weit (Caddy, nginx). Caddy ersetzt einen mitgeschickten `X-Forwarded-For`, deshalb kann ein Client sich keine fremde Adresse geben.
 - **CORS** ist nicht eingerichtet: Fremde Websites können die API im Browser nicht lesen. Die Apps betrifft das nicht.
 - **Header:** nginx setzt für alle Antworten Content-Security-Policy, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` und `Permissions-Policy` (`web/security-headers.conf`), Caddy dazu HSTS. Die CSP erlaubt nur eigene Skripte; deshalb steht das Theme-Skript in `web/public/theme.js` statt inline in `index.html`. Ein neuer Kachel-Server oder eine andere externe Quelle muss dort eingetragen werden.
@@ -251,6 +298,7 @@ Die API ist bewusst ohne Anmeldung lesbar, Web und Apps brauchen keinen Schlüss
 | Gewässerverläufe (`shape`) | [OpenStreetMap](https://www.openstreetmap.org/copyright) über Nominatim | [ODbL 1.0](https://opendatacommons.org/licenses/odbl/) | Namensnennung (Seitenfuß, Link zum OSM-Element auf der Detailseite); die API gibt die Formen weiter, sie stehen deshalb selbst unter ODbL (Share-Alike) |
 | Slipanlagen, Marinas, Motorservices (Seed) | von Hand erfasst (2019/20) | eigene Daten | – |
 | Telefon, E-Mail, Öffnungszeiten von Marinas (`infos` mit `source = website`) | Startseite der Marina, die in OSM verlinkt ist | Fakten, kein Werkschutz; ggf. personenbezogen (DSGVO, siehe Datenschutzseite) | Quelle und Abrufdatum an der Angabe; robots.txt beachten; auf Widerspruch löschen und ausschließen |
+| Werte von Nutzern, Fakten, Tipps und neue Slipanlagen (`infos` mit `source = user`, neue Einträge mit `Source = manual`) | Vorschläge der Nutzer nach Moderation | eigene Daten; Werte zu OSM-Einträgen als abgeleitete Datenbank unter [ODbL 1.0](https://opendatacommons.org/licenses/odbl/) | Absender bestätigen eigene Kenntnis und erlauben die Veröffentlichung; Werte zu OSM-Einträgen getrennt in `PlaceInfos`, Download unter `/api/contributions/odbl` |
 | Slipanlagen und Marinas mit `source = osm` | [OpenStreetMap](https://www.openstreetmap.org/copyright) über Overpass | [ODbL 1.0](https://opendatacommons.org/licenses/odbl/) | Namensnennung (Seitenfuß, Quelle und Link zum OSM-Element auf der Detailseite); getrennt gehalten über `Source` und OSM-Element; die API gibt sie weiter, sie stehen deshalb selbst unter ODbL (Share-Alike) |
 
 Die Web-Oberfläche nennt die Quellen im Seitenfuß. Die ausführliche Recherche zu weiteren offenen Quellen (OSM, eHYD, BAFU, Rijkswaterstaat u. a.) steht in [`docs/datenquellen.md`](docs/datenquellen.md). Für den Import von Slipanlagen und Marinas aus OpenStreetMap gilt zusätzlich: Die ODbL verlangt Namensnennung, und wer eine Datenbank mit OSM-Daten weitergibt, muss sie unter ODbL weitergeben (Share-Alike). Importierte Einträge tragen deshalb `Source = osm` und ihr OSM-Element und bleiben von den eigenen Daten getrennt: Der Import kopiert keine OSM-Werte in eigene Einträge, sondern hinterlegt dort höchstens das OSM-Element. Die API liefert bei Slipanlagen und Marinas `source` (`manual` oder `osm`) und, falls vorhanden, `osmElement` (z. B. `node/123`) mit.

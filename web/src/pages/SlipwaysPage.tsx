@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { ChevronRight, Sailboat } from 'lucide-react'
+import { ChevronRight, MapPinPlus, Sailboat } from 'lucide-react'
 import { memo, useDeferredValue, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { api } from '../api/client'
@@ -35,9 +35,15 @@ export function SlipwaysPage() {
   const listed = useMemo(() => slipways && listedInView(slipways, view, searching), [slipways, view, searching])
   // A search moves the map to its hits, so they are on screen next to the list.
   const focus = useMemo(() => (searching && slipways ? boundsOf(slipways) : null), [slipways, searching])
+  // A new slipway starts where the sender is looking, if they zoomed in far enough to mean a place.
+  const newSlipway =
+    view && view.zoom >= 10
+      ? `/slipways/neu?lat=${((view.bbox[1] + view.bbox[3]) / 2).toFixed(5)}&lon=${((view.bbox[0] + view.bbox[2]) / 2).toFixed(5)}&z=${view.zoom}`
+      : '/slipways/neu'
 
   return (
     <>
+      <title>Slipways · Slipanlagen, Marinas und Pegel</title>
       <section className="hero">
         <h1>Slipanlagen finden</h1>
         <p className="hero-lead">
@@ -49,6 +55,9 @@ export function SlipwaysPage() {
           placeholder="Nach Name, Ort oder Gewässer suchen"
           label="Slipanlagen durchsuchen"
         />
+        <Link to={newSlipway} className="hero-link">
+          <MapPinPlus size={16} /> Slipanlage fehlt?
+        </Link>
       </section>
       <Overview
         list={
