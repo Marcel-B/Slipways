@@ -9,7 +9,11 @@ Slipanlagen, Marinas, Gewässer und Pegel als Web-App. Backend in `backend/` (.N
 ```sh
 cd backend && dotnet test
 cd web && npm run lint && npm test && npm run build
+cd mobile/ios && swift test --package-path SlipwaysKit        # nur bei Änderungen an den Apps
+cd mobile/android && ./gradlew :shared:test :app:assembleDebug
 ```
+
+Die Mobile-Apps (`mobile/`) lesen dieselbe API; ändert sich ein DTO in `Contracts.cs`, die Modelle dort mitziehen (siehe `docs/mobile-apps.md`).
 
 Die CI (`.github/workflows/`) führt genau das aus, dazu `docker compose up` als Rauchtest. `TreatWarningsAsErrors` ist an, Nullable-Warnungen brechen also den Build.
 

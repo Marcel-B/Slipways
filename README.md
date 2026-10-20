@@ -152,7 +152,7 @@ dotnet ef migrations add <Name> --project src/Slipways.Infrastructure --startup-
 
 ## Mobile-Apps
 
-Beide Apps sprechen mit der lokalen API aus `docker compose up` (Port 5080).
+Beide Apps sind reine Lesesichten mit den Tabs Slipanlagen, Gewässer und Info. Die Release-Versionen sprechen mit https://slipways.de, die Debug-Versionen mit der lokalen API aus `docker compose up` (Port 5080). Aufbau und Lizenzhinweis: [`docs/mobile-apps.md`](docs/mobile-apps.md).
 
 Android (Android Studio oder JDK 17+ mit Android SDK):
 

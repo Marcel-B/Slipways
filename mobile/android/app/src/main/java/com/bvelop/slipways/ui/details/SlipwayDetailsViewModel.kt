@@ -7,10 +7,12 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.bvelop.slipways.shared.ApiException
+import com.bvelop.slipways.shared.NearestGauge
 import com.bvelop.slipways.shared.SlipwayDetails
 import com.bvelop.slipways.shared.SlipwaysApi
 import com.bvelop.slipways.ui.UiState
 import com.bvelop.slipways.ui.container
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,6 +24,10 @@ class SlipwayDetailsViewModel(savedStateHandle: SavedStateHandle, private val ap
     private val _state = MutableStateFlow<UiState<SlipwayDetails>>(UiState.Loading)
     val state: StateFlow<UiState<SlipwayDetails>> = _state.asStateFlow()
 
+    /** The gauge with a current reading closest to the slipway, from the water the slipway is on. */
+    private val _nearestGauge = MutableStateFlow<NearestGauge?>(null)
+    val nearestGauge: StateFlow<NearestGauge?> = _nearestGauge.asStateFlow()
+
     init {
         load()
     }
@@ -29,12 +35,25 @@ class SlipwayDetailsViewModel(savedStateHandle: SavedStateHandle, private val ap
     fun load() {
         _state.value = UiState.Loading
         viewModelScope.launch {
-            _state.value = try {
-                UiState.Success(api.slipway(id))
+            val slipway = try {
+                api.slipway(id)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: ApiException) {
-                UiState.Error(if (e.status == 404) "Diese Slipanlage gibt es nicht." else "Fehler ${e.status}")
+                _state.value = UiState.Error(if (e.status == 404) "Diese Slipanlage gibt es nicht." else "Fehler ${e.status}")
+                return@launch
             } catch (e: Exception) {
-                UiState.Error(e.message ?: "Unbekannter Fehler")
+                _state.value = UiState.Error(e.message ?: "Unbekannter Fehler")
+                return@launch
+            }
+            _state.value = UiState.Success(slipway)
+            val waterId = slipway.water?.id ?: return@launch
+            _nearestGauge.value = try {
+                api.water(waterId).nearestGauge(slipway.latitude, slipway.longitude)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                null
             }
         }
     }
