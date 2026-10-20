@@ -1,0 +1,30 @@
+name: iOS
+
+on:
+  push:
+    branches: [master]
+    paths: [mobile/ios/**, .github/workflows/ios.yml]
+  pull_request:
+    paths: [mobile/ios/**, .github/workflows/ios.yml]
+
+jobs:
+  build-and-test:
+    runs-on: macos-26
+    defaults:
+      run:
+        working-directory: mobile/ios
+    steps:
+      - uses: actions/checkout@v5
+      - name: Test SlipwaysKit
+        run: swift test --package-path SlipwaysKit
+      - name: Generate Xcode project
+        run: |
+          brew install xcodegen
+          xcodegen generate
+      - name: Build app for the simulator
+        run: |
+          xcodebuild build \
+            -project Slipways.xcodeproj \
+            -scheme Slipways \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO
