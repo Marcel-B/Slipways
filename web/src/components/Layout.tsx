@@ -1,4 +1,5 @@
 import { Link, NavLink, Outlet } from 'react-router'
+import { ThemeToggle } from './ThemeToggle'
 
 export function Layout() {
   return (
@@ -9,7 +10,7 @@ export function Layout() {
             <span className="brand-logo">
               <img src="/favicon.svg" alt="" width={24} height={24} />
             </span>
-            Slipways
+            <span className="brand-name">Slipways</span>
           </Link>
           <nav className="nav">
             <NavLink to="/" end>
@@ -17,6 +18,7 @@ export function Layout() {
             </NavLink>
             <NavLink to="/waters">Gewässer</NavLink>
           </nav>
+          <ThemeToggle />
         </div>
       </header>
       <main className="main">
