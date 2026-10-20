@@ -157,7 +157,9 @@ dotnet ef migrations add <Name> --project src/Slipways.Infrastructure --startup-
 | GET | `/api/waters?search=` | Gewässer mit Anzahl Slipanlagen und Pegel, Kartenposition (`position`) und dem Wasserstand, wenn es genau einen Pegel gibt (`gauge`) |
 | GET | `/api/waters/shapes?search=` | Verläufe der gefundenen Gewässer als GeoJSON-FeatureCollection für die Übersichtskarte (ODbL), Feature-ID = Gewässer-ID |
 | GET | `/api/waters/{id}` | Details eines Gewässers mit Slipanlagen, Pegeln, Marinas, Verlauf als GeoJSON (`shape`, ODbL) und Kartenausschnitt (`bounds`) |
-| GET | `/api/marinas?waterId=`, `/api/extras`, `/api/services` | Stammdaten |
+| GET | `/api/marinas?search=&waterId=` | Marinas, optional gefiltert nach Name, Ort oder Gewässer bzw. nach Gewässer-ID |
+| GET | `/api/marinas/{id}` | Details einer Marina mit den zugehörigen Slipanlagen |
+| GET | `/api/extras`, `/api/services` | Stammdaten |
 | GET | `/api/stations?waterId=` | Pegelstationen mit aktuellem Wasserstand (`waterLevel`, in cm) |
 | POST | `/api/account/register`, `/api/account/login`, `/api/account/refresh` | Konto und Bearer-Token (ASP.NET Identity), nur mit `Accounts__Enabled=true` |
 | GET | `/api/account/me` | Angemeldeter Benutzer, nur mit `Accounts__Enabled=true` |

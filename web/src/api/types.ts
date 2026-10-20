@@ -103,6 +103,10 @@ export interface Marina extends OsmTags {
   osmElement: string | null
 }
 
+export interface MarinaDetails extends Marina {
+  slipways: SlipwaySummary[]
+}
+
 /** Shapes thinned out for the overview map; feature ids are water ids. */
 export type WaterShapes = FeatureCollection<Geometry, { name: string }>
 

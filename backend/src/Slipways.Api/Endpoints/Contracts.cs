@@ -125,6 +125,27 @@ public record MarinaDto(
     string Source,
     string? OsmElement);
 
+/// <summary>A marina as in <see cref="MarinaDto"/>, with the slipways that belong to it.</summary>
+public record MarinaDetailsDto(
+    Guid Id,
+    string Name,
+    double Latitude,
+    double Longitude,
+    string? Url,
+    string? Street,
+    string? PostalCode,
+    string? City,
+    string? Phone,
+    string? Email,
+    string? Operator,
+    string? Fee,
+    string? Access,
+    string? OpeningHours,
+    WaterDto? Water,
+    string Source,
+    string? OsmElement,
+    IReadOnlyList<SlipwaySummaryDto> Slipways);
+
 public record ExtraDto(Guid Id, string Name);
 
 public record ServiceDto(
