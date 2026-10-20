@@ -12,12 +12,14 @@ using Slipways.Infrastructure.Monitoring;
 using Slipways.Infrastructure.Osm;
 using Slipways.Infrastructure.Persistence;
 using Slipways.Infrastructure.Shapes;
+using Slipways.Infrastructure.Websites;
 
 namespace Slipways.Infrastructure;
 
 public static class DependencyInjection
 {
-    // PEGELONLINE, Nominatim and Overpass all ask for a user agent that identifies the application.
+    // PEGELONLINE, Nominatim and Overpass all ask for a user agent that identifies the application. Its first word is
+    // also what robots.txt files name to address us (RobotsTxt.ProductToken).
     private const string UserAgent = "Slipways (+https://github.com/Marcel-B/Slipways)";
 
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
@@ -68,6 +70,29 @@ public static class DependencyInjection
             .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler { AutomaticDecompression = DecompressionMethods.All });
         services.AddScoped<OsmImport>();
         services.AddHostedService<OsmImportWorker>();
+
+        services.AddOptions<WebsiteOptions>().Bind(configuration.GetSection(WebsiteOptions.SectionName));
+        services.AddHttpClient<WebsiteClient>(http =>
+            {
+                // The client cancels each request itself after WebsiteOptions.Timeout.
+                http.Timeout = Timeout.InfiniteTimeSpan;
+                http.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgent);
+                http.DefaultRequestHeaders.Accept.ParseAdd("text/html,application/xhtml+xml;q=0.9,*/*;q=0.1");
+                http.DefaultRequestHeaders.AcceptLanguage.ParseAdd("de,en;q=0.5");
+            })
+            .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+            {
+                // Redirects are followed by the client, which checks robots.txt for every host on the way.
+                AllowAutoRedirect = false,
+                AutomaticDecompression = DecompressionMethods.All,
+                ConnectCallback = PublicAddressGuard.ConnectAsync,
+                // A proxy would make the guard check the proxy instead of the site.
+                UseProxy = false,
+            })
+            // Every request would be logged with its address; the job logs a summary per run instead.
+            .RemoveAllLoggers();
+        services.AddScoped<WebsiteSync>();
+        services.AddHostedService<WebsiteSyncWorker>();
 
         services.AddOptions<MonitoringOptions>().Bind(configuration.GetSection(MonitoringOptions.SectionName));
         services.AddHostedService<CatalogMetricsWorker>();

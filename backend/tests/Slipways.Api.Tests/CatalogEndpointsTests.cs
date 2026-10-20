@@ -4,6 +4,7 @@ using System.Text.Json.Nodes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Slipways.Api.Endpoints;
+using Slipways.Domain;
 using Slipways.Infrastructure.Persistence;
 
 namespace Slipways.Api.Tests;
@@ -249,6 +250,28 @@ public class CatalogEndpointsTests(SlipwaysApiFactory factory) : IClassFixture<S
         Assert.NotNull(marina);
         Assert.Equal(slipway.Marina.Name, marina.Name);
         Assert.Contains(marina.Slipways, s => s.Id == KelheimId);
+    }
+
+    [Fact]
+    public async Task Returns_marina_details_with_infos_from_its_website()
+    {
+        var marinaId = Guid.Parse("4CFBA36B-39A9-4F63-B155-32D6279DE801");
+        var retrieved = new DateTime(2026, 10, 20, 12, 0, 0, DateTimeKind.Utc);
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<SlipwaysDbContext>();
+            db.PlaceInfos.Add(new PlaceInfo
+            {
+                PlaceType = PlaceTypes.Marina, PlaceId = marinaId, Field = PlaceInfoFields.Phone, Value = "+49 9441 1234",
+                Source = Sources.Website, SourceUrl = "https://saal.example/", Retrieved = retrieved,
+            });
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        var marina = await _client.GetFromJsonAsync<MarinaDetailsDto>($"/api/marinas/{marinaId}", TestContext.Current.CancellationToken);
+
+        var info = Assert.Single(marina!.Infos);
+        Assert.Equal(new PlaceInfoDto("phone", "+49 9441 1234", "website", "https://saal.example/", retrieved), info);
     }
 
     [Fact]

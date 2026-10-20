@@ -39,6 +39,7 @@ const details: MarinaDetails = {
   ...marina,
   // No water, so no gauge is looked up.
   water: null,
+  infos: [],
   slipways: [
     {
       id: 'eac96a93-fd47-4a9a-8771-0005805b9655',

@@ -95,6 +95,23 @@ export function DatenschutzPage() {
         keine Daten über Sie übermittelt.
       </p>
 
+      <h2>Angaben von den Webseiten der Marinas</h2>
+      <p>
+        Viele Marinas verlinken in OpenStreetMap ihre eigene Webseite. Unser Server ruft etwa einmal im Monat die Startseite dieser
+        Webseiten ab, um Telefonnummer, E-Mail-Adresse und Öffnungszeiten der Marina zu übernehmen, und zeigt sie mit Quelle und
+        Abrufdatum auf der Detailseite. Er liest nur Angaben, die die Seite für die Marina selbst macht (strukturierte Daten und
+        einzelne Telefon- bzw. E-Mail-Links), keine Angaben zu Personen, und hält sich an die robots.txt der Webseite. Nennt eine
+        Seite mehrere Telefonnummern oder Adressen, übernehmen wir keine davon. Wenn Sie die Seiten aufrufen, werden keine Daten
+        über Sie an diese Webseiten übermittelt.
+      </p>
+      <p>
+        Gehört eine übernommene Telefonnummer oder E-Mail-Adresse zu einer Person, etwa bei einem Verein, verarbeiten wir sie auf
+        Grundlage von Art. 6 Abs. 1 lit. f DSGVO. Unser berechtigtes Interesse ist, Wassersportlern aktuelle Kontaktdaten der
+        Marinas zu zeigen, die diese selbst veröffentlicht haben. Auf einen Hinweis an <OperatorEmail /> löschen wir die Angaben und
+        lesen die Webseite nicht mehr aus. Betreiber können das Auslesen auch selbst über die robots.txt mit dem Namen{' '}
+        <code>Slipways</code> unterbinden.
+      </p>
+
       <h2>Ihre Rechte</h2>
       <p>Sie haben das Recht auf</p>
       <ul>

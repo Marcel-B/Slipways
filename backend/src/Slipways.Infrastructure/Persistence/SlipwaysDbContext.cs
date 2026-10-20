@@ -18,6 +18,8 @@ public class SlipwaysDbContext(DbContextOptions<SlipwaysDbContext> options)
     public DbSet<Service> Services => Set<Service>();
     public DbSet<Station> Stations => Set<Station>();
     public DbSet<JobState> JobStates => Set<JobState>();
+    public DbSet<PlaceInfo> PlaceInfos => Set<PlaceInfo>();
+    public DbSet<WebsiteCheck> WebsiteChecks => Set<WebsiteCheck>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
@@ -67,6 +69,27 @@ public class SlipwaysDbContext(DbContextOptions<SlipwaysDbContext> options)
         {
             e.HasKey(x => x.Name);
             e.Property(x => x.Name).HasMaxLength(50);
+        });
+
+        // Not tied to the places with foreign keys, since a row can belong to a slipway or a marina.
+        builder.Entity<PlaceInfo>(e =>
+        {
+            e.Property(x => x.PlaceType).HasMaxLength(10);
+            e.Property(x => x.OsmType).HasMaxLength(10);
+            e.Property(x => x.Field).HasMaxLength(50);
+            e.Property(x => x.Value).HasMaxLength(500);
+            e.Property(x => x.BaseValue).HasMaxLength(500);
+            e.Property(x => x.Source).HasMaxLength(20);
+            e.Property(x => x.SourceUrl).HasMaxLength(2000);
+            e.HasIndex(x => new { x.PlaceType, x.PlaceId });
+        });
+
+        builder.Entity<WebsiteCheck>(e =>
+        {
+            e.HasKey(x => new { x.PlaceType, x.PlaceId });
+            e.Property(x => x.PlaceType).HasMaxLength(10);
+            e.Property(x => x.Url).HasMaxLength(2000);
+            e.Property(x => x.Result).HasMaxLength(20);
         });
 
         builder.Entity<Station>(e =>

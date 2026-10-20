@@ -45,7 +45,8 @@ public sealed class OsmImportTests : IAsyncLifetime
             { "type": "node", "id": 3001, "lat": 48.90940, "lon": 11.92680,
               "tags": { "leisure": "marina", "name": "Yachthafen Saal" } },
             { "type": "way", "id": 4001, "center": { "lat": 53.0, "lon": 8.0 },
-              "tags": { "leisure": "marina", "name": "Testhafen", "website": "https://testhafen.example" } }
+              "tags": { "leisure": "marina", "name": "Testhafen", "website": "https://testhafen.example",
+                "contact:phone": "+49 4401 12345", "email": "hafen@testhafen.example" } }
           ]
         }
         """;
@@ -109,6 +110,7 @@ public sealed class OsmImportTests : IAsyncLifetime
 
         var marina = await _db.Marinas.AsNoTracking().SingleAsync(m => m.OsmType == "way" && m.OsmId == 4001, TestContext.Current.CancellationToken);
         Assert.Equal((Sources.Osm, "Testhafen", "https://testhafen.example"), (marina.Source, marina.Name, marina.Url));
+        Assert.Equal(("+49 4401 12345", "hafen@testhafen.example"), (marina.Phone, marina.Email));
     }
 
     [Fact]

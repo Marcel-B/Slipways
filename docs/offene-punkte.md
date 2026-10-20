@@ -16,9 +16,16 @@ Messwerte, Logs und das Grafana-Dashboard **Slipways** laufen für slipways.de (
 Der Import selbst ist im README beschrieben (Abschnitt „Slipanlagen und Marinas aus OpenStreetMap“), der Code liegt in `backend/src/Slipways.Infrastructure/Osm/`.
 
 1. **Namen ohne Aussage.** Ohne `name` und `addr:city` heißt ein Eintrag nur „Slipanlage“ bzw. „Marina“. Beim Probelauf für Österreich traf das 349 von 391 Slipanlagen. Ideen: Gewässername anhängen („Slipanlage Donau“, wenn `WaterId` gesetzt ist) oder den Ort per Nominatim-Rückwärtssuche holen (1 Anfrage/s, also bei ~5.000 Einträgen einmalig rund 1,5 h). Entscheidung steht aus.
-2. **Telefon und E-Mail für Marinas.** OSM hat oft `phone`/`contact:phone` und `email`/`contact:email`. Die Spalten `Marina.Phone`/`Email` gibt es schon, der Import übernimmt die Tags aber nicht, weil sie nicht in der vereinbarten Tag-Liste standen. Für Einträge mit `Source = osm` leicht nachzurüsten (`ApplyMarina` in `OsmImport.cs`).
-3. **Karibische Niederlande.** Die Abfrage nutzt die Fläche `ISO3166-1=NL`, `admin_level=2` (Relation 2323309). Sie umfasst vermutlich auch Bonaire, Sint Eustatius und Saba, dann kämen ein paar karibische Einträge mit. Nicht geprüft; bei Bedarf nach Breitengrad filtern (alles südlich von 50° N bei NL verwerfen).
-4. **Schwelle für die Gewässerzuordnung.** 300 m zum vereinfachten Verlauf (`OsmImport.WaterDistance`) sind ein Schätzwert. Bei breiten Flüssen, deren Verlauf als Mittellinie vorliegt, kann das zu knapp sein, bei kleinen Seen neben großen Flüssen zu großzügig. Nach dem ersten vollen Import stichprobenartig prüfen.
+2. **Karibische Niederlande.** Die Abfrage nutzt die Fläche `ISO3166-1=NL`, `admin_level=2` (Relation 2323309). Sie umfasst vermutlich auch Bonaire, Sint Eustatius und Saba, dann kämen ein paar karibische Einträge mit. Nicht geprüft; bei Bedarf nach Breitengrad filtern (alles südlich von 50° N bei NL verwerfen).
+3. **Schwelle für die Gewässerzuordnung.** 300 m zum vereinfachten Verlauf (`OsmImport.WaterDistance`) sind ein Schätzwert. Bei breiten Flüssen, deren Verlauf als Mittellinie vorliegt, kann das zu knapp sein, bei kleinen Seen neben großen Flüssen zu großzügig. Nach dem ersten vollen Import stichprobenartig prüfen.
+
+## Angaben von den Webseiten der Marinas (20.10.2026)
+
+Beschrieben im README („Angaben von den Webseiten der Marinas“), Code in `backend/src/Slipways.Infrastructure/Websites/`.
+
+1. **Ausbeute prüfen.** Aus dem Cloud-Container waren die Webseiten nicht erreichbar, die Trefferquote ist also nur geschätzt (viele kleine Vereinsseiten ohne strukturierte Daten). Nach dem ersten Durchlauf (rund 2.000 Seiten, bei 200 je Stunde etwa ein halber Tag) `SELECT Result, COUNT(*) FROM WebsiteChecks GROUP BY Result;` ansehen und Stichproben der übernommenen Werte prüfen.
+2. **Seiten, die erst per JavaScript entstehen**, liefern nichts; ein Headless-Browser wäre zu schwer für den Server. Bewusst offen.
+3. **Slipanlagen.** Die Tabelle `PlaceInfos` kann auch Slipanlagen aufnehmen, der Job liest aber nur Marinas. Bei Slipanlagen zeigt `url` oft auf eine Gemeindeseite mit vielen Nummern, deshalb erst nach der Auswertung von Punkt 1 entscheiden.
 
 ## Optik des Webs (PR #69, 20.10.2026)
 

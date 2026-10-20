@@ -316,6 +316,66 @@ namespace Slipways.Infrastructure.Persistence.Migrations
                     b.ToTable("Marinas");
                 });
 
+            modelBuilder.Entity("Slipways.Domain.PlaceInfo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("BaseValue")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Field")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("OsmId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("OsmType")
+                        .HasMaxLength(10)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("PlaceId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PlaceType")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("Retrieved")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SourceUrl")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("Updated")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PlaceType", "PlaceId");
+
+                    b.ToTable("PlaceInfos");
+                });
+
             modelBuilder.Entity("Slipways.Domain.Service", b =>
                 {
                     b.Property<Guid>("Id")
@@ -558,6 +618,33 @@ namespace Slipways.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Waters");
+                });
+
+            modelBuilder.Entity("Slipways.Domain.WebsiteCheck", b =>
+                {
+                    b.Property<string>("PlaceType")
+                        .HasMaxLength(10)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("PlaceId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("Checked")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Result")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("PlaceType", "PlaceId");
+
+                    b.ToTable("WebsiteChecks");
                 });
 
             modelBuilder.Entity("Slipways.Infrastructure.Identity.AppUser", b =>

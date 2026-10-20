@@ -1,4 +1,5 @@
 using Prometheus;
+using Slipways.Domain;
 
 namespace Slipways.Infrastructure.Monitoring;
 
@@ -10,7 +11,7 @@ public static class SlipwaysMetrics
 {
     // The label is called "task" because Prometheus sets "job" itself, to the scrape job, and renames a "job"
     // label of the app to "exported_job".
-    public static readonly string[] Jobs = ["gauges", "shapes", "osm"];
+    public static readonly string[] Jobs = ["gauges", "shapes", "osm", "websites"];
 
     public static readonly Counter JobRuns = Metrics.CreateCounter(
         "slipways_job_runs_total", "Runs of background jobs, by task and result (success, failure).", "task", "result");
@@ -37,6 +38,10 @@ public static class SlipwaysMetrics
 
     public static readonly Counter OverpassBusyResponses = Metrics.CreateCounter(
         "slipways_overpass_busy_responses_total", "Overpass answers that it is busy (429, 502, 503, 504), each followed by a retry.");
+
+    public static readonly Counter WebsiteChecks = Metrics.CreateCounter(
+        "slipways_website_checks_total",
+        "Websites of marinas read for contact details, by result (found, empty, disallowed, refused, failed).", "result");
 
     public static readonly Gauge Places = Metrics.CreateGauge(
         "slipways_places", "Slipways, marinas and gauge stations in the database, by kind and source.", "kind", "source");
@@ -67,6 +72,8 @@ public static class SlipwaysMetrics
         foreach (var kind in new[] { "slipway", "marina" })
         foreach (var change in new[] { "added", "updated", "linked" })
             OsmImportChanges.WithLabels(kind, change);
+        foreach (var result in WebsiteCheckResults.All)
+            WebsiteChecks.WithLabels(result);
         LokiLinesDropped.WithLabels("queue_full");
         LokiLinesDropped.WithLabels("push_failed");
 

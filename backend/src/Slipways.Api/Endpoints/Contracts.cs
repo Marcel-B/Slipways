@@ -125,7 +125,10 @@ public record MarinaDto(
     string Source,
     string? OsmElement);
 
-/// <summary>A marina as in <see cref="MarinaDto"/>, with the slipways that belong to it.</summary>
+/// <summary>
+/// A marina as in <see cref="MarinaDto"/>, with the slipways that belong to it and <paramref name="Infos"/> from other
+/// sources than the marina's own fields, such as its website.
+/// </summary>
 public record MarinaDetailsDto(
     Guid Id,
     string Name,
@@ -144,7 +147,14 @@ public record MarinaDetailsDto(
     WaterDto? Water,
     string Source,
     string? OsmElement,
-    IReadOnlyList<SlipwaySummaryDto> Slipways);
+    IReadOnlyList<SlipwaySummaryDto> Slipways,
+    IReadOnlyList<PlaceInfoDto> Infos);
+
+/// <summary>
+/// A detail such as a phone number from <paramref name="Source"/> ("website": read from <paramref name="SourceUrl"/>),
+/// as it was on <paramref name="Retrieved"/>. <paramref name="Field"/> is "phone", "email" or "opening_hours".
+/// </summary>
+public record PlaceInfoDto(string Field, string Value, string Source, string? SourceUrl, DateTime Retrieved);
 
 public record ExtraDto(Guid Id, string Name);
 

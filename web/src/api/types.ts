@@ -103,8 +103,19 @@ export interface Marina extends OsmTags {
   osmElement: string | null
 }
 
+/** A detail from another source than the place's own fields, e.g. read from its website. */
+export interface PlaceInfo {
+  field: 'phone' | 'email' | 'opening_hours' | (string & {})
+  value: string
+  /** "website" for details read from the place's home page. */
+  source: string
+  sourceUrl: string | null
+  retrieved: string
+}
+
 export interface MarinaDetails extends Marina {
   slipways: SlipwaySummary[]
+  infos: PlaceInfo[]
 }
 
 /** Shapes thinned out for the overview map; feature ids are water ids. */
