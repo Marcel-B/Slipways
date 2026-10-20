@@ -1,6 +1,11 @@
 # Reverse Proxy vor der Web-App, eingebunden über deploy/compose.https.yaml
 {$SLIPWAYS_DOMAIN} {
 	encode zstd gzip
+	# Browsers only use HTTPS for a year; the other security headers come from nginx (web/security-headers.conf).
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
 	reverse_proxy web:8080
 }
 

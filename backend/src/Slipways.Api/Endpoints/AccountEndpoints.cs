@@ -9,7 +9,7 @@ public static class AccountEndpoints
 {
     public static IEndpointRouteBuilder MapAccountEndpoints(this IEndpointRouteBuilder app)
     {
-        var account = app.MapGroup("/api/account").WithTags("Account");
+        var account = app.MapGroup("/api/account").WithTags("Account").RequireRateLimiting(RateLimiting.ApiPolicy);
 
         // register, login, refresh, confirmEmail, manage/info, ... (bearer tokens for web and mobile clients)
         account.MapIdentityApi<AppUser>();

@@ -5,15 +5,8 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Slipways</title>
-    <script>
-      // Sets the theme before the first paint; src/components/theme.ts keeps it up to date.
-      try {
-        var theme = localStorage.getItem('slipways-theme')
-      } catch (e) {}
-      if (theme !== 'light' && theme !== 'dark')
-        theme = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-      document.documentElement.dataset.theme = theme
-    </script>
+    <!-- Sets the theme before the first paint; a file of its own, so the Content-Security-Policy needs no inline scripts. -->
+    <script src="/theme.js"></script>
   </head>
   <body>
     <div id="root"></div>

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.DataProtection;
 using Prometheus;
 using Scalar.AspNetCore;
+using Slipways.Api;
 using Slipways.Api.Endpoints;
 using Slipways.Infrastructure;
 using Slipways.Infrastructure.Monitoring;
@@ -16,6 +17,7 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddAuthorization();
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
+builder.Services.AddApiRateLimiting();
 builder.Services.AddHealthChecks().AddDbContextCheck<SlipwaysDbContext>();
 
 // Bearer tokens are protected with data protection keys; persist them so logins survive restarts.
@@ -23,6 +25,9 @@ if (builder.Configuration["DataProtection:KeysPath"] is { Length: > 0 } keysPath
     builder.Services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(keysPath));
 
 var app = builder.Build();
+
+// The client address from X-Forwarded-For, for the rate limiter; only trusted from the proxies in the Docker network.
+app.UseForwardedHeaders();
 
 // The metrics port answers nothing but /metrics, and the other ports never answer /metrics. It goes by the port the
 // connection came in on, not by the Host header, which a client could set. The port is never forwarded to the
@@ -43,6 +48,7 @@ app.UseRouting();
 app.UseHttpMetrics();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 

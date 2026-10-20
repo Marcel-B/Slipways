@@ -12,7 +12,7 @@ public static class CatalogEndpoints
 {
     public static IEndpointRouteBuilder MapCatalogEndpoints(this IEndpointRouteBuilder app)
     {
-        var api = app.MapGroup("/api");
+        var api = app.MapGroup("/api").RequireRateLimiting(RateLimiting.ApiPolicy);
 
         api.MapGet("/slipways", ListSlipways).WithTags("Slipways");
         api.MapGet("/slipways/{id:guid}", GetSlipway).WithTags("Slipways");

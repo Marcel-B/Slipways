@@ -33,6 +33,10 @@ export function DatenschutzPage() {
         personenbezogenen Daten enthalten.
       </p>
       <p>
+        Damit niemand den Server mit massenhaften Anfragen überlastet, zählt der Server die Anfragen je IP-Adresse. Dieser Zähler
+        liegt nur im Arbeitsspeicher, wird nicht gespeichert und nach kurzer Zeit ohne Anfragen verworfen.
+      </p>
+      <p>
         Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO. Unser berechtigtes Interesse liegt darin, die Website und die Apps
         bereitzustellen und gegen Störungen und Angriffe zu schützen.
       </p>
