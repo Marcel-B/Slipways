@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, render, screen, waitFor } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { WaterDetails, WaterSummary } from '../api/types'
+import type { WaterShapes, WaterSummary } from '../api/types'
 import type { MarkerMap } from '../components/MarkerMap'
 import { WatersPage } from './WatersPage'
 
@@ -48,6 +48,33 @@ const waters: WaterSummary[] = [
   },
 ]
 
+const shapes: WaterShapes = {
+  type: 'FeatureCollection',
+  features: [
+    {
+      type: 'Feature',
+      id: waters[0].id,
+      properties: { name: 'Donau' },
+      geometry: { type: 'LineString', coordinates: [[11.9, 48.9], [13.5, 48.6]] },
+    },
+    {
+      type: 'Feature',
+      id: waters[1].id,
+      properties: { name: 'Schwinge' },
+      geometry: { type: 'LineString', coordinates: [[9.4, 53.6], [9.5, 53.65]] },
+    },
+  ],
+}
+
+/** Answers the list and the shapes like the API, each request with a fresh response. */
+function stubApi(list: unknown = waters, collection: unknown = shapes) {
+  const fetchMock = vi.fn((url: string) =>
+    Promise.resolve(new Response(JSON.stringify(url.startsWith('/api/waters/shapes') ? collection : list), { status: 200 })),
+  )
+  vi.stubGlobal('fetch', fetchMock)
+  return fetchMock
+}
+
 function renderAt(url: string) {
   const router = createMemoryRouter([{ path: '/waters', element: <WatersPage /> }], { initialEntries: [url] })
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -65,8 +92,7 @@ describe('WatersPage', () => {
   })
 
   it('lists waters with what lies on them', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(waters), { status: 200 }))
-    vi.stubGlobal('fetch', fetchMock)
+    const fetchMock = stubApi()
 
     renderAt('/waters')
 
@@ -80,7 +106,7 @@ describe('WatersPage', () => {
   })
 
   it('shows the reading of a single gauge', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(waters), { status: 200 })))
+    stubApi()
 
     renderAt('/waters')
 
@@ -89,7 +115,7 @@ describe('WatersPage', () => {
   })
 
   it('puts waters with a position on the map', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(waters), { status: 200 })))
+    stubApi()
 
     renderAt('/waters')
 
@@ -98,46 +124,41 @@ describe('WatersPage', () => {
     expect(mapProps.at(-1)?.markers[0].to).toBe(`/waters/${waters[0].id}`)
   })
 
-  it('highlights the shape of the water whose marker is selected', async () => {
-    const donau: WaterDetails = {
-      id: waters[0].id,
-      name: 'Donau',
-      shortname: 'DONAU',
-      bounds: null,
-      shape: { type: 'LineString', coordinates: [[11.9, 48.9], [13.5, 48.6]] },
-      osmElements: ['relation/89652'],
-      slipways: [],
-      stations: [],
-      marinas: [],
-    }
-    const fetchMock = vi.fn((url: string) =>
-      Promise.resolve(new Response(JSON.stringify(url.endsWith(donau.id) ? donau : waters), { status: 200 })),
-    )
-    vi.stubGlobal('fetch', fetchMock)
+  it('draws the shapes of all waters faintly', async () => {
+    const fetchMock = stubApi()
 
     renderAt('/waters')
-    await screen.findByText('Donau')
-    expect(mapProps.at(-1)?.shape).toBeUndefined()
 
-    const map = mapProps.at(-1)!
-    act(() => map.onSelect?.(map.markers[0]))
+    await waitFor(() => expect(mapProps.at(-1)?.shapes).toHaveLength(2))
+    expect(mapProps.at(-1)?.shapes?.map((s) => [s.id, s.highlighted, s.popup?.to])).toEqual([
+      [waters[0].id, false, `/waters/${waters[0].id}`],
+      [waters[1].id, false, `/waters/${waters[1].id}`],
+    ])
+    expect(fetchMock).toHaveBeenCalledWith('/api/waters/shapes', expect.anything())
+  })
 
-    await waitFor(() => expect(mapProps.at(-1)?.shape).toEqual({ id: donau.id, geometry: donau.shape }))
-    expect(fetchMock).toHaveBeenCalledWith(`/api/waters/${donau.id}`, expect.anything())
+  it('highlights the water whose marker or shape is selected', async () => {
+    stubApi()
+
+    renderAt('/waters')
+    await waitFor(() => expect(mapProps.at(-1)?.shapes).toHaveLength(2))
+
+    act(() => mapProps.at(-1)!.onSelect?.(waters[1].id))
+    expect(mapProps.at(-1)?.shapes?.map((s) => s.highlighted)).toEqual([false, true])
 
     act(() => mapProps.at(-1)!.onSelect?.(null))
-    expect(mapProps.at(-1)?.shape).toBeUndefined()
+    expect(mapProps.at(-1)?.shapes?.map((s) => s.highlighted)).toEqual([false, false])
   })
 
   it('passes the search term from the URL to the API', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(new Response('[]', { status: 200 }))
-    vi.stubGlobal('fetch', fetchMock)
+    const fetchMock = stubApi([], { type: 'FeatureCollection', features: [] })
 
     renderAt('/waters?q=Donau')
 
     expect(await screen.findByText('0 Gewässer')).toBeInTheDocument()
     expect(screen.getByRole('searchbox')).toHaveValue('Donau')
     expect(fetchMock).toHaveBeenCalledWith('/api/waters?search=Donau', expect.anything())
+    expect(fetchMock).toHaveBeenCalledWith('/api/waters/shapes?search=Donau', expect.anything())
   })
 
   it('shows an error when the API fails', async () => {

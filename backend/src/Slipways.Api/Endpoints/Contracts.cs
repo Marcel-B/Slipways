@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Slipways.Api.Endpoints;
 
@@ -30,6 +31,19 @@ public record GaugeReadingDto(Guid StationId, string StationName, WaterLevelDto 
 /// <paramref name="OsmElements"/> such as "relation/123924"; null when the water has none.
 /// <paramref name="Bounds"/> covers the shape and everything on the water.
 /// </summary>
+/// <summary>GeoJSON FeatureCollection of water shapes (OpenStreetMap, ODbL); feature ids are water ids.</summary>
+public record WaterShapeCollectionDto(IReadOnlyList<WaterShapeDto> Features)
+{
+    public string Type => "FeatureCollection";
+}
+
+public record WaterShapeDto(Guid Id, WaterShapePropertiesDto Properties, JsonNode Geometry)
+{
+    public string Type => "Feature";
+}
+
+public record WaterShapePropertiesDto(string Name);
+
 public record WaterDetailsDto(
     Guid Id,
     string Name,

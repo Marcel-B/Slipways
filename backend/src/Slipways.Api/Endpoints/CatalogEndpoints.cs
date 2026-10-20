@@ -1,7 +1,10 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
+using Slipways.Domain;
 using Slipways.Infrastructure.Persistence;
+using Slipways.Infrastructure.Shapes;
 
 namespace Slipways.Api.Endpoints;
 
@@ -14,6 +17,7 @@ public static class CatalogEndpoints
         api.MapGet("/slipways", ListSlipways).WithTags("Slipways");
         api.MapGet("/slipways/{id:guid}", GetSlipway).WithTags("Slipways");
         api.MapGet("/waters", ListWaters).WithTags("Waters");
+        api.MapGet("/waters/shapes", ListWaterShapes).WithTags("Waters");
         api.MapGet("/waters/{id:guid}", GetWater).WithTags("Waters");
         api.MapGet("/marinas", ListMarinas).WithTags("Marinas");
         api.MapGet("/extras", ListExtras).WithTags("Extras");
@@ -65,20 +69,22 @@ public static class CatalogEndpoints
         return slipway is null ? TypedResults.NotFound() : TypedResults.Ok(slipway);
     }
 
+    private static IQueryable<Water> SearchWaters(SlipwaysDbContext db, string? search)
+    {
+        var query = db.Waters.AsNoTracking();
+        if (string.IsNullOrWhiteSpace(search))
+            return query;
+
+        var term = search.Trim().ToLower();
+        return query.Where(w =>
+            w.Name.ToLower().Contains(term) ||
+            (w.Shortname != null && w.Shortname.ToLower().Contains(term)));
+    }
+
     private static async Task<List<WaterSummaryDto>> ListWaters(
         SlipwaysDbContext db, string? search, CancellationToken ct)
     {
-        var query = db.Waters.AsNoTracking();
-
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            var term = search.Trim().ToLower();
-            query = query.Where(w =>
-                w.Name.ToLower().Contains(term) ||
-                (w.Shortname != null && w.Shortname.ToLower().Contains(term)));
-        }
-
-        var waters = await query
+        var waters = await SearchWaters(db, search)
             .OrderBy(w => w.Name)
             .Select(w => new { w.Id, w.Name, w.Shortname, HasShape = w.Shape != null })
             .ToListAsync(ct);
@@ -147,6 +153,26 @@ public static class CatalogEndpoints
             water.Id, water.Name, water.Shortname, BoundsOf(positions),
             water.Shape is null ? null : JsonDocument.Parse(water.Shape).RootElement.Clone(),
             water.OsmElements, slipways, stations, marinas));
+    }
+
+    // About 500 m: invisible on a map of Germany, and it brings all shapes from 565 KB down to under 200 KB.
+    private const double OverviewTolerance = 0.005;
+
+    /// <summary>Shapes of the waters a search finds, thinned out for drawing them all on one map.</summary>
+    private static async Task<WaterShapeCollectionDto> ListWaterShapes(
+        SlipwaysDbContext db, string? search, CancellationToken ct)
+    {
+        var shapes = await SearchWaters(db, search)
+            .Where(w => w.Shape != null)
+            .OrderBy(w => w.Name)
+            .Select(w => new { w.Id, w.Name, w.Shape })
+            .ToListAsync(ct);
+
+        return new WaterShapeCollectionDto(shapes
+            .Select(w => new WaterShapeDto(
+                w.Id, new WaterShapePropertiesDto(w.Name),
+                ShapeSimplifier.Simplify(JsonNode.Parse(w.Shape!)!, OverviewTolerance)))
+            .ToList());
     }
 
     /// <summary>Every vertex of a GeoJSON geometry.</summary>

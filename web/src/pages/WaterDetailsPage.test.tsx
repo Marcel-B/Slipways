@@ -118,7 +118,7 @@ describe('WaterDetailsPage', () => {
       'href',
       'https://www.openstreetmap.org/relation/89652',
     )
-    expect(mapProps.at(-1)?.shape).toEqual({ id: water.id, geometry: water.shape })
+    expect(mapProps.at(-1)?.shapes).toEqual([{ id: water.id, geometry: water.shape, highlighted: true }])
   })
 
   it('shows no course without a shape', async () => {
@@ -129,7 +129,7 @@ describe('WaterDetailsPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Donau' })).toBeInTheDocument()
     expect(screen.queryByText(/Verlauf/)).not.toBeInTheDocument()
-    expect(mapProps.at(-1)?.shape).toBeUndefined()
+    expect(mapProps.at(-1)?.shapes).toEqual([])
   })
 
   it('has no map when nothing on the water has coordinates', async () => {

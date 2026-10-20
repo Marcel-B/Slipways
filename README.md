@@ -35,7 +35,7 @@ Einstellungen (Abschnitt `Pegelonline`, z. B. als Umgebungsvariable `Pegelonline
 
 ## Gewässerverläufe
 
-Die Detailseite eines Gewässers hebt seinen Verlauf (Flüsse, Kanäle) bzw. seine Fläche (Seen) aus [OpenStreetMap](https://www.openstreetmap.org/) hervor; die Übersicht zeigt ihn, sobald man ein Gewässer auf der Karte anklickt. Welche OSM-Elemente zu einem Gewässer gehören, steht in [`waterShapes.json`](backend/src/Slipways.Infrastructure/Seed/waterShapes.json), zugeordnet über den Kurznamen, den auch PEGELONLINE verwendet. Eine leere Liste heißt: geprüft, es gibt keinen passenden Verlauf (Nord- und Ostsee, Grundwassermessstellen, Abschnitte, die OSM nicht kennt).
+Die Detailseite eines Gewässers hebt seinen Verlauf (Flüsse, Kanäle) bzw. seine Fläche (Seen) aus [OpenStreetMap](https://www.openstreetmap.org/) hervor. Die Übersicht zeichnet die Verläufe aller Gewässer, die die Suche findet, und hebt das angeklickte hervor; dafür liefert `/api/waters/shapes` sie gröber vereinfacht (etwa 500 m, zusammen rund 160 KB, mit gzip rund 55 KB). Welche OSM-Elemente zu einem Gewässer gehören, steht in [`waterShapes.json`](backend/src/Slipways.Infrastructure/Seed/waterShapes.json), zugeordnet über den Kurznamen, den auch PEGELONLINE verwendet. Eine leere Liste heißt: geprüft, es gibt keinen passenden Verlauf (Nord- und Ostsee, Grundwassermessstellen, Abschnitte, die OSM nicht kennt).
 
 Ein Hintergrund-Job in der API übernimmt die Zuordnung beim Start und holt die Formen bei [Nominatim](https://nominatim.org/), auf etwa 100 m vereinfacht (zusammen rund 0,6 MB). Danach prüft er einmal am Tag, ob eine Form älter als 30 Tage ist. Clients fragen Nominatim nie selbst ab, sondern lesen `/api/waters/{id}`.
 
@@ -93,6 +93,7 @@ dotnet ef migrations add <Name> --project src/Slipways.Infrastructure --startup-
 | GET | `/api/slipways?search=&waterId=` | Slipanlagen, optional gefiltert |
 | GET | `/api/slipways/{id}` | Details einer Slipanlage |
 | GET | `/api/waters?search=` | Gewässer mit Anzahl Slipanlagen und Pegel, Kartenposition (`position`) und dem Wasserstand, wenn es genau einen Pegel gibt (`gauge`) |
+| GET | `/api/waters/shapes?search=` | Verläufe der gefundenen Gewässer als GeoJSON-FeatureCollection für die Übersichtskarte (ODbL), Feature-ID = Gewässer-ID |
 | GET | `/api/waters/{id}` | Details eines Gewässers mit Slipanlagen, Pegeln, Marinas, Verlauf als GeoJSON (`shape`, ODbL) und Kartenausschnitt (`bounds`) |
 | GET | `/api/marinas?waterId=`, `/api/extras`, `/api/services` | Stammdaten |
 | GET | `/api/stations?waterId=` | Pegelstationen mit aktuellem Wasserstand (`waterLevel`, in cm) |

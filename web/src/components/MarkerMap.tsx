@@ -1,9 +1,10 @@
-import type { Geometry } from 'geojson'
+import type { GeoJSON as LeafletGeoJSON } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { useEffect, useRef } from 'react'
 import { CircleMarker, GeoJSON, MapContainer, Pane, Popup, TileLayer } from 'react-leaflet'
 import { Link } from 'react-router'
 import type { Bounds } from '../api/types'
-import { markerColors, shapeStyle, type MapMarker } from './mapMarkers'
+import { faintShapeStyle, markerColors, shapeStyle, type MapMarker, type MapShape } from './mapMarkers'
 
 const GERMANY: [number, number] = [51.2, 10.4]
 
@@ -13,13 +14,15 @@ interface MarkerMapProps {
   zoom?: number
   /** Fits the map to these bounds instead of using center and zoom. */
   bounds?: Bounds
-  /** Highlighted shape; the id tells shapes apart, since Leaflet does not update a shape in place. */
-  shape?: { id: string; geometry: Geometry }
-  /** Called with the marker whose popup opens, and with null when it closes. */
-  onSelect?: (marker: MapMarker | null) => void
+  shapes?: MapShape[]
+  /** Called with the id of the marker or shape whose popup opens, and with null when it closes. */
+  onSelect?: (id: string | null) => void
 }
 
-export function MarkerMap({ markers, center = GERMANY, zoom = 6, bounds, shape, onSelect }: MarkerMapProps) {
+export function MarkerMap({ markers, center = GERMANY, zoom = 6, bounds, shapes = [], onSelect }: MarkerMapProps) {
+  const selectHandlers = (id: string) =>
+    onSelect && { popupopen: () => onSelect(id), popupclose: () => onSelect(null) }
+
   return (
     // MapContainer ignores bounds as soon as it gets a center and zoom.
     <MapContainer
@@ -42,7 +45,9 @@ export function MarkerMap({ markers, center = GERMANY, zoom = 6, bounds, shape, 
       />
       {/* Below the markers (overlay pane: 400), so a river never covers them. */}
       <Pane name="shapes" style={{ zIndex: 350 }}>
-        {shape && <GeoJSON key={shape.id} data={shape.geometry} style={shapeStyle} interactive={false} />}
+        {shapes.map((shape) => (
+          <ShapeLayer key={shape.id} shape={shape} eventHandlers={selectHandlers(shape.id)} />
+        ))}
       </Pane>
       {markers.map((marker) => (
         <CircleMarker
@@ -50,19 +55,51 @@ export function MarkerMap({ markers, center = GERMANY, zoom = 6, bounds, shape, 
           center={[marker.latitude, marker.longitude]}
           radius={7}
           pathOptions={{ ...markerColors[marker.kind], fillOpacity: 0.8 }}
-          eventHandlers={onSelect && { popupopen: () => onSelect(marker), popupclose: () => onSelect(null) }}
+          eventHandlers={selectHandlers(marker.id)}
         >
           <Popup>
-            {marker.to ? <Link to={marker.to}>{marker.title}</Link> : <strong>{marker.title}</strong>}
-            {marker.subtitle && (
-              <>
-                <br />
-                {marker.subtitle}
-              </>
-            )}
+            <PopupContent {...marker} />
           </Popup>
         </CircleMarker>
       ))}
     </MapContainer>
+  )
+}
+
+function ShapeLayer({ shape, eventHandlers }: { shape: MapShape; eventHandlers?: Record<string, () => void> }) {
+  const layer = useRef<LeafletGeoJSON>(null)
+  useEffect(() => {
+    if (shape.highlighted) layer.current?.bringToFront()
+  }, [shape.highlighted])
+
+  // Changing the style restyles the layer in place, so an open popup stays open.
+  return (
+    <GeoJSON
+      ref={layer}
+      data={shape.geometry}
+      style={shape.highlighted ? shapeStyle : faintShapeStyle}
+      interactive={shape.popup !== undefined}
+      eventHandlers={eventHandlers}
+    >
+      {shape.popup && (
+        <Popup>
+          <PopupContent {...shape.popup} />
+        </Popup>
+      )}
+    </GeoJSON>
+  )
+}
+
+function PopupContent({ title, subtitle, to }: Pick<MapMarker, 'title' | 'subtitle' | 'to'>) {
+  return (
+    <>
+      {to ? <Link to={to}>{title}</Link> : <strong>{title}</strong>}
+      {subtitle && (
+        <>
+          <br />
+          {subtitle}
+        </>
+      )}
+    </>
   )
 }

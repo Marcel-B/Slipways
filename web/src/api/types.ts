@@ -1,4 +1,4 @@
-import type { Geometry } from 'geojson'
+import type { FeatureCollection, Geometry } from 'geojson'
 
 export interface Water {
   id: string
@@ -83,6 +83,9 @@ export interface Marina {
   email: string | null
   water: Water
 }
+
+/** Shapes thinned out for the overview map; feature ids are water ids. */
+export type WaterShapes = FeatureCollection<Geometry, { name: string }>
 
 export interface WaterDetails extends Water {
   shortname: string | null

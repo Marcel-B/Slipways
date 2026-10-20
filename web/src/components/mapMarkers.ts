@@ -1,3 +1,4 @@
+import type { Geometry } from 'geojson'
 import type { SlipwaySummary } from '../api/types'
 
 // Kept apart from MarkerMap so pages can use it without pulling Leaflet into the main chunk.
@@ -14,6 +15,9 @@ export const markerColors: Record<MarkerKind, { color: string; fillColor: string
 /** Highlights a water's course or area; orange stands out against the blue water of the map tiles. */
 export const shapeStyle = { color: '#e69138', weight: 5, opacity: 0.85, fillOpacity: 0.3 }
 
+/** For many shapes at once: dark blue reads as water and, unlike orange, does not blend in with the roads. */
+export const faintShapeStyle = { color: '#1c4587', weight: 3, opacity: 0.7, fillOpacity: 0.2 }
+
 export interface MapMarker {
   id: string
   kind: MarkerKind
@@ -23,6 +27,15 @@ export interface MapMarker {
   subtitle?: string
   /** Route the title links to. */
   to?: string
+}
+
+export interface MapShape {
+  id: string
+  geometry: Geometry
+  /** Drawn bold and on top of the others. */
+  highlighted?: boolean
+  /** Makes the shape clickable, with the same popup as a marker. */
+  popup?: Pick<MapMarker, 'title' | 'subtitle' | 'to'>
 }
 
 export function slipwayMarker(slipway: SlipwaySummary): MapMarker {

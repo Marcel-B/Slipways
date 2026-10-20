@@ -2,9 +2,9 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useDeferredValue, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { api } from '../api/client'
-import type { WaterSummary } from '../api/types'
+import type { WaterShapes, WaterSummary } from '../api/types'
 import { LazyMarkerMap } from '../components/LazyMarkerMap'
-import type { MapMarker } from '../components/mapMarkers'
+import type { MapMarker, MapShape } from '../components/mapMarkers'
 import { WaterLevelText } from '../components/WaterLevelText'
 import { count } from './count'
 
@@ -16,12 +16,21 @@ function contents(water: WaterSummary): string {
   return parts.length > 0 ? parts.join(' · ') : 'Keine Slipanlagen oder Pegel'
 }
 
+function popup(water: WaterSummary) {
+  return { title: water.name, subtitle: contents(water), to: `/waters/${water.id}` }
+}
+
 function waterMarkers(waters: WaterSummary[]): MapMarker[] {
-  return waters.flatMap((w) =>
-    w.position
-      ? [{ id: w.id, kind: 'water', ...w.position, title: w.name, subtitle: contents(w), to: `/waters/${w.id}` }]
-      : [],
-  )
+  return waters.flatMap((w) => (w.position ? [{ id: w.id, kind: 'water', ...w.position, ...popup(w) }] : []))
+}
+
+function waterShapes(shapes: WaterShapes | undefined, waters: WaterSummary[], selectedId: string | null): MapShape[] {
+  const byId = new Map(waters.map((w) => [w.id, w]))
+  return (shapes?.features ?? []).flatMap((f) => {
+    // Shapes and list are fetched separately; draw only what the list shows, too.
+    const water = byId.get(String(f.id))
+    return water ? [{ id: water.id, geometry: f.geometry, highlighted: water.id === selectedId, popup: popup(water) }] : []
+  })
 }
 
 export function WatersPage() {
@@ -37,14 +46,12 @@ export function WatersPage() {
     queryFn: ({ signal }) => api.waters(deferredSearch, signal),
     placeholderData: keepPreviousData,
   })
-  // The shape comes with the details, which the details page then finds in the cache.
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  const { data: selected } = useQuery({
-    queryKey: ['water', selectedId],
-    queryFn: ({ signal }) => api.water(selectedId!, signal),
-    enabled: selectedId !== null,
+  const { data: shapes } = useQuery({
+    queryKey: ['water-shapes', deferredSearch],
+    queryFn: ({ signal }) => api.waterShapes(deferredSearch, signal),
+    placeholderData: keepPreviousData,
   })
-  const shape = selected?.id === selectedId && selected?.shape ? { id: selected.id, geometry: selected.shape } : undefined
+  const [selectedId, setSelectedId] = useState<string | null>(null)
 
   return (
     <div className="overview">
@@ -84,8 +91,8 @@ export function WatersPage() {
       <section className="map-panel">
         <LazyMarkerMap
           markers={waterMarkers(waters ?? [])}
-          shape={shape}
-          onSelect={(marker) => setSelectedId(marker?.id ?? null)}
+          shapes={waterShapes(shapes, waters ?? [], selectedId)}
+          onSelect={setSelectedId}
         />
       </section>
     </div>
