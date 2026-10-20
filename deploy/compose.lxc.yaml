@@ -2,11 +2,6 @@
 #   COMPOSE_FILE=compose.yaml:deploy/compose.lxc.yaml
 # Werte stehen in der .env, die deploy/proxmox/create-lxc.sh anlegt.
 services:
-  db:
-    # Die Datenbank ist nur für die API da, nicht im Netz
-    ports: !reset []
-    restart: unless-stopped
-
   api:
     environment:
       ASPNETCORE_ENVIRONMENT: ${SLIPWAYS_ENVIRONMENT:-Production}

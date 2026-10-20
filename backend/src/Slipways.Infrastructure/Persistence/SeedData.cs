@@ -136,7 +136,7 @@ public static class SeedData
     private static Manufacturer Manufacturer(string id, string name) =>
         new() { Id = Guid.Parse(id), Created = ManufacturersCreated, Name = name };
 
-    private static string ToTitleCase(string value) =>
+    internal static string ToTitleCase(string value) =>
         CultureInfo.GetCultureInfo("de-DE").TextInfo.ToTitleCase(value.Trim().ToLowerInvariant());
 
     private static List<T> Load<T>(string name)

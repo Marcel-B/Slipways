@@ -97,6 +97,9 @@ public static class CatalogEndpoints
             .OrderBy(s => s.Name)
             .Select(s => new StationDto(
                 s.Id, s.Name, s.Number, s.Latitude, s.Longitude, s.Km, s.Agency,
-                new WaterDto(s.Water.Id, s.Water.Name)))
+                new WaterDto(s.Water.Id, s.Water.Name),
+                s.WaterLevel == null || s.WaterLevelMeasuredAt == null
+                    ? null
+                    : new WaterLevelDto(s.WaterLevel.Value, s.WaterLevelMeasuredAt.Value, s.WaterLevelState)))
             .ToListAsync(ct);
 }

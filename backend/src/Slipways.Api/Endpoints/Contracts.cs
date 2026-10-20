@@ -62,6 +62,18 @@ public record ServiceDto(
     string? Email,
     IReadOnlyList<string> Manufacturers);
 
-public record StationDto(Guid Id, string Name, string? Number, double Latitude, double Longitude, double Km, string? Agency, WaterDto Water);
+public record StationDto(
+    Guid Id,
+    string Name,
+    string? Number,
+    double Latitude,
+    double Longitude,
+    double Km,
+    string? Agency,
+    WaterDto Water,
+    WaterLevelDto? WaterLevel);
+
+/// <summary>Latest reading at a gauge; <paramref name="Value"/> is in centimetres.</summary>
+public record WaterLevelDto(double Value, DateTime MeasuredAt, string? State);
 
 public record UserDto(string Id, string Email, string? DisplayName);

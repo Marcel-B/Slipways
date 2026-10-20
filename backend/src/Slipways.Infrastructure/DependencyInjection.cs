@@ -2,6 +2,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
+using Slipways.Infrastructure.Gauges;
 using Slipways.Infrastructure.Identity;
 using Slipways.Infrastructure.Persistence;
 
@@ -14,7 +17,9 @@ public static class DependencyInjection
         var connectionString = configuration.GetConnectionString("Slipways")
             ?? throw new InvalidOperationException("Connection string 'Slipways' is not configured.");
 
-        services.AddDbContext<SlipwaysDbContext>(options => options.UseNpgsql(connectionString));
+        services.AddDbContext<SlipwaysDbContext>(options => options
+            .UseSqlite(connectionString)
+            .AddInterceptors(new SqliteUnicodeInterceptor()));
 
         services.AddIdentityApiEndpoints<AppUser>(options =>
             {
@@ -23,19 +28,26 @@ public static class DependencyInjection
             })
             .AddEntityFrameworkStores<SlipwaysDbContext>();
 
+        services.AddOptions<PegelonlineOptions>().Bind(configuration.GetSection(PegelonlineOptions.SectionName));
+        services.AddHttpClient<PegelonlineClient>((sp, http) =>
+        {
+            http.BaseAddress = sp.GetRequiredService<IOptions<PegelonlineOptions>>().Value.BaseUrl;
+            http.DefaultRequestHeaders.UserAgent.ParseAdd("Slipways (+https://github.com/Marcel-B/Slipways)");
+        });
+        services.TryAddSingleton(TimeProvider.System);
+        services.AddScoped<GaugeSync>();
+        services.AddHostedService<GaugeSyncWorker>();
+
         return services;
     }
 
-    /// <summary>Applies pending migrations (or creates the schema for non-relational test setups) and seeds an empty database.</summary>
+    /// <summary>Applies pending migrations and seeds an empty database.</summary>
     public static async Task InitializeDatabaseAsync(this IServiceProvider services, CancellationToken cancellationToken = default)
     {
         await using var scope = services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<SlipwaysDbContext>();
 
-        if (db.Database.IsNpgsql())
-            await db.Database.MigrateAsync(cancellationToken);
-        else
-            await db.Database.EnsureCreatedAsync(cancellationToken);
+        await db.Database.MigrateAsync(cancellationToken);
 
         await SeedData.SeedAsync(db, cancellationToken);
     }

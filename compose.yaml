@@ -3,35 +3,17 @@
 name: slipways
 
 services:
-  db:
-    image: postgres:17-alpine
-    environment:
-      POSTGRES_DB: slipways
-      POSTGRES_USER: slipways
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-slipways}
-    ports:
-      - "5432:5432"
-    volumes:
-      - db-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U slipways -d slipways"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
   api:
     build: ./backend
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__Slipways: Host=db;Port=5432;Database=slipways;Username=slipways;Password=${POSTGRES_PASSWORD:-slipways};GSS Encryption Mode=Disable
+      ConnectionStrings__Slipways: Data Source=/data/slipways.db
       DataProtection__KeysPath: /keys
     ports:
       - "5080:8080"
     volumes:
+      - api-data:/data
       - api-keys:/keys
-    depends_on:
-      db:
-        condition: service_healthy
 
   web:
     build: ./web
@@ -41,5 +23,5 @@ services:
       - api
 
 volumes:
-  db-data:
+  api-data:
   api-keys:
