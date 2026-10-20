@@ -110,7 +110,7 @@ Die API liefert Messwerte für Prometheus unter `/metrics`, aber nur auf einem e
 
 Labels haben nur wenige feste Werte. Benutzer, Inhalte und IDs kommen nicht vor.
 
-Mit `Monitoring:Loki:Url` (z. B. `http://monitoring:3100`) schickt die API ihre Logzeilen zusätzlich an Loki, mit den Labels `app=slipways`, `host` (`Monitoring:Loki:Host`), `level` und `source` (`api`, `http`, `db`, `gauges`, `shapes`, `osm`, `http-client`). Die Zeilen werden alle 2 Sekunden gebündelt verschickt. Ist Loki nicht erreichbar, verwirft die API sie, statt zu warten. Das Konsolen-Log bleibt vollständig. Ohne Url ist der Versand aus. Einrichten im LXC: [`deploy/README.md`](deploy/README.md#überwachung).
+Mit `Monitoring:Loki:Url` (z. B. `http://monitoring:3100`) schickt die API ihre Logzeilen zusätzlich an Loki, mit den Labels `app=slipways`, `host` (`Monitoring:Loki:Host`), `level` und `source` (`api`, `http`, `db`, `gauges`, `shapes`, `osm`, `http-client`). Die Zeilen werden alle 2 Sekunden gebündelt verschickt. Ist Loki nicht erreichbar, verwirft die API sie, statt zu warten. Das Konsolen-Log bleibt vollständig. Ohne Url ist der Versand aus. Angebunden ist nur slipways.de; Einrichten: [`deploy/README.md`](deploy/README.md#überwachung).
 
 ## Entwickeln ohne Docker
 
@@ -169,6 +169,6 @@ Die Web-Oberfläche nennt die Quellen im Seitenfuß. Die ausführliche Recherche
 
 ## Betrieb
 
-Auf Proxmox läuft Slipways in einem LXC mit Tailscale, nächtlicher Nextcloud-Sicherung und Auto-Update von `master`: siehe [`deploy/README.md`](deploy/README.md).
+Die Produktion läuft auf slipways.de (im Tailnet `slipways-1`) mit Caddy für HTTPS ([`deploy/README.md`](deploy/README.md#https-mit-eigener-domain)). Eine Test-Stage läuft auf Proxmox in einem LXC mit Tailscale und nächtlicher Nextcloud-Sicherung. Beide spielen jeden neuen Stand auf `master` selbst ein (siehe [`deploy/README.md`](deploy/README.md)).
 
 Abhängigkeiten hält Dependabot wöchentlich aktuell.

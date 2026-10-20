@@ -19,6 +19,7 @@ Migrationen werden mit `dotnet ef migrations add <Name> --project src/Slipways.I
 
 - Commit-Nachrichten, Doku und UI-Texte auf Deutsch. Code, Bezeichner und Code-Kommentare auf Englisch.
 - Nie direkt auf `master` arbeiten: Die Produktion aktualisiert sich automatisch von `master` (siehe `deploy/README.md`). Immer einen Branch anlegen.
+- Umgebungen: Produktion ist slipways.de, im Tailnet `slipways-1` (Docker mit `compose.yaml`, `deploy/compose.lxc.yaml` und `deploy/compose.https.yaml`, Tailscale direkt auf dem Server). Der Proxmox-LXC `slipways` ist nur eine Test-Stage. Überwachung (Prometheus/Loki) hängt nur an der Produktion.
 - Datenbankneutral bleiben: keine providerspezifischen SQL- oder Spatial-Features. Geometrie wird im Speicher gerechnet (z. B. `WaterLocator`).
 - Hintergrund-Jobs für externe Quellen folgen einem Muster: `…Options` (eigener Konfigurationsabschnitt mit `Enabled`, `BaseUrl`, `Interval`), typisierter `…Client`, ein `…Sync`/`…Import` mit dem Abgleich und ein `…Worker`. Beispiele: `Gauges/` (PEGELONLINE), `Shapes/` (Nominatim), `Osm/` (Overpass). Clients rufen externe Dienste nie selbst auf.
 - Externe Dienste schonen: eigener User-Agent (`DependencyInjection.UserAgent`), keine parallelen Anfragen, Pausen und Backoff gemäß den Nutzungsregeln.
