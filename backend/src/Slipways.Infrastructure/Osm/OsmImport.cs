@@ -46,6 +46,8 @@ public sealed class OsmImport(SlipwaysDbContext db, OverpassClient client, IOpti
         var marinas = Import(await db.Marinas.ToListAsync(cancellationToken), marinaElements,
             () => new Marina { Name = "" }, ApplyMarina, waters, now, missing);
 
+        // In the same save as the places, so the recorded success and the data never disagree.
+        await OsmImportSchedule.MarkSuccessAsync(db, now, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
         return new OsmImportResult(slipways, marinas, missing);
     }

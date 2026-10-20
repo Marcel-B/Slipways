@@ -197,6 +197,23 @@ namespace Slipways.Infrastructure.Persistence.Migrations
                     b.ToTable("Extras");
                 });
 
+            modelBuilder.Entity("Slipways.Domain.JobState", b =>
+                {
+                    b.Property<string>("Name")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastFailure")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastSuccess")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Name");
+
+                    b.ToTable("JobStates");
+                });
+
             modelBuilder.Entity("Slipways.Domain.Manufacturer", b =>
                 {
                     b.Property<Guid>("Id")
