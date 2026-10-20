@@ -1,6 +1,6 @@
 # Slipways
 
-Slipways sammelt Slipanlagen (Bootsrampen) an deutschen und niederländischen Gewässern.
+Slipways sammelt Slipanlagen (Bootsrampen) und Marinas in Deutschland und weiteren Ländern Europas.
 
 | Teil | Ordner | Technik |
 | --- | --- | --- |
@@ -62,13 +62,15 @@ Die Vorschläge vor dem Übernehmen prüfen. Große internationale Flüsse finde
 
 ## Slipanlagen und Marinas aus OpenStreetMap
 
-Ein Hintergrund-Job in der API importiert alle 30 Tage Slipanlagen (`leisure=slipway`) und Marinas (`leisure=marina`) aus [OpenStreetMap](https://www.openstreetmap.org/) über die [Overpass API](https://wiki.openstreetmap.org/wiki/Overpass_API), je Land und Art eine Abfrage mit `out center tags;` (Wege und Relationen bekommen so einen Mittelpunkt). Die Abfragen laufen nacheinander mit Pause dazwischen und Timeout in der Abfrage. Ist Overpass ausgelastet (429, 502, 503, 504), wiederholt der Client mit exponentiellem Backoff; scheitert der ganze Lauf, versucht der Job es nach einer Stunde erneut. Stand Oktober 2026 sind es etwa 5.100 Slipanlagen und 4.600 Marinas (DE 3.342 / 2.727, AT 391 / 199, CH 447 / 446, NL 916 / 1.224).
+Ein Hintergrund-Job in der API importiert Slipanlagen (`leisure=slipway`) und Marinas (`leisure=marina`) aus [OpenStreetMap](https://www.openstreetmap.org/) über die [Overpass API](https://wiki.openstreetmap.org/wiki/Overpass_API), je Land und Art eine Abfrage mit `out center tags;` (Wege und Relationen bekommen so einen Mittelpunkt). Jedes Land wird alle 30 Tage importiert, ein Land pro Lauf. Die Länder wechseln sich ab, ein Lauf alle 30 Tage geteilt durch die Zahl der Länder (bei neun Ländern etwa alle 3,3 Tage), damit Overpass und der Server kleine Läufe über den Monat verteilt bekommen. Ein Land, das noch nie importiert wurde, läuft sofort. Die beiden Abfragen eines Laufs laufen nacheinander mit Pause dazwischen und Timeout in der Abfrage. Ist Overpass ausgelastet (429, 502, 503, 504), wiederholt der Client mit exponentiellem Backoff; scheitert der Lauf, versucht der Job dieses Land nach einer Stunde erneut. Stand Oktober 2026 waren es für DE, AT, CH und NL etwa 5.100 Slipanlagen und 4.600 Marinas (DE 3.342 / 2.727, AT 391 / 199, CH 447 / 446, NL 916 / 1.224). Dazu kommen DK, SE, NO, IT und HR.
 
-Wann der Import zuletzt erfolgreich war bzw. gescheitert ist, steht in der Tabelle `JobStates` (Zeile `osm`). Neustarts und Deploys stoßen deshalb keinen Import an, der Job wartet bis zum nächsten fälligen Zeitpunkt (im Log: „Next OpenStreetMap import at …“). Sofort läuft er nur in einer Datenbank ohne importierte Einträge, also bei einer Neuinstallation. Fehlt die Zeile, es gibt aber schon importierte Einträge (etwa nach dem Zurückspielen einer Sicherung von vor dieser Tabelle), gilt der jüngste importierte Eintrag als letzter Erfolg. Ein Lauf, den ein Neustart abbricht, zählt nicht als gescheitert und beginnt beim nächsten Start neu. Einen Import vorziehen: auf dem Server
+Ein Element, das in den Flächen zweier Länder liegt, gehört dem Land, dessen Import es zuerst gefunden hat (Spalte `OsmCountry`). Nur dieser Import aktualisiert es und meldet es als verschwunden.
+
+Wann der Import eines Landes zuletzt erfolgreich war bzw. gescheitert ist, steht in der Tabelle `JobStates` (eine Zeile je Land, z. B. `osm:DE`). Neustarts und Deploys stoßen deshalb keinen Import an, der Job wartet bis zum nächsten fälligen Zeitpunkt (im Log: „Next OpenStreetMap import at … for DE“). Sofort läuft er nur für Länder, die noch nie importiert wurden. Fehlt die Zeile eines Landes, gilt für die Länder, aus denen es schon importierte Slipanlagen gibt, die alte gemeinsame Zeile `osm` (aus der Zeit vor dem Import je Land) und ohne sie der jüngste importierte Eintrag als letzter Erfolg. Ein Lauf, den ein Neustart abbricht, zählt nicht als gescheitert und beginnt beim nächsten Start neu. Einen Import vorziehen: auf dem Server
 
 ```sh
 sqlite3 "$(docker volume inspect --format '{{ .Mountpoint }}' slipways_api-data)/slipways.db" \
-  "UPDATE JobStates SET LastSuccess = NULL, LastFailure = NULL WHERE Name = 'osm';"
+  "UPDATE JobStates SET LastSuccess = NULL, LastFailure = NULL WHERE Name = 'osm:DE';"
 cd /opt/slipways && docker compose restart api
 ```
 
@@ -87,11 +89,11 @@ Einstellungen (Abschnitt `Osm`):
 | Schlüssel | Standard | Bedeutung |
 | --- | --- | --- |
 | `Enabled` | `true` | Job ein/aus |
-| `Countries` | `DE`, `AT`, `CH`, `NL` | ISO-3166-1-Codes, z. B. `Osm__Countries__0=DE` |
-| `Interval` | `30.00:00:00` | Abstand der Importe, gerechnet ab dem letzten Erfolg |
+| `Countries` | `DE`, `AT`, `CH`, `NL`, `DK`, `SE`, `NO`, `IT`, `HR` | ISO-3166-1-Codes, z. B. `Osm__Countries__0=DE` |
+| `Interval` | `30.00:00:00` | Abstand der Importe eines Landes, gerechnet ab seinem letzten Erfolg; die Länder verteilen sich darüber |
 | `RetryInterval` | `01:00:00` | Wartezeit nach einem gescheiterten Lauf, auch über Neustarts hinweg |
 | `QueryTimeout` | `00:03:00` | Timeout in der Overpass-Abfrage |
-| `RequestSpacing` | `00:00:10` | Pause zwischen zwei Abfragen |
+| `RequestSpacing` | `00:00:10` | Pause zwischen zwei Abfragen, auch zwischen zwei Ländern, die zugleich fällig sind |
 | `BusyBackoff`, `MaxAttempts` | `00:00:30`, `4` | Erste Wartezeit (verdoppelt sich) und Versuche, wenn Overpass ausgelastet ist |
 | `BaseUrl` | `https://overpass-api.de/api/` | Overpass-Server; für viel Last besser eine eigene Instanz |
 
@@ -183,7 +185,7 @@ Die API liefert Messwerte für Prometheus unter `/metrics`, aber nur auf einem e
 | `slipways_job_last_success_timestamp_seconds{task}` | Zeitpunkt des letzten erfolgreichen Laufs (für `osm` nach einem Neustart aus der Datenbank) |
 | `slipways_gauge_water_levels_updated_total` | übernommene Wasserstände |
 | `slipways_osm_import_changes_total{kind, change}` | OSM-Import: `added`/`updated`/`linked` je `slipway`/`marina` |
-| `slipways_osm_missing_elements` | Einträge, deren OSM-Element der letzte Import nicht mehr fand |
+| `slipways_osm_missing_elements{country}` | Einträge, deren OSM-Element der letzte Import ihres Landes nicht mehr fand |
 | `slipways_overpass_busy_responses_total` | „Overpass ausgelastet“, jeweils mit neuem Versuch |
 | `slipways_website_checks_total{result}` | gelesene Webseiten von Marinas nach Ergebnis (`found`, `empty`, `disallowed`, `refused`, `failed`) |
 | `slipways_suggestions_received_total{result}` | eingegangene Vorschläge nach Ergebnis (`queued`, `invalid`, `proof_failed`, `honeypot`, `nearby`) |

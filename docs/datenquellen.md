@@ -83,3 +83,23 @@ Hinweis: PEGELONLINE-Lizenz direkt beim Anbieter bestätigt. eHYD und BAFU stamm
 - **Tourismus-Datenbanken der Länder** (z.B. Reiseland Brandenburg, Sportboothäfen/Wasserwanderrastplätze): teils als Open Data angeboten, Lizenz je Land prüfen (nicht verifiziert).
 - **Verbände/Kooperation** (DMYV, ADAC-Marinaführer, Kanu-Landesverbände): nur mit Erlaubnis.
 - **Crowd**: Nutzer erfassen in der App; Korrekturen idealerweise auch in OSM zurückspielen.
+
+## Nachtrag: Pegelquellen in weiteren Ländern (20.10.2026)
+
+Seit dem 20.10.2026 importiert der OSM-Job auch DK, SE, NO, IT und HR. Pegel gibt es dort noch keine. Stand der Recherche (Lizenzen meist nur aus Katalog-Einträgen):
+
+| Land | Quelle | Zugriff | Lizenz | geprüft |
+|---|---|---|---|---|
+| NL | Rijkswaterstaat Waterinfo / DDL (Waterkwantiteit-Dataservice) | REST, ohne Schlüssel | Publiek domein (data.overheid.nl) | Katalog |
+| DK | DMI oceanObs (Meerespegel, inkl. Kystdirektoratet) | OGC API Features, **API-Schlüssel** | CC BY 4.0 | Katalog; Flusspegel (Miljøportal) offen |
+| FR | Hub'Eau Hydrométrie (`observations_tr`, ca. 3.000 Stationen) | REST, ohne Schlüssel | vermutlich Licence Ouverte, nicht bestätigt | teilweise |
+| PL | IMGW-PIB danepubliczne.imgw.pl | Dateien/API | Quellenangabe IMGW-PIB | nicht bestätigt |
+| SE | SMHI Hydrologi | REST | CC BY 4.0 | Lizenz ja, Wasserstand als Datensatz unklar |
+| NO | NVE HydAPI | REST, **API-Schlüssel** | NLOD (≈ CC BY) | ja |
+| GB (England) | Environment Agency Flood Monitoring | REST, ohne Schlüssel | OGL | nicht neu geprüft |
+| HR | DHMZ | keine offene API gefunden, Preisliste | – | ja |
+| IT, ES | nur regional (ARPA bzw. SAIH je Flussgebiet) | je Region | je Region | nein |
+
+Für die Küsten wäre ein europaweiter Pegeldienst (EMODnet Physics / Copernicus Marine, Tide Gauges) einen Blick wert, nicht geprüft.
+
+Quellen: [DMI oceanObs](https://opendatadocs.dmi.govcloud.dk/Data/Oceanographic_Observation_Data), [RWS Waterkwantiteit](https://data.overheid.nl/dataset/79093-rijkswaterstaat-waterkwantiteit-dataservice), [Hub'Eau Hydrométrie](https://www.data.gouv.fr/dataservices/hubeau-hydrometrie), [SMHI Villkor](https://www.smhi.se/data/om-smhis-data/villkor-for-anvandning), [NVE HydAPI](https://hydapi.nve.no/), [DHMZ](https://meteo.hr/podaci_e.php?param=mop), [Geofabrik Europa](https://download.geofabrik.de/europe.html).

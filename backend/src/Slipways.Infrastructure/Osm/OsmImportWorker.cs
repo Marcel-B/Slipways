@@ -8,10 +8,10 @@ using Slipways.Infrastructure.Persistence;
 namespace Slipways.Infrastructure.Osm;
 
 /// <summary>
-/// Runs <see cref="OsmImport"/> when <see cref="OsmImportSchedule"/> says it is due: right away in a database without
-/// imported places, otherwise every <see cref="OsmOptions.Interval"/> after the last success, and a failed run again
-/// after <see cref="OsmOptions.RetryInterval"/>. The times come from the database, so restarts and deploys do not
-/// start a new import.
+/// Runs <see cref="OsmImport"/> for one country at a time when <see cref="OsmImportSchedule"/> says it is due: right
+/// away for a country never imported, otherwise every <see cref="OsmOptions.Interval"/> after its last success, with
+/// the countries spread over that interval, and a failed run again after <see cref="OsmOptions.RetryInterval"/>.
+/// The times come from the database, so restarts and deploys do not start a new import.
 /// </summary>
 public sealed class OsmImportWorker(
     IServiceScopeFactory scopes,
@@ -28,20 +28,22 @@ public sealed class OsmImportWorker(
             return;
 
         var announced = DateTime.MinValue;
+        var ran = false;
         while (true)
         {
             var now = time.GetUtcNow().UtcDateTime;
+            string? country = null;
             DateTime due;
             try
             {
                 await using var scope = scopes.CreateAsyncScope();
-                var (lastSuccess, lastFailure) = await OsmImportSchedule.LoadAsync(
-                    scope.ServiceProvider.GetRequiredService<SlipwaysDbContext>(), stoppingToken);
-                // After a restart, the dashboard shows the last success from before it instead of nothing for a month.
-                if (lastSuccess is { } success)
+                var states = await OsmImportSchedule.LoadAsync(
+                    scope.ServiceProvider.GetRequiredService<SlipwaysDbContext>(), options.Value.CountriesToImport, stoppingToken);
+                // After a restart, the dashboard shows the last success from before it instead of nothing for days.
+                if (states.Max(s => s.LastSuccess) is { } success)
                     SlipwaysMetrics.JobLastSuccess.WithLabels(OsmImportSchedule.JobName)
                         .Set(new DateTimeOffset(success, TimeSpan.Zero).ToUnixTimeMilliseconds() / 1000.0);
-                due = OsmImportSchedule.NextRun(lastSuccess, lastFailure, options.Value);
+                (country, due) = OsmImportSchedule.NextRun(states, options.Value);
             }
             catch (Exception ex) when (!stoppingToken.IsCancellationRequested)
             {
@@ -53,7 +55,7 @@ public sealed class OsmImportWorker(
             {
                 if (due != announced)
                 {
-                    logger.LogInformation("Next OpenStreetMap import at {Due:u}", due);
+                    logger.LogInformation("Next OpenStreetMap import at {Due:u} for {Country}", due, country);
                     announced = due;
                 }
                 var wait = due - now;
@@ -61,24 +63,28 @@ public sealed class OsmImportWorker(
                 continue;
             }
 
-            await RunAsync(stoppingToken);
+            // Countries due one after another, e.g. after a new installation, still keep Overpass' spacing.
+            if (ran)
+                await Task.Delay(options.Value.RequestSpacing, time, stoppingToken);
+            await RunAsync(country!, stoppingToken);
+            ran = true;
         }
     }
 
-    private async Task RunAsync(CancellationToken stoppingToken)
+    private async Task RunAsync(string country, CancellationToken stoppingToken)
     {
         try
         {
             await using var scope = scopes.CreateAsyncScope();
             var result = await SlipwaysMetrics.MeasureJobAsync(OsmImportSchedule.JobName, time,
-                () => scope.ServiceProvider.GetRequiredService<OsmImport>().RunAsync(stoppingToken), stoppingToken);
+                () => scope.ServiceProvider.GetRequiredService<OsmImport>().RunAsync(country, stoppingToken), stoppingToken);
             Record("slipway", result.Slipways);
             Record("marina", result.Marinas);
-            SlipwaysMetrics.OsmMissingElements.Set(result.Missing.Count);
+            SlipwaysMetrics.OsmMissingElements.WithLabels(country).Set(result.Missing.Count);
             logger.LogInformation(
-                "OpenStreetMap import finished: slipways {SlipwaysAdded} added, {SlipwaysUpdated} updated, {SlipwaysLinked} linked; " +
+                "OpenStreetMap import of {Country} finished: slipways {SlipwaysAdded} added, {SlipwaysUpdated} updated, {SlipwaysLinked} linked; " +
                 "marinas {MarinasAdded} added, {MarinasUpdated} updated, {MarinasLinked} linked",
-                result.Slipways.Added, result.Slipways.Updated, result.Slipways.Linked,
+                country, result.Slipways.Added, result.Slipways.Updated, result.Slipways.Linked,
                 result.Marinas.Added, result.Marinas.Updated, result.Marinas.Linked);
             if (result.UserValuesResolved + result.UserValuesConflicting > 0)
                 logger.LogInformation(
@@ -86,18 +92,18 @@ public sealed class OsmImportWorker(
                     result.UserValuesResolved, result.UserValuesConflicting);
             if (result.Missing.Count > 0)
                 logger.LogWarning(
-                    "{Count} places are no longer in OpenStreetMap and were kept: {Elements}",
-                    result.Missing.Count, string.Join(", ", result.Missing));
+                    "{Count} places in {Country} are no longer in OpenStreetMap and were kept: {Elements}",
+                    result.Missing.Count, country, string.Join(", ", result.Missing));
         }
         catch (Exception ex) when (!stoppingToken.IsCancellationRequested)
         {
             // Overpass being busy or unreachable must not take the API down.
-            logger.LogWarning(ex, "OpenStreetMap import failed; retrying in {RetryInterval}", options.Value.RetryInterval);
+            logger.LogWarning(ex, "OpenStreetMap import of {Country} failed; retrying in {RetryInterval}", country, options.Value.RetryInterval);
             try
             {
                 await using var scope = scopes.CreateAsyncScope();
                 await OsmImportSchedule.RecordFailureAsync(
-                    scope.ServiceProvider.GetRequiredService<SlipwaysDbContext>(), time.GetUtcNow().UtcDateTime, stoppingToken);
+                    scope.ServiceProvider.GetRequiredService<SlipwaysDbContext>(), country, time.GetUtcNow().UtcDateTime, stoppingToken);
             }
             catch (Exception recordEx) when (!stoppingToken.IsCancellationRequested)
             {

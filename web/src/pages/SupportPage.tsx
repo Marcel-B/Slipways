@@ -7,7 +7,7 @@ export function SupportPage() {
       <title>Support · Slipways</title>
       <h1>Support</h1>
       <p>
-        Slipways zeigt Slipanlagen und aktuelle Pegelstände an Gewässern in Deutschland, auf der Website und in den Apps für
+        Slipways zeigt Slipanlagen, Marinas und aktuelle Pegelstände an Gewässern in Deutschland und weiteren Ländern Europas, auf der Website und in den Apps für
         iOS und Android.
       </p>
 

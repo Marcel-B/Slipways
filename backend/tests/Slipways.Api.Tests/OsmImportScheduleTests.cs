@@ -48,48 +48,75 @@ public sealed class OsmImportScheduleTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task A_new_database_without_imported_places_has_no_state()
+    public void Takes_the_country_due_first_and_a_new_one_right_away()
     {
-        Assert.Equal((null, null), await OsmImportSchedule.LoadAsync(_db, TestContext.Current.CancellationToken));
+        OsmCountryState[] states = [new("DE", Monday, null), new("AT", Monday.AddDays(-20), null), new("HR", null, null)];
+
+        Assert.Equal(("HR", DateTime.MinValue), OsmImportSchedule.NextRun(states, Options));
     }
 
     [Fact]
-    public async Task Without_a_state_the_newest_imported_place_stands_in_for_the_last_success()
+    public void Spreads_the_countries_over_the_interval()
+    {
+        var gap = Options.Interval / 3;
+        // All three ran back to back, e.g. after a new installation: the next round leaves a gap between them.
+        OsmCountryState[] states = [new("DE", Monday, null), new("AT", Monday.AddMinutes(1), null), new("CH", Monday.AddMinutes(2), null)];
+        Assert.Equal(("DE", Monday + Options.Interval), OsmImportSchedule.NextRun(states, Options));
+
+        states[0] = new("DE", Monday + Options.Interval, null);
+        Assert.Equal(("AT", Monday + Options.Interval + gap), OsmImportSchedule.NextRun(states, Options));
+    }
+
+    [Fact]
+    public async Task A_new_database_without_imported_places_has_no_state()
+    {
+        Assert.Equal([new("DE", null, null), new("AT", null, null)], await LoadAsync("DE", "AT"));
+    }
+
+    [Fact]
+    public async Task Without_a_state_the_newest_imported_place_stands_in_for_the_countries_it_imported()
     {
         _db.Slipways.Add(Imported(Monday.AddDays(-2)));
         _db.Slipways.Add(Imported(Monday));
         await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        Assert.Equal((Monday, null), await OsmImportSchedule.LoadAsync(_db, TestContext.Current.CancellationToken));
+        Assert.Equal([new("DE", Monday, null), new("HR", null, null)], await LoadAsync("DE", "HR"));
     }
 
     [Fact]
-    public async Task A_recorded_state_wins_over_the_imported_places()
+    public async Task The_state_from_before_the_import_by_country_counts_for_the_countries_it_imported()
     {
         _db.Slipways.Add(Imported(Monday));
         _db.JobStates.Add(new JobState { Name = OsmImportSchedule.JobName, LastSuccess = Monday.AddDays(-10) });
+        _db.JobStates.Add(new JobState { Name = "osm:AT", LastSuccess = Monday.AddDays(-3) });
         await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        Assert.Equal((Monday.AddDays(-10), null), await OsmImportSchedule.LoadAsync(_db, TestContext.Current.CancellationToken));
+        Assert.Equal(
+            [new("DE", Monday.AddDays(-10), null), new("AT", Monday.AddDays(-3), null), new("HR", null, null)],
+            await LoadAsync("DE", "AT", "HR"));
     }
 
     [Fact]
     public async Task Records_a_failure_and_keeps_the_last_success()
     {
-        _db.JobStates.Add(new JobState { Name = OsmImportSchedule.JobName, LastSuccess = Monday });
+        _db.JobStates.Add(new JobState { Name = "osm:DE", LastSuccess = Monday });
         await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
         _db.ChangeTracker.Clear();
 
-        await OsmImportSchedule.RecordFailureAsync(_db, Monday.AddDays(31), TestContext.Current.CancellationToken);
+        await OsmImportSchedule.RecordFailureAsync(_db, "DE", Monday.AddDays(31), TestContext.Current.CancellationToken);
 
-        Assert.Equal((Monday, Monday.AddDays(31)), await OsmImportSchedule.LoadAsync(_db, TestContext.Current.CancellationToken));
+        Assert.Equal([new("DE", Monday, Monday.AddDays(31))], await LoadAsync("DE"));
     }
+
+    private Task<IReadOnlyList<OsmCountryState>> LoadAsync(params string[] countries) =>
+        OsmImportSchedule.LoadAsync(_db, countries, TestContext.Current.CancellationToken);
 
     private static Slipway Imported(DateTime created) => new()
     {
         Id = Guid.NewGuid(),
         Created = created,
         Name = "Slipanlage",
+        Country = "DE",
         Source = Sources.Osm,
         OsmType = "node",
         OsmId = created.Ticks,

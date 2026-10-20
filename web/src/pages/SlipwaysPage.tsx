@@ -47,7 +47,7 @@ export function SlipwaysPage() {
       <section className="hero">
         <h1>Slipanlagen finden</h1>
         <p className="hero-lead">
-          Slipanlagen an Flüssen, Seen und Kanälen in Deutschland, mit aktuellen Pegelständen von PEGELONLINE.
+          Slipanlagen an Flüssen, Seen, Kanälen und Küsten in Deutschland und Europa, mit aktuellen Pegelständen von PEGELONLINE.
         </p>
         <SearchField
           value={search}

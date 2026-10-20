@@ -119,6 +119,7 @@ public class SlipwaysDbContext(DbContextOptions<SlipwaysDbContext> options)
         // Rows from before the OpenStreetMap import were all entered by hand.
         e.Property(x => x.Source).HasMaxLength(10).HasDefaultValue(Sources.Manual);
         e.Property(x => x.OsmType).HasMaxLength(10);
+        e.Property(x => x.OsmCountry).HasMaxLength(2);
         e.HasIndex(x => new { x.OsmType, x.OsmId }).IsUnique();
     }
 
