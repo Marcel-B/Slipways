@@ -44,19 +44,17 @@ export function SlipwaysPage() {
   return (
     <>
       <title>Slipways · Slipanlagen, Marinas und Pegel</title>
-      <section className="hero">
+      {/* A slim bar instead of a hero band, so the map starts high and fits the screen. */}
+      <section className="toolbar">
         <h1>Slipanlagen finden</h1>
-        <p className="hero-lead">
-          Slipanlagen an Flüssen, Seen, Kanälen und Küsten in Deutschland und Europa, mit aktuellen Pegelständen von PEGELONLINE.
-        </p>
         <SearchField
           value={search}
           onChange={(value) => setParams(value ? { q: value } : {}, { replace: true })}
           placeholder="Nach Name, Ort oder Gewässer suchen"
           label="Slipanlagen durchsuchen"
         />
-        <Link to={newSlipway} className="hero-link">
-          <MapPinPlus size={16} /> Slipanlage fehlt?
+        <Link to={newSlipway} className="toolbar-link" aria-label="Slipanlage fehlt? Vorschlagen">
+          <MapPinPlus size={18} /> <span>Slipanlage fehlt?</span>
         </Link>
       </section>
       <Overview
