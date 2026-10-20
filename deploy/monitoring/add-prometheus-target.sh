@@ -43,7 +43,9 @@ if [[ -z "${SLIPWAYS_TARGET:-}" ]]; then
 fi
 
 echo "Prüfe https://$SLIPWAYS_TARGET/metrics …"
-if curl -fsS --max-time 10 "https://$SLIPWAYS_TARGET/metrics" | grep -q '^slipways_job_runs_total'; then
+# Erst ganz lesen, dann suchen: grep -q hört beim ersten Treffer auf, curl scheitert dann beim Weiterschreiben
+# (Fehler 23), und mit pipefail sähe ein erreichbares Ziel aus wie ein unerreichbares.
+if body="$(curl -fsS --max-time 10 "https://$SLIPWAYS_TARGET/metrics")" && grep -q '^slipways_job_runs_total' <<< "$body"; then
   echo "erreichbar."
 elif [[ "$FORCE" == 1 ]]; then
   echo "nicht erreichbar, lege das Ziel trotzdem an (FORCE=1)."
