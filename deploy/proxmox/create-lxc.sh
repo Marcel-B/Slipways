@@ -41,8 +41,10 @@ pct status "$CTID" &>/dev/null && fail "Container $CTID existiert bereits. Ander
 
 info "Debian-Vorlage suchen"
 pveam update >/dev/null
-TEMPLATE="$(pveam available --section system | awk '/debian-1[23]-standard/ {print $2}' | sort -V | tail -n1)"
-[[ -n "$TEMPLATE" ]] || fail "Keine debian-standard-Vorlage gefunden."
+# Die Liste enthält Vorlagen für mehrere Architekturen; eine fremde startet nicht ("Exec format error")
+ARCH="$(dpkg --print-architecture)"
+TEMPLATE="${TEMPLATE:-$(pveam available --section system | awk -v arch="$ARCH" '$2 ~ "^debian-1[23]-standard_.*_" arch "\\." {print $2}' | sort -V | tail -n1)}"
+[[ -n "$TEMPLATE" ]] || fail "Keine debian-standard-Vorlage für $ARCH gefunden."
 if ! pveam list "$TEMPLATE_STORAGE" | grep -q "$TEMPLATE"; then
   info "Vorlage $TEMPLATE herunterladen"
   pveam download "$TEMPLATE_STORAGE" "$TEMPLATE"
@@ -55,6 +57,7 @@ info "Container $CTID ($CT_HOSTNAME) anlegen"
 # nesting und keyctl braucht Docker in einem unprivilegierten Container
 pct create "$CTID" "${TEMPLATE_STORAGE}:vztmpl/${TEMPLATE}" \
   --hostname "$CT_HOSTNAME" \
+  --arch "$ARCH" \
   --cores "$CORES" \
   --memory "$MEMORY_MB" \
   --swap 1024 \

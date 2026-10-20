@@ -24,7 +24,8 @@ Alle über Umgebungsvariablen beim Aufruf:
 | `CTID` | nächste freie ID | Container-ID |
 | `CT_HOSTNAME` | `slipways` | Hostname, auch Name im Tailnet |
 | `STORAGE` | `local-lvm` | Speicher für die Disk |
-| `TEMPLATE_STORAGE` | `local` | Speicher für die Debian-Vorlage (die neueste `debian-13`/`debian-12-standard`) |
+| `TEMPLATE_STORAGE` | `local` | Speicher für die Debian-Vorlage |
+| `TEMPLATE` | neueste `debian-13`/`debian-12-standard` für die Architektur des Hosts | z. B. `TEMPLATE=debian-12-standard_12.12-1_amd64.tar.zst` |
 | `BRIDGE` | `vmbr0` | Netzwerk-Bridge |
 | `IP` / `GATEWAY` | `dhcp` | z. B. `IP=192.168.1.60/24 GATEWAY=192.168.1.1` |
 | `DISK_GB` / `MEMORY_MB` / `CORES` | `16` / `2048` / `2` | Ressourcen; die Builds beim Update brauchen den Speicher |
