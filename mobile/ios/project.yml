@@ -29,9 +29,6 @@ targets:
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
         INFOPLIST_FILE: Slipways/Info.plist
-      configs:
-        # The simulator reaches the docker compose API on the host machine.
-        Debug:
-          SLIPWAYS_API_BASE_URL: http://localhost:5080
-        Release:
-          SLIPWAYS_API_BASE_URL: https://slipways.de
+        # Debug builds use production too; for the local docker compose API set the environment variable
+        # SLIPWAYS_API_BASE_URL=http://localhost:5080 in the scheme (Product > Scheme > Edit Scheme > Run).
+        SLIPWAYS_API_BASE_URL: https://slipways.de

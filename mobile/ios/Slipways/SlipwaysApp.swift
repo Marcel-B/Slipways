@@ -21,7 +21,12 @@ struct SlipwaysApp: App {
 }
 
 enum AppConfig {
+    /// https://slipways.de from Info.plist; the scheme's environment variable SLIPWAYS_API_BASE_URL overrides it,
+    /// e.g. http://localhost:5080 for the docker compose API.
     static let apiBaseURL: URL = {
+        if let value = ProcessInfo.processInfo.environment["SLIPWAYS_API_BASE_URL"], let url = URL(string: value) {
+            return url
+        }
         guard let value = Bundle.main.object(forInfoDictionaryKey: "SlipwaysAPIBaseURL") as? String,
               let url = URL(string: value) else {
             fatalError("SlipwaysAPIBaseURL is missing from Info.plist")

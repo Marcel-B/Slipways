@@ -16,9 +16,11 @@ android {
     }
 
     buildTypes {
+        // Debug builds use production too. For the local docker compose API:
+        // ./gradlew :app:installDebug -Pslipways.apiBaseUrl=http://10.0.2.2:5080 (10.0.2.2 is the host as seen from the emulator).
         debug {
-            // 10.0.2.2 is the host machine as seen from the Android emulator (docker compose API on port 5080).
-            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:5080\"")
+            val apiBaseUrl = providers.gradleProperty("slipways.apiBaseUrl").getOrElse("https://slipways.de")
+            buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
         }
         release {
             buildConfigField("String", "API_BASE_URL", "\"https://slipways.de\"")

@@ -10,7 +10,7 @@ Stand 20.10.2026. Beide Apps sind reine Lesesichten wie die Website: kein Konto,
 | API-Client und Modelle | Swift-Package `SlipwaysKit` | Kotlin-Modul `shared` (Ktor) |
 | Tests | Swift Testing in `SlipwaysKit` | `shared/src/test` |
 | Karten | MapKit in der App | keine eigene Karte, „In Karten öffnen“ übergibt an eine Karten-App |
-| Release-Adresse | `https://slipways.de` (`project.yml`) | `https://slipways.de` (`app/build.gradle.kts`) |
+| API-Adresse | `https://slipways.de` (`project.yml`), lokal per Schema-Umgebungsvariable `SLIPWAYS_API_BASE_URL` | `https://slipways.de` (`app/build.gradle.kts`), lokal per `-Pslipways.apiBaseUrl=…` |
 
 Die Modelle spiegeln `backend/src/Slipways.Api/Endpoints/Contracts.cs`. Ändert sich ein DTO, beide Clients und die Fixtures in den Tests mitziehen. Die Fixtures sind gekürzte echte Antworten, darunter eine OSM-Slipanlage ohne Gewässer. Deutsche Texte für OSM-Tags und Pegelzustände (`Labels`, `Format`) liegen im Client-Paket und entsprechen `web/src/components/osmTags.ts` bzw. `waterLevel.ts`.
 
