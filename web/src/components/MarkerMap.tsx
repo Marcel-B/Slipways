@@ -6,6 +6,7 @@ import { Link } from 'react-router'
 import Supercluster, { type PointFeature } from 'supercluster'
 import type { Bounds } from '../api/types'
 import { faintShapeStyle, shapeStyle, type MapMarker, type MapShape } from './mapMarkers'
+import type { MapView } from './mapView'
 import { clusterIcon, pinIcon } from './markerIcons'
 
 const GERMANY: [number, number] = [51.2, 10.4]
@@ -23,6 +24,10 @@ interface MarkerMapProps {
   cluster?: boolean
   /** Draws this marker larger and on top, even when it would be in a cluster. */
   highlightedId?: string | null
+  /** Called with the visible part of the map once it is measured and after every move or zoom. */
+  onViewChange?: (view: MapView) => void
+  /** Moves the map to these bounds whenever a new object is passed, e.g. to show search hits. */
+  focus?: Bounds | null
 }
 
 type SelectHandlers = (id: string) => Record<string, () => void> | undefined
@@ -36,6 +41,8 @@ export function MarkerMap({
   onSelect,
   cluster = false,
   highlightedId = null,
+  onViewChange,
+  focus = null,
 }: MarkerMapProps) {
   const selectHandlers: SelectHandlers = (id) =>
     onSelect && { popupopen: () => onSelect(id), popupclose: () => onSelect(null) }
@@ -67,6 +74,8 @@ export function MarkerMap({
         ))}
       </Pane>
       <AutoResize />
+      {onViewChange && <ViewReporter onViewChange={onViewChange} />}
+      {focus && <Focus bounds={focus} />}
       <MarkerLayer markers={markers} cluster={cluster} highlightedId={highlightedId} selectHandlers={selectHandlers} />
     </MapContainer>
   )
@@ -80,6 +89,30 @@ function AutoResize() {
     observer.observe(map.getContainer())
     return () => observer.disconnect()
   }, [map])
+  return null
+}
+
+function ViewReporter({ onViewChange }: { onViewChange: (view: MapView) => void }) {
+  const map = useMap()
+  // A hidden map (mobile list view) has no size and so no meaningful view; keep the last one.
+  useMapEvents({ moveend: () => map.getSize().x > 0 && onViewChange(viewOf(map)) })
+  useEffect(() => {
+    if (map.getSize().x > 0) onViewChange(viewOf(map))
+  }, [map, onViewChange])
+  return null
+}
+
+function Focus({ bounds }: { bounds: Bounds }) {
+  const map = useMap()
+  useEffect(() => {
+    map.flyToBounds(
+      [
+        [bounds.south, bounds.west],
+        [bounds.north, bounds.east],
+      ],
+      { padding: [24, 24], maxZoom: 13, duration: 0.8 },
+    )
+  }, [map, bounds])
   return null
 }
 
@@ -149,7 +182,7 @@ function MarkerLayer({ markers, cluster, highlightedId, selectHandlers }: Marker
   )
 }
 
-function viewOf(map: LeafletMap): { bbox: [number, number, number, number]; zoom: number } {
+function viewOf(map: LeafletMap): MapView {
   const b = map.getBounds()
   return { bbox: [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()], zoom: Math.round(map.getZoom()) }
 }
