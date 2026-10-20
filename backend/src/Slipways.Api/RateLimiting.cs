@@ -21,6 +21,11 @@ public sealed class RateLimitOptions
     public int TokensPerPeriod { get; set; } = 60;
 
     public TimeSpan ReplenishmentPeriod { get; set; } = TimeSpan.FromSeconds(10);
+
+    /// <summary>Suggestions a client may send in a row; then one more per <see cref="SuggestionReplenishmentPeriod"/>.</summary>
+    public int SuggestionTokenLimit { get; set; } = 5;
+
+    public TimeSpan SuggestionReplenishmentPeriod { get; set; } = TimeSpan.FromMinutes(10);
 }
 
 /// <summary>
@@ -30,6 +35,9 @@ public sealed class RateLimitOptions
 public static class RateLimiting
 {
     public const string ApiPolicy = "api";
+
+    /// <summary>For sending suggestions: a few in a row, then about six an hour per client.</summary>
+    public const string SuggestionPolicy = "suggestions";
 
     // Caddy and nginx sit in front of the API inside the Docker network. Caddy replaces any X-Forwarded-For a
     // client sends, nginx appends Caddy's address, so the client is at most two hops back.
@@ -71,6 +79,23 @@ public static class RateLimiting
                         TokenLimit = options.TokenLimit,
                         TokensPerPeriod = options.TokensPerPeriod,
                         ReplenishmentPeriod = options.ReplenishmentPeriod,
+                        QueueLimit = 0,
+                        AutoReplenishment = true,
+                    });
+            });
+
+            limiter.AddPolicy(SuggestionPolicy, context =>
+            {
+                var options = context.RequestServices.GetRequiredService<IOptions<RateLimitOptions>>().Value;
+                if (!options.Enabled)
+                    return RateLimitPartition.GetNoLimiter("off");
+
+                return RateLimitPartition.GetTokenBucketLimiter(ClientKey(context.Connection.RemoteIpAddress), _ =>
+                    new TokenBucketRateLimiterOptions
+                    {
+                        TokenLimit = options.SuggestionTokenLimit,
+                        TokensPerPeriod = 1,
+                        ReplenishmentPeriod = options.SuggestionReplenishmentPeriod,
                         QueueLimit = 0,
                         AutoReplenishment = true,
                     });

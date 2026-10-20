@@ -20,6 +20,7 @@ public class SlipwaysDbContext(DbContextOptions<SlipwaysDbContext> options)
     public DbSet<JobState> JobStates => Set<JobState>();
     public DbSet<PlaceInfo> PlaceInfos => Set<PlaceInfo>();
     public DbSet<WebsiteCheck> WebsiteChecks => Set<WebsiteCheck>();
+    public DbSet<Suggestion> Suggestions => Set<Suggestion>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
@@ -90,6 +91,18 @@ public class SlipwaysDbContext(DbContextOptions<SlipwaysDbContext> options)
             e.Property(x => x.PlaceType).HasMaxLength(10);
             e.Property(x => x.Url).HasMaxLength(2000);
             e.Property(x => x.Result).HasMaxLength(20);
+        });
+
+        builder.Entity<Suggestion>(e =>
+        {
+            e.Property(x => x.Kind).HasMaxLength(20);
+            e.Property(x => x.Status).HasMaxLength(10);
+            e.Property(x => x.PlaceType).HasMaxLength(10);
+            e.Property(x => x.Name).HasMaxLength(200);
+            e.Property(x => x.Fields).HasMaxLength(4000);
+            e.Property(x => x.Text).HasMaxLength(1000);
+            e.Property(x => x.TokenHash).HasMaxLength(64);
+            e.HasIndex(x => x.Status);
         });
 
         builder.Entity<Station>(e =>

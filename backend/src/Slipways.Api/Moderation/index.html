@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Slipways · Moderation</title>
+  <link rel="stylesheet" href="/moderation/app.css">
+  <script src="/moderation/app.js" defer></script>
+</head>
+<body>
+  <header>
+    <h1>Moderation</h1>
+    <nav>
+      <button type="button" data-status="pending" aria-pressed="true">Offen <span id="pending-count"></span></button>
+      <button type="button" data-status="accepted" aria-pressed="false">Angenommen</button>
+      <button type="button" data-status="rejected" aria-pressed="false">Abgelehnt</button>
+    </nav>
+  </header>
+  <main>
+    <p id="message" role="status"></p>
+    <ul id="list"></ul>
+  </main>
+</body>
+</html>

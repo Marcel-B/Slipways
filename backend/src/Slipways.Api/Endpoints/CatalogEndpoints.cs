@@ -67,11 +67,20 @@ public static class CatalogEndpoints
                 s.Marina == null ? null : new MarinaSummaryDto(s.Marina.Id, s.Marina.Name, s.Marina.Url),
                 s.Extras.OrderBy(e => e.Name).Select(e => e.Name).ToList(),
                 s.Source, s.OsmId == null ? null : s.OsmType + "/" + s.OsmId,
-                s.Created, s.Updated))
+                s.Created, s.Updated, Array.Empty<PlaceInfoDto>()))
             .SingleOrDefaultAsync(ct);
 
-        return slipway is null ? TypedResults.NotFound() : TypedResults.Ok(slipway);
+        return slipway is null
+            ? TypedResults.NotFound()
+            : TypedResults.Ok(slipway with { Infos = await ListInfos(db, PlaceTypes.Slipway, id, ct) });
     }
+
+    private static Task<List<PlaceInfoDto>> ListInfos(SlipwaysDbContext db, string placeType, Guid id, CancellationToken ct) =>
+        db.PlaceInfos.AsNoTracking()
+            .Where(i => i.PlaceType == placeType && i.PlaceId == id)
+            .OrderBy(i => i.Field).ThenBy(i => i.Source).ThenByDescending(i => i.Retrieved)
+            .Select(i => new PlaceInfoDto(i.Field, i.Value, i.Source, i.SourceUrl, i.Retrieved))
+            .ToListAsync(ct);
 
     private static IQueryable<Water> SearchWaters(SlipwaysDbContext db, string? search)
     {
@@ -275,12 +284,7 @@ public static class CatalogEndpoints
         if (marina is null)
             return TypedResults.NotFound();
 
-        var infos = await db.PlaceInfos.AsNoTracking()
-            .Where(i => i.PlaceType == PlaceTypes.Marina && i.PlaceId == id)
-            .OrderBy(i => i.Field).ThenBy(i => i.Source)
-            .Select(i => new PlaceInfoDto(i.Field, i.Value, i.Source, i.SourceUrl, i.Retrieved))
-            .ToListAsync(ct);
-        return TypedResults.Ok(marina with { Infos = infos });
+        return TypedResults.Ok(marina with { Infos = await ListInfos(db, PlaceTypes.Marina, id, ct) });
     }
 
     private static Task<List<ExtraDto>> ListExtras(SlipwaysDbContext db, CancellationToken ct) =>

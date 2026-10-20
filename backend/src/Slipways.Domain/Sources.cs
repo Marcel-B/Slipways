@@ -11,4 +11,7 @@ public static class Sources
 
     /// <summary>Read from the place's own website; only used for <see cref="PlaceInfo"/>.</summary>
     public const string Website = "website";
+
+    /// <summary>An accepted suggestion from a user; only used for <see cref="PlaceInfo"/>.</summary>
+    public const string User = "user";
 }

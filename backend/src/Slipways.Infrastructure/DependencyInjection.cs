@@ -12,6 +12,7 @@ using Slipways.Infrastructure.Monitoring;
 using Slipways.Infrastructure.Osm;
 using Slipways.Infrastructure.Persistence;
 using Slipways.Infrastructure.Shapes;
+using Slipways.Infrastructure.Suggestions;
 using Slipways.Infrastructure.Websites;
 
 namespace Slipways.Infrastructure;
@@ -93,6 +94,10 @@ public static class DependencyInjection
             .RemoveAllLoggers();
         services.AddScoped<WebsiteSync>();
         services.AddHostedService<WebsiteSyncWorker>();
+
+        services.AddOptions<SuggestionOptions>().Bind(configuration.GetSection(SuggestionOptions.SectionName));
+        services.AddSingleton<ProofOfWork>();
+        services.AddScoped<SuggestionService>();
 
         services.AddOptions<MonitoringOptions>().Bind(configuration.GetSection(MonitoringOptions.SectionName));
         services.AddHostedService<CatalogMetricsWorker>();

@@ -2,13 +2,21 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Slipways.Domain;
 using Slipways.Infrastructure.Persistence;
+using Slipways.Infrastructure.Suggestions;
 
 namespace Slipways.Infrastructure.Osm;
 
 public sealed record OsmImportCounts(int Added, int Updated, int Linked);
 
 /// <param name="Missing">Elements we know, such as "node/123", that the import no longer found in OpenStreetMap.</param>
-public sealed record OsmImportResult(OsmImportCounts Slipways, OsmImportCounts Marinas, IReadOnlyList<string> Missing);
+/// <param name="UserValuesResolved">Values from users that OpenStreetMap now has as well, so they were removed.</param>
+/// <param name="UserValuesConflicting">Values from users where OpenStreetMap changed to something else; sent back to moderation.</param>
+public sealed record OsmImportResult(
+    OsmImportCounts Slipways,
+    OsmImportCounts Marinas,
+    IReadOnlyList<string> Missing,
+    int UserValuesResolved = 0,
+    int UserValuesConflicting = 0);
 
 /// <summary>
 /// Imports slipways (<c>leisure=slipway</c>) and marinas (<c>leisure=marina</c>) from OpenStreetMap.
@@ -41,15 +49,18 @@ public sealed class OsmImport(SlipwaysDbContext db, OverpassClient client, IOpti
         var waters = new WaterLocator(shapes.Select(w => (w.Id, w.Shape!)));
         var missing = new List<string>();
 
-        var slipways = Import(await db.Slipways.ToListAsync(cancellationToken), slipwayElements,
-            () => new Slipway { Name = "" }, ApplySlipway, waters, now, missing);
-        var marinas = Import(await db.Marinas.ToListAsync(cancellationToken), marinaElements,
-            () => new Marina { Name = "" }, ApplyMarina, waters, now, missing);
+        var existingSlipways = await db.Slipways.ToListAsync(cancellationToken);
+        var existingMarinas = await db.Marinas.ToListAsync(cancellationToken);
+        var slipways = Import(existingSlipways, slipwayElements, () => new Slipway { Name = "" }, ApplySlipway, waters, now, missing);
+        var marinas = Import(existingMarinas, marinaElements, () => new Marina { Name = "" }, ApplyMarina, waters, now, missing);
+
+        var userInfos = await db.PlaceInfos.Where(i => i.Source == Sources.User).ToListAsync(cancellationToken);
+        var (resolved, conflicts) = SuggestionService.ReconcileAfterImport(db, existingSlipways, existingMarinas, userInfos, now);
 
         // In the same save as the places, so the recorded success and the data never disagree.
         await OsmImportSchedule.MarkSuccessAsync(db, now, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
-        return new OsmImportResult(slipways, marinas, missing);
+        return new OsmImportResult(slipways, marinas, missing, resolved, conflicts);
     }
 
     /// <summary>Elements of all countries, one query per country; an element on a border comes only once.</summary>
