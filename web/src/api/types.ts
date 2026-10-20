@@ -26,3 +26,66 @@ export interface SlipwayDetails extends SlipwaySummary {
   created: string
   updated: string | null
 }
+
+export interface Position {
+  latitude: number
+  longitude: number
+}
+
+export interface Bounds {
+  south: number
+  west: number
+  north: number
+  east: number
+}
+
+/** Latest reading at a gauge; `value` is in centimetres. */
+export interface WaterLevel {
+  value: number
+  measuredAt: string
+  state: string | null
+}
+
+export interface WaterSummary extends Water {
+  shortname: string | null
+  slipwayCount: number
+  stationCount: number
+  /** Something on the water near its middle; null when nothing on it has coordinates. */
+  position: Position | null
+  /** Set only when the water has exactly one gauge with a reading. */
+  gauge: { stationId: string; stationName: string; waterLevel: WaterLevel } | null
+}
+
+export interface Station {
+  id: string
+  name: string
+  number: string | null
+  latitude: number
+  longitude: number
+  km: number
+  agency: string | null
+  water: Water
+  waterLevel: WaterLevel | null
+}
+
+export interface Marina {
+  id: string
+  name: string
+  latitude: number
+  longitude: number
+  url: string | null
+  street: string | null
+  postalCode: string | null
+  city: string | null
+  phone: string | null
+  email: string | null
+  water: Water
+}
+
+export interface WaterDetails extends Water {
+  shortname: string | null
+  bounds: Bounds | null
+  slipways: SlipwaySummary[]
+  stations: Station[]
+  marinas: Marina[]
+}

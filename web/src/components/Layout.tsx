@@ -12,6 +12,7 @@ export function Layout() {
           <NavLink to="/" end>
             Slipanlagen
           </NavLink>
+          <NavLink to="/waters">Gewässer</NavLink>
         </nav>
       </header>
       <main className="main">

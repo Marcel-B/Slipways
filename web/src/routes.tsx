@@ -6,6 +6,8 @@ import { NotFoundPage } from './pages/NotFoundPage'
 import { SlipwayDetailsPage } from './pages/SlipwayDetailsPage'
 import { SlipwaysPage } from './pages/SlipwaysPage'
 import { SupportPage } from './pages/SupportPage'
+import { WaterDetailsPage } from './pages/WaterDetailsPage'
+import { WatersPage } from './pages/WatersPage'
 
 export const routes: RouteObject[] = [
   {
@@ -13,6 +15,8 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <SlipwaysPage /> },
       { path: 'slipways/:id', element: <SlipwayDetailsPage /> },
+      { path: 'waters', element: <WatersPage /> },
+      { path: 'waters/:id', element: <WaterDetailsPage /> },
       { path: 'impressum', element: <ImpressumPage /> },
       { path: 'datenschutz', element: <DatenschutzPage /> },
       { path: 'support', element: <SupportPage /> },

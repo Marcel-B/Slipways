@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { SlipwaySummary } from '../api/types'
 import { SlipwaysPage } from './SlipwaysPage'
 
-vi.mock('../components/LazySlipwayMap', () => ({ LazySlipwayMap: () => null }))
+vi.mock('../components/LazyMarkerMap', () => ({ LazyMarkerMap: () => null }))
 
 const slipways: SlipwaySummary[] = [
   {

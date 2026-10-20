@@ -2,6 +2,36 @@ namespace Slipways.Api.Endpoints;
 
 public record WaterDto(Guid Id, string Name);
 
+public record PositionDto(double Latitude, double Longitude);
+
+/// <summary>Rectangle around everything with coordinates on a water, to fit a map to it.</summary>
+public record BoundsDto(double South, double West, double North, double East);
+
+/// <summary>
+/// A water for the overview. <paramref name="Position"/> is a slipway, gauge or marina near the middle of the
+/// water and null when nothing on it has coordinates. <paramref name="Gauge"/> is set only when the water has
+/// exactly one gauge with a reading.
+/// </summary>
+public record WaterSummaryDto(
+    Guid Id,
+    string Name,
+    string? Shortname,
+    int SlipwayCount,
+    int StationCount,
+    PositionDto? Position,
+    GaugeReadingDto? Gauge);
+
+public record GaugeReadingDto(Guid StationId, string StationName, WaterLevelDto WaterLevel);
+
+public record WaterDetailsDto(
+    Guid Id,
+    string Name,
+    string? Shortname,
+    BoundsDto? Bounds,
+    IReadOnlyList<SlipwaySummaryDto> Slipways,
+    IReadOnlyList<StationDto> Stations,
+    IReadOnlyList<MarinaDto> Marinas);
+
 public record SlipwaySummaryDto(
     Guid Id,
     string Name,

@@ -67,7 +67,9 @@ dotnet ef migrations add <Name> --project src/Slipways.Infrastructure --startup-
 | --- | --- | --- |
 | GET | `/api/slipways?search=&waterId=` | Slipanlagen, optional gefiltert |
 | GET | `/api/slipways/{id}` | Details einer Slipanlage |
-| GET | `/api/waters`, `/api/marinas`, `/api/extras`, `/api/services` | Stammdaten |
+| GET | `/api/waters?search=` | Gewässer mit Anzahl Slipanlagen und Pegel, Kartenposition (`position`) und dem Wasserstand, wenn es genau einen Pegel gibt (`gauge`) |
+| GET | `/api/waters/{id}` | Details eines Gewässers mit Slipanlagen, Pegeln, Marinas und Kartenausschnitt (`bounds`) |
+| GET | `/api/marinas?waterId=`, `/api/extras`, `/api/services` | Stammdaten |
 | GET | `/api/stations?waterId=` | Pegelstationen mit aktuellem Wasserstand (`waterLevel`, in cm) |
 | POST | `/api/account/register`, `/api/account/login`, `/api/account/refresh` | Konto und Bearer-Token (ASP.NET Identity), nur mit `Accounts__Enabled=true` |
 | GET | `/api/account/me` | Angemeldeter Benutzer, nur mit `Accounts__Enabled=true` |
