@@ -19,9 +19,10 @@ import {
   Waves,
   type LucideIcon,
 } from 'lucide-react'
-import { Fragment } from 'react'
+import { Fragment, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router'
 import { api, ApiError } from '../api/client'
+import type { PlaceInfo } from '../api/types'
 import { LazyMarkerMap } from '../components/LazyMarkerMap'
 import { marinaMarker, slipwayMarker } from '../components/mapMarkers'
 import { NearestGauge } from '../components/NearestGauge'
@@ -43,12 +44,18 @@ export function MarinaDetailsPage() {
   if (error instanceof ApiError && error.status === 404) return <p>Diese Marina gibt es nicht.</p>
   if (error || !marina) return <p className="error">Marina konnte nicht geladen werden.</p>
 
+  // Details from the marina's website only fill gaps; our own and OpenStreetMap's values come first.
+  const fromWebsite = (field: string) => marina.infos.find((i) => i.field === field && i.source === 'website')
+  const openingHours = marina.openingHours ?? fromWebsite('opening_hours')
+  const phone = marina.phone ?? fromWebsite('phone')
+  const email = marina.email ?? fromWebsite('email')
+
   const address = [marina.street, [marina.postalCode, marina.city].filter(Boolean).join(' ')].filter(Boolean).join(', ')
-  const facts: [LucideIcon, string, string | null][] = [
+  const facts: [LucideIcon, string, ReactNode][] = [
     [MapPin, 'Adresse', address || null],
     [Building2, 'Betreiber', marina.operator],
     [DoorOpen, 'Zugang', marina.access && accessLabel(marina.access)],
-    [Clock, 'Öffnungszeiten', marina.openingHours],
+    [Clock, 'Öffnungszeiten', openingHours && <Sourced key="hours" value={openingHours} render={(v) => v} />],
   ]
   const position = `${marina.latitude},${marina.longitude}`
 
@@ -91,23 +98,23 @@ export function MarinaDetailsPage() {
                   <dd>{value}</dd>
                 </Fragment>
               ))}
-            {marina.phone && (
+            {phone && (
               <>
                 <dt>
                   <Phone size={16} /> Telefon
                 </dt>
                 <dd>
-                  <a href={`tel:${marina.phone.replace(/[^\d+]/g, '')}`}>{marina.phone}</a>
+                  <Sourced value={phone} render={(v) => <a href={`tel:${v.replace(/[^\d+]/g, '')}`}>{v}</a>} />
                 </dd>
               </>
             )}
-            {marina.email && (
+            {email && (
               <>
                 <dt>
                   <Mail size={16} /> E-Mail
                 </dt>
                 <dd>
-                  <a href={`mailto:${marina.email}`}>{marina.email}</a>
+                  <Sourced value={email} render={(v) => <a href={`mailto:${v}`}>{v}</a>} />
                 </dd>
               </>
             )}
@@ -199,5 +206,26 @@ export function MarinaDetailsPage() {
         </div>
       </div>
     </article>
+  )
+}
+
+/** A value of the marina itself, or one from its website with where and when it was read. */
+function Sourced({ value, render }: { value: string | PlaceInfo; render: (value: string) => ReactNode }) {
+  if (typeof value === 'string') return render(value)
+  const date = new Date(value.retrieved).toLocaleDateString('de-DE')
+  return (
+    <>
+      {render(value.value)}
+      <small className="fact-source">
+        {value.sourceUrl ? (
+          <a href={value.sourceUrl} target="_blank" rel="noreferrer">
+            laut Webseite
+          </a>
+        ) : (
+          'laut Webseite'
+        )}
+        , Stand {date}
+      </small>
+    </>
   )
 }

@@ -172,6 +172,8 @@ public sealed class OsmImport(SlipwaysDbContext db, OverpassClient client, IOpti
         marina.PostalCode = place.Element.Tag("addr:postcode");
         marina.City = place.Element.Tag("addr:city");
         marina.Url = place.Website;
+        marina.Phone = place.Element.Tag("phone") ?? place.Element.Tag("contact:phone");
+        marina.Email = place.Element.Tag("email") ?? place.Element.Tag("contact:email");
         marina.Operator = place.Element.Tag("operator");
         marina.Fee = place.Element.Tag("fee");
         marina.Access = place.Element.Tag("access");

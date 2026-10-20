@@ -78,7 +78,7 @@ Abgleich, getrennt für Slipanlagen und Marinas:
 2. Liegt ein eigener Eintrag (`Source = manual`) näher als 50 m (Haversine), wird nur das OSM-Element an ihm hinterlegt und nichts Neues angelegt. Ist jeder eigene Eintrag in der Nähe schon mit einem anderen Element verknüpft, gilt das Element als doppelt erfasst (z. B. als Knoten und als Weg) und wird übersprungen.
 3. Sonst entsteht ein neuer Eintrag mit `Source = osm`.
 
-Übernommen werden `name` (sonst „Slipanlage“ bzw. „Marina“ und `addr:city`), `addr:street`/`addr:housenumber`, `addr:postcode`, `addr:city`, `addr:country` (sonst das abgefragte Land, nur Slipanlagen), `website` (oder `contact:website`), `operator`, `fee`, `access`, `opening_hours` und bei Slipanlagen `surface`. Eigene Angaben (Kommentar, Bewertung, Kosten, Pro/Contra, Extras, Marina, Telefon, E-Mail) überschreibt der Import nie. Was aus OSM verschwindet, löscht er nicht, sondern schreibt es ins Log.
+Übernommen werden `name` (sonst „Slipanlage“ bzw. „Marina“ und `addr:city`), `addr:street`/`addr:housenumber`, `addr:postcode`, `addr:city`, `addr:country` (sonst das abgefragte Land, nur Slipanlagen), `website` (oder `contact:website`), bei Marinas `phone`/`contact:phone` und `email`/`contact:email`, `operator`, `fee`, `access`, `opening_hours` und bei Slipanlagen `surface`. Eigene Angaben (Kommentar, Bewertung, Kosten, Pro/Contra, Extras, Marina, Telefon, E-Mail) überschreibt der Import nie. Was aus OSM verschwindet, löscht er nicht, sondern schreibt es ins Log.
 
 OSM kennt kein Gewässer zu einer Slipanlage. Der Import ordnet deshalb das Gewässer zu, dessen Verlauf (siehe oben) höchstens 300 m entfernt ist oder dessen Fläche den Punkt enthält, sonst bleibt `WaterId` leer. Das betrifft vor allem Seen und kleine Flüsse, die PEGELONLINE nicht kennt. Einträge ohne Gewässer bekommen bei jedem Lauf eine neue Chance.
 
@@ -99,19 +99,57 @@ overpass-api.de spricht nur noch TLS 1.3. .NET auf macOS kann das nur über das 
 
 Was beim Import noch offen ist, steht in [`docs/offene-punkte.md`](docs/offene-punkte.md).
 
+## Angaben von den Webseiten der Marinas
+
+Etwa 2.000 Marinas verlinken in OSM ihre Webseite, aber nur wenige haben dort Telefon oder Öffnungszeiten. Ein Hintergrund-Job (`backend/src/Slipways.Infrastructure/Websites/`) liest deshalb die verlinkte Startseite und übernimmt, was sie über die Marina selbst sagt:
+
+- aus strukturierten Daten (schema.org als JSON-LD) `telephone`, `email`, `openingHours` und `openingHoursSpecification` (umgeschrieben in die OSM-Schreibweise, z. B. `Mo-Fr 08:00-18:00; Sa,Su 09:00-12:00`; saisonale Angaben mit `validFrom`/`validThrough` nicht),
+- sonst Telefon und E-Mail aus `tel:`- und `mailto:`-Links.
+
+Ein Wert wird nur übernommen, wenn die Seite genau einen nennt (dieselbe Nummer national und international geschrieben zählt als eine). Nennt eine Vereinsseite mehrere Ansprechpartner, bleibt das Feld leer. Objekte vom Typ `Person` und Eigenschaften wie `employee`, `founder` oder `member` liest der Job nie. Gelesen wird nur die Startseite, kein Impressum und keine Unterseiten.
+
+Die Ergebnisse stehen nicht in der Marina, sondern in der Tabelle `PlaceInfos`: eine Zeile je Feld mit `Source = website`, Quell-URL (nach Weiterleitungen) und Abrufdatum. Die Tabelle ist offen für weitere Quellen (z. B. freigegebene Nutzerbeiträge, dafür gibt es auch `OsmType`/`OsmId` und `BaseValue`). Die API liefert sie bei `/api/marinas/{id}` als `infos`; das Web zeigt sie nur, wo die Marina selbst (bzw. OSM) keinen Wert hat, mit „laut Webseite, Stand …“.
+
+Höflich bleiben: eigener User-Agent (`Slipways (+https://github.com/Marcel-B/Slipways)`, in robots.txt als `Slipways` ansprechbar), robots.txt nach RFC 9309 für jeden Host auf dem Weg (fehlt sie, ist alles erlaubt; antwortet der Server mit 5xx, nichts), Weiterleitungen von Hand (höchstens 5), eine Anfrage nach der anderen mit Pause, höchstens 1 MB je Seite. Der Job verbindet sich nur mit öffentlichen Adressen: Links aus OSM kann jeder setzen, deshalb sind Loopback, private Netze, das Tailnet (100.64.0.0/10, `fd7a:…`) und Link-Local gesperrt.
+
+Jede Stunde liest er bis zu 200 fällige Seiten: noch nie gelesen, älter als 30 Tage oder mit geänderter Adresse. Wann und mit welchem Ergebnis eine Seite gelesen wurde, steht in `WebsiteChecks` (`found`, `empty`, `disallowed`, `refused`, `failed`). Ist eine Seite nicht erreichbar, bleiben die alten Angaben stehen; verbietet die robots.txt das Lesen oder steht nichts mehr auf der Seite, verschwinden sie. Widerspricht ein Betreiber, auf dem Server:
+
+```sh
+sqlite3 "$(docker volume inspect --format '{{ .Mountpoint }}' slipways_api-data)/slipways.db" \
+  "UPDATE WebsiteChecks SET Result = 'excluded' WHERE PlaceType = 'marina' AND PlaceId = '<ID>';
+   DELETE FROM PlaceInfos WHERE PlaceType = 'marina' AND PlaceId = '<ID>' AND Source = 'website';"
+```
+
+Die ID steht in großen Buchstaben in der Datenbank (wie EF Core GUIDs in SQLite schreibt). Eine ausgeschlossene Seite liest der Job nie wieder.
+
+Einstellungen (Abschnitt `Websites`; eine `BaseUrl` gibt es nicht, jede Marina hat ihre eigene Seite):
+
+| Schlüssel | Standard | Bedeutung |
+| --- | --- | --- |
+| `Enabled` | `true` | Job ein/aus |
+| `Interval` | `01:00:00` | Abstand der Läufe |
+| `BatchSize` | `200` | Seiten je Lauf |
+| `RefreshAfter` | `30.00:00:00` | Alter, ab dem eine Seite neu gelesen wird |
+| `RequestSpacing` | `00:00:02` | Pause zwischen zwei Anfragen (auch robots.txt) |
+| `Timeout` | `00:00:15` | Zeit je Anfrage samt Inhalt |
+| `MaxPageBytes` | `1048576` | gelesene Bytes je Seite |
+
+Google Maps ist bewusst keine Quelle: Auslesen verbieten die Nutzungsbedingungen, und die Places API kostet je Abfrage und erlaubt kein dauerhaftes Speichern der Inhalte.
+
 ## Überwachung
 
 Die API liefert Messwerte für Prometheus unter `/metrics`, aber nur auf einem eigenen Port (`Monitoring:MetricsPort`, Standard 9464). Dieser Port beantwortet nichts anderes, und die übrigen Ports beantworten `/metrics` nicht. Entscheidend ist der Port, auf dem die Verbindung ankommt, nicht der `Host`-Header. Lokal: http://localhost:9464/metrics.
 
 | Messwert | Bedeutung |
 | --- | --- |
-| `slipways_job_runs_total{task, result}` | Läufe der Hintergrund-Jobs `gauges`, `shapes`, `osm`, nach `success`/`failure` |
+| `slipways_job_runs_total{task, result}` | Läufe der Hintergrund-Jobs `gauges`, `shapes`, `osm`, `websites`, nach `success`/`failure` |
 | `slipways_job_duration_seconds{task}` | Dauer der Läufe (Histogramm) |
 | `slipways_job_last_success_timestamp_seconds{task}` | Zeitpunkt des letzten erfolgreichen Laufs (für `osm` nach einem Neustart aus der Datenbank) |
 | `slipways_gauge_water_levels_updated_total` | übernommene Wasserstände |
 | `slipways_osm_import_changes_total{kind, change}` | OSM-Import: `added`/`updated`/`linked` je `slipway`/`marina` |
 | `slipways_osm_missing_elements` | Einträge, deren OSM-Element der letzte Import nicht mehr fand |
 | `slipways_overpass_busy_responses_total` | „Overpass ausgelastet“, jeweils mit neuem Versuch |
+| `slipways_website_checks_total{result}` | gelesene Webseiten von Marinas nach Ergebnis (`found`, `empty`, `disallowed`, `refused`, `failed`) |
 | `slipways_places{kind, source}` | Slipanlagen, Marinas und Pegel in der Datenbank (jede Minute gezählt) |
 | `slipways_database_size_bytes` | Größe der SQLite-Datei samt WAL |
 | `slipways_loki_lines_pushed_total`, `slipways_loki_lines_dropped_total{reason}` | Logzeilen an Loki bzw. verworfen (`queue_full`, `push_failed`) |
@@ -120,7 +158,7 @@ Die API liefert Messwerte für Prometheus unter `/metrics`, aber nur auf einem e
 
 Labels haben nur wenige feste Werte. Das Label der Jobs heißt `task`, weil Prometheus `job` selbst vergibt. Benutzer, Inhalte und IDs kommen nicht vor.
 
-Mit `Monitoring:Loki:Url` (z. B. `http://monitoring:3100`) schickt die API ihre Logzeilen zusätzlich an Loki, mit den Labels `app=slipways`, `host` (`Monitoring:Loki:Host`), `level` und `source` (`api`, `http`, `db`, `gauges`, `shapes`, `osm`, `http-client`). Die Zeilen werden alle 2 Sekunden gebündelt verschickt. Ist Loki nicht erreichbar, verwirft die API sie, statt zu warten. Das Konsolen-Log bleibt vollständig. Ohne Url ist der Versand aus. Angebunden ist nur slipways.de; Einrichten: [`deploy/README.md`](deploy/README.md#überwachung).
+Mit `Monitoring:Loki:Url` (z. B. `http://monitoring:3100`) schickt die API ihre Logzeilen zusätzlich an Loki, mit den Labels `app=slipways`, `host` (`Monitoring:Loki:Host`), `level` und `source` (`api`, `http`, `db`, `gauges`, `shapes`, `osm`, `websites`, `http-client`). Die Zeilen werden alle 2 Sekunden gebündelt verschickt. Ist Loki nicht erreichbar, verwirft die API sie, statt zu warten. Das Konsolen-Log bleibt vollständig. Ohne Url ist der Versand aus. Angebunden ist nur slipways.de; Einrichten: [`deploy/README.md`](deploy/README.md#überwachung).
 
 ## Entwickeln ohne Docker
 
@@ -210,6 +248,7 @@ Die API ist bewusst ohne Anmeldung lesbar, Web und Apps brauchen keinen Schlüss
 | Kartenkacheln der Android-App | [OpenFreeMap](https://openfreemap.org/) (OpenMapTiles, Daten aus OpenStreetMap) | ODbL 1.0 (Daten), Stil BSD/CC BY | Namensnennung an der Karte; der Kartenstil bringt sie mit |
 | Gewässerverläufe (`shape`) | [OpenStreetMap](https://www.openstreetmap.org/copyright) über Nominatim | [ODbL 1.0](https://opendatacommons.org/licenses/odbl/) | Namensnennung (Seitenfuß, Link zum OSM-Element auf der Detailseite); die API gibt die Formen weiter, sie stehen deshalb selbst unter ODbL (Share-Alike) |
 | Slipanlagen, Marinas, Motorservices (Seed) | von Hand erfasst (2019/20) | eigene Daten | – |
+| Telefon, E-Mail, Öffnungszeiten von Marinas (`infos` mit `source = website`) | Startseite der Marina, die in OSM verlinkt ist | Fakten, kein Werkschutz; ggf. personenbezogen (DSGVO, siehe Datenschutzseite) | Quelle und Abrufdatum an der Angabe; robots.txt beachten; auf Widerspruch löschen und ausschließen |
 | Slipanlagen und Marinas mit `source = osm` | [OpenStreetMap](https://www.openstreetmap.org/copyright) über Overpass | [ODbL 1.0](https://opendatacommons.org/licenses/odbl/) | Namensnennung (Seitenfuß, Quelle und Link zum OSM-Element auf der Detailseite); getrennt gehalten über `Source` und OSM-Element; die API gibt sie weiter, sie stehen deshalb selbst unter ODbL (Share-Alike) |
 
 Die Web-Oberfläche nennt die Quellen im Seitenfuß. Die ausführliche Recherche zu weiteren offenen Quellen (OSM, eHYD, BAFU, Rijkswaterstaat u. a.) steht in [`docs/datenquellen.md`](docs/datenquellen.md). Für den Import von Slipanlagen und Marinas aus OpenStreetMap gilt zusätzlich: Die ODbL verlangt Namensnennung, und wer eine Datenbank mit OSM-Daten weitergibt, muss sie unter ODbL weitergeben (Share-Alike). Importierte Einträge tragen deshalb `Source = osm` und ihr OSM-Element und bleiben von den eigenen Daten getrennt: Der Import kopiert keine OSM-Werte in eigene Einträge, sondern hinterlegt dort höchstens das OSM-Element. Die API liefert bei Slipanlagen und Marinas `source` (`manual` oder `osm`) und, falls vorhanden, `osmElement` (z. B. `node/123`) mit.

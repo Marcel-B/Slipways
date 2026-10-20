@@ -269,10 +269,18 @@ public static class CatalogEndpoints
                         s.Id, s.Name, s.Latitude, s.Longitude, s.PostalCode, s.City, s.Country,
                         s.Water == null ? null : new WaterDto(s.Water.Id, s.Water.Name),
                         s.Source))
-                    .ToList()))
+                    .ToList(),
+                Array.Empty<PlaceInfoDto>()))
             .SingleOrDefaultAsync(ct);
+        if (marina is null)
+            return TypedResults.NotFound();
 
-        return marina is null ? TypedResults.NotFound() : TypedResults.Ok(marina);
+        var infos = await db.PlaceInfos.AsNoTracking()
+            .Where(i => i.PlaceType == PlaceTypes.Marina && i.PlaceId == id)
+            .OrderBy(i => i.Field).ThenBy(i => i.Source)
+            .Select(i => new PlaceInfoDto(i.Field, i.Value, i.Source, i.SourceUrl, i.Retrieved))
+            .ToListAsync(ct);
+        return TypedResults.Ok(marina with { Infos = infos });
     }
 
     private static Task<List<ExtraDto>> ListExtras(SlipwaysDbContext db, CancellationToken ct) =>
