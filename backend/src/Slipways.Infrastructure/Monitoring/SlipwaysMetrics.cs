@@ -8,17 +8,19 @@ namespace Slipways.Infrastructure.Monitoring;
 /// </summary>
 public static class SlipwaysMetrics
 {
+    // The label is called "task" because Prometheus sets "job" itself, to the scrape job, and renames a "job"
+    // label of the app to "exported_job".
     public static readonly string[] Jobs = ["gauges", "shapes", "osm"];
 
     public static readonly Counter JobRuns = Metrics.CreateCounter(
-        "slipways_job_runs_total", "Runs of background jobs, by job and result (success, failure).", "job", "result");
+        "slipways_job_runs_total", "Runs of background jobs, by task and result (success, failure).", "task", "result");
 
     public static readonly Histogram JobDuration = Metrics.CreateHistogram(
         "slipways_job_duration_seconds", "Duration of background job runs.",
-        new HistogramConfiguration { LabelNames = ["job"], Buckets = [0.1, 0.5, 1, 5, 15, 60, 300, 900, 1800] });
+        new HistogramConfiguration { LabelNames = ["task"], Buckets = [0.1, 0.5, 1, 5, 15, 60, 300, 900, 1800] });
 
     public static readonly Gauge JobLastSuccess = Metrics.CreateGauge(
-        "slipways_job_last_success_timestamp_seconds", "Unix time of the last successful run of a background job.", "job");
+        "slipways_job_last_success_timestamp_seconds", "Unix time of the last successful run of a background job, by task.", "task");
 
     public static readonly Counter WaterLevelsUpdated = Metrics.CreateCounter(
         "slipways_gauge_water_levels_updated_total", "Water levels taken over from PEGELONLINE.");
@@ -28,8 +30,10 @@ public static class SlipwaysMetrics
         "Places changed by the OpenStreetMap import, by kind (slipway, marina) and change (added, updated, linked).",
         "kind", "change");
 
+    // Absent until the first import is done, so a dashboard does not read 0 as "nothing missing" before that.
     public static readonly Gauge OsmMissingElements = Metrics.CreateGauge(
-        "slipways_osm_missing_elements", "Places whose OpenStreetMap element the last import no longer found.");
+        "slipways_osm_missing_elements", "Places whose OpenStreetMap element the last import no longer found.",
+        new GaugeConfiguration { SuppressInitialValue = true });
 
     public static readonly Counter OverpassBusyResponses = Metrics.CreateCounter(
         "slipways_overpass_busy_responses_total", "Overpass answers that it is busy (429, 502, 503, 504), each followed by a retry.");

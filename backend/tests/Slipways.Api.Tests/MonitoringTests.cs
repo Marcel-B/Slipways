@@ -38,10 +38,11 @@ public sealed class MetricsEndpointTests : IAsyncLifetime
         var metrics = await client.GetStringAsync("/metrics", TestContext.Current.CancellationToken);
         var api = await client.GetAsync("/api/slipways", TestContext.Current.CancellationToken);
 
-        Assert.Contains("slipways_job_runs_total{job=\"osm\",result=\"failure\"} 0", metrics);
+        Assert.Contains("slipways_job_runs_total{task=\"osm\",result=\"failure\"} 0", metrics);
         Assert.Contains("slipways_places", metrics);
         Assert.Contains("process_cpu_seconds_total", metrics);
         Assert.Contains("process_resident_memory_bytes", metrics);
+        Assert.DoesNotMatch("(?m)^slipways_osm_missing_elements ", metrics);
         Assert.Equal(HttpStatusCode.NotFound, api.StatusCode);
     }
 }

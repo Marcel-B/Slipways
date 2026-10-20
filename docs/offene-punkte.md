@@ -11,7 +11,7 @@ Beschrieben in README („Überwachung“) und `deploy/README.md` („Überwachu
 3. **Tailscale-Policy.** slipways-1 ist öffentlich erreichbar und seit 20.10.2026 im Tailnet. Vorschlag in `deploy/README.md`: `tag:slipways`, nur `tcp:3100` zu `monitoring`. Die aktuelle Policy ist unbekannt. Die Test-Stage im LXC hängt außerdem direkt im Heimnetz (eigenes VLAN oder Proxmox-Firewall).
 4. **Steckbrief im YuE-UI-Repo.** Die Tabelle „Angebundene Apps“ in `deploy/monitoring/` von `Marcel-B/YuE-UI` um Slipways ergänzen, sobald es läuft.
 5. **Dashboard fehlt.** Ein `Slipways`-Dashboard (JSON in `deploy/monitoring/grafana/dashboards/` im YuE-UI-Repo) ist noch nicht gebaut. Sinnvoll: Alter des letzten Erfolgs je Job, Fehlläufe, Anfragen und 5xx je Route, Speicher, Einträge nach Quelle.
-6. **Alarme** (z. B. `time() - slipways_job_last_success_timestamp_seconds{job="gauges"} > 3600`) gibt es noch nicht. Der Steckbrief nennt auch keinen Alertmanager.
+6. **Alarme** (z. B. `time() - slipways_job_last_success_timestamp_seconds{task="gauges"} > 3600`) gibt es noch nicht. Der Steckbrief nennt auch keinen Alertmanager.
 
 ## OpenStreetMap-Import (Branch `feature/osm-import`, 20.10.2026)
 
