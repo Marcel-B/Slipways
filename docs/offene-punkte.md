@@ -35,7 +35,7 @@ Beschrieben im README („Angaben von den Webseiten der Marinas“), Code in `ba
 
 Vorschläge, Proof of Work, Moderation und Abgleich nach dem OSM-Import sind im Web und im Backend umgesetzt (README „Nutzerbeiträge“, Konzept in [`nutzerbeitraege.md`](nutzerbeitraege.md)).
 
-1. **Moderation einrichten.** Auf slipways-1 einmal `tailscale serve --bg --https=9465 http://127.0.0.1:9465` ausführen (siehe `deploy/README.md`, „Moderation“). Bis dahin sammeln sich Vorschläge ungesehen. Für die Test-Stage nach Bedarf ebenso.
+1. **Moderation einrichten.** Auf slipways-1 einmal `tailscale serve --bg --https=9465 http://127.0.0.1:9465` ausführen (siehe `deploy/README.md`, „Moderation“); `setup-ntfy.sh` (Punkt 2) erledigt das mit. Bis dahin sammeln sich Vorschläge ungesehen. Für die Test-Stage nach Bedarf ebenso.
 2. **Benachrichtigungen einrichten** (seit 21.10.2026). Auf slipways-1 `bash /opt/slipways/deploy/lxc/setup-ntfy.sh` ausführen (siehe `deploy/README.md`, „Benachrichtigungen“) und in der ntfy-App das Topic abonnieren. Ob Push auf dem iPhone über den Upstream ntfy.sh ankommt, ist ungetestet (aus der Cloud nicht prüfbar).
 3. **Apps (Stufe 3).** iOS und Android zeigen `infos` noch nicht und können keine Vorschläge senden. Dieselben Endpunkte nutzen, den Proof of Work nativ lösen (SHA-256 mit CryptoKit bzw. `MessageDigest`). `SlipwayDetailsDto` hat `infos` neu; die Apps ignorieren unbekannte Felder, deshalb ist das noch nicht nachgezogen.
 4. **Fotos (Stufe 4).** Von Marcel gewünscht: Upload über die Moderation, serverseitig neu kodieren (WebP, lange Kante 1600 px, Vorschau 400 px), EXIF entfernen, keine Originale, höchstens etwa 5 je Eintrag. Speicher im Volume neben der Datenbank, ins Nextcloud-Backup aufnehmen.
