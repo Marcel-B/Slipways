@@ -18,6 +18,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 builder.Services.AddApiRateLimiting();
+builder.Services.AddSingleton<WaterShapeOverview>();
 builder.Services.AddOptions<SeoOptions>().BindConfiguration(SeoOptions.SectionName);
 builder.Services.AddHealthChecks().AddDbContextCheck<SlipwaysDbContext>();
 

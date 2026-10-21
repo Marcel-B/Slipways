@@ -1,6 +1,6 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { ChevronRight, Waves } from 'lucide-react'
-import { useDeferredValue, useMemo, useState } from 'react'
+import { memo, useDeferredValue, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { api } from '../api/client'
 import type { WaterShapes, WaterSummary } from '../api/types'
@@ -8,10 +8,12 @@ import { coreBounds } from '../components/countries'
 import { CountrySelect } from '../components/CountrySelect'
 import { LazyMarkerMap } from '../components/LazyMarkerMap'
 import { ListSkeleton } from '../components/ListSkeleton'
-import type { MapMarker, MapShape } from '../components/mapMarkers'
+import type { MapShape } from '../components/mapMarkers'
+import { boundsOf, listedInView, shapeArea, type MapView } from '../components/mapView'
 import { Overview } from '../components/Overview'
 import { SearchField } from '../components/SearchField'
 import { WaterLevelText } from '../components/WaterLevelText'
+import { ZoomHint } from '../components/ZoomHint'
 import { count } from './count'
 import { useQueryParams } from './searchParams'
 
@@ -27,10 +29,12 @@ function popup(water: WaterSummary) {
   return { title: water.name, subtitle: contents(water), to: `/waters/${water.id}` }
 }
 
-function waterMarkers(waters: WaterSummary[]): MapMarker[] {
-  return waters.flatMap((w) =>
-    w.position ? [{ id: w.id, kind: 'water', ...w.position, ...popup(w), country: w.countries[0] ?? null }] : [],
-  )
+// Starts with every country on screen, like the slipways and marinas.
+const EUROPE: [number, number] = [50, 5]
+
+/** Waters with a position, placed there for the list of what is in the map view. */
+function placed(waters: WaterSummary[]) {
+  return waters.flatMap((w) => (w.position ? [{ ...w, ...w.position }] : []))
 }
 
 /** How many waters touch each country, most first; a river through three countries counts in all three. */
@@ -60,14 +64,21 @@ export function WatersPage() {
     data: waters,
     error,
     isPending,
+    isPlaceholderData,
   } = useQuery({
     queryKey: ['waters', deferredSearch],
     queryFn: ({ signal }) => api.waters(deferredSearch, signal),
     placeholderData: keepPreviousData,
   })
+  const [view, setView] = useState<MapView | null>(null)
+  // The map shows waters as their shapes, not as bubbles. Thousands of shapes are too much to load at once, so a
+  // search loads those of its hits and otherwise the map loads those in its view, further out only the large ones.
+  const area = useMemo(() => (view ? shapeArea(view) : null), [view])
+  const shapeFilter = deferredSearch ? { search: deferredSearch } : area
   const { data: shapes } = useQuery({
-    queryKey: ['water-shapes', deferredSearch],
-    queryFn: ({ signal }) => api.waterShapes(deferredSearch, signal),
+    queryKey: ['water-shapes', shapeFilter],
+    queryFn: ({ signal }) => api.waterShapes(shapeFilter!, signal),
+    enabled: shapeFilter !== null,
     placeholderData: keepPreviousData,
   })
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -77,11 +88,19 @@ export function WatersPage() {
     () => (country && waters ? waters.filter((w) => w.countries.includes(country)) : waters),
     [waters, country],
   )
-  // A chosen country moves the map to it.
-  const focus = useMemo(
-    () => (country && shown ? coreBounds(shown.flatMap((w) => (w.position ? [w.position] : []))) : null),
-    [shown, country],
+  // While a new search loads, the previous results stand in; they only count as hits once they belong to it.
+  const searching = deferredSearch !== '' && !isPlaceholderData
+  const listed = useMemo(
+    () => shown && (searching ? shown : listedInView(placed(shown), view, false)),
+    [shown, view, searching],
   )
+  // A search moves the map to its hits, a chosen country to that country.
+  const focus = useMemo(() => {
+    if (!shown || !(searching || country)) return null
+    const positions = shown.flatMap((w) => (w.position ? [w.position] : []))
+    return searching ? boundsOf(positions) : coreBounds(positions)
+  }, [shown, searching, country])
+  const mapShapes = useMemo(() => waterShapes(shapes, shown ?? [], selectedId), [shapes, shown, selectedId])
 
   return (
     <>
@@ -101,41 +120,35 @@ export function WatersPage() {
           <>
             {error && <p className="error">Gewässer konnten nicht geladen werden: {error.message}</p>}
             {isPending && <ListSkeleton />}
-            {shown && (
+            {shown && !listed && <ZoomHint total={shown.length} singular="Gewässer" plural="Gewässer" />}
+            {listed && (
               <>
-                <p className="list-count">{count(shown.length, 'Gewässer', 'Gewässer')}</p>
-                {shown.length === 0 && <p className="empty">Kein Gewässer passt zu dieser Suche.</p>}
-                <ul className="item-list">
-                  {shown.map((w) => (
-                    <li key={w.id}>
-                      <Link to={`/waters/${w.id}`} className="item">
-                        <span className="item-icon item-icon-water">
-                          <Waves size={18} />
-                        </span>
-                        <span className="item-text">
-                          <strong>{w.name}</strong>
-                          <span className="muted">{contents(w)}</span>
-                          {w.gauge && (
-                            <span className="item-gauge">
-                              Pegel {w.gauge.stationName}: <WaterLevelText level={w.gauge.waterLevel} />
-                            </span>
-                          )}
-                        </span>
-                        <ChevronRight size={18} className="item-chevron" />
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
+                <p className="list-count">
+                  {searching
+                    ? count(listed.length, 'Treffer', 'Treffer')
+                    : `${count(listed.length, 'Gewässer', 'Gewässer')} im Kartenausschnitt`}
+                </p>
+                {listed.length === 0 && (
+                  <p className="empty">
+                    {searching
+                      ? 'Kein Gewässer passt zu dieser Suche.'
+                      : 'Hier liegt kein Gewässer. Verschiebe die Karte oder zoome heraus.'}
+                  </p>
+                )}
+                <WaterList waters={listed} />
               </>
             )}
           </>
         }
+        initialView="map"
         map={
           <LazyMarkerMap
-            markers={waterMarkers(shown ?? [])}
-            shapes={waterShapes(shapes, shown ?? [], selectedId)}
+            markers={[]}
+            center={EUROPE}
+            zoom={4}
+            shapes={mapShapes}
             onSelect={setSelectedId}
-            cluster
+            onViewChange={setView}
             focus={focus}
           />
         }
@@ -143,3 +156,30 @@ export function WatersPage() {
     </>
   )
 }
+
+// Up to hundreds of entries: memoised, so selecting a shape (which re-renders the page for the map) leaves the list.
+const WaterList = memo(function WaterList({ waters }: { waters: WaterSummary[] }) {
+  return (
+    <ul className="item-list">
+      {waters.map((w) => (
+        <li key={w.id}>
+          <Link to={`/waters/${w.id}`} className="item">
+            <span className="item-icon item-icon-water">
+              <Waves size={18} />
+            </span>
+            <span className="item-text">
+              <strong>{w.name}</strong>
+              <span className="muted">{contents(w)}</span>
+              {w.gauge && (
+                <span className="item-gauge">
+                  Pegel {w.gauge.stationName}: <WaterLevelText level={w.gauge.waterLevel} />
+                </span>
+              )}
+            </span>
+            <ChevronRight size={18} className="item-chevron" />
+          </Link>
+        </li>
+      ))}
+    </ul>
+  )
+})

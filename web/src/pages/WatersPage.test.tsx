@@ -89,62 +89,66 @@ function renderAt(url: string) {
   )
 }
 
+/** Reports a map view like the map does once it is measured or moved. */
+function moveMap(bbox: [number, number, number, number], zoom: number) {
+  act(() => mapProps.at(-1)!.onViewChange?.({ bbox, zoom }))
+}
+
 describe('WatersPage', () => {
   afterEach(() => {
     vi.unstubAllGlobals()
     mapProps.length = 0
   })
 
-  it('lists waters with what lies on them', async () => {
+  it('lists the waters in the map view with what lies on them', async () => {
     const fetchMock = stubApi()
-
     renderAt('/waters')
+    expect(await screen.findByText(/3 Gewässer auf der Karte/)).toBeInTheDocument()
+    expect(fetchMock).toHaveBeenCalledWith('/api/waters', expect.anything())
 
-    expect(await screen.findByText('Donau')).toBeInTheDocument()
+    moveMap([5, 47, 15, 55], 8)
+
+    expect(screen.getByText('2 Gewässer im Kartenausschnitt')).toBeInTheDocument()
     expect(screen.getByText('9 Slipanlagen · 17 Pegel')).toBeInTheDocument()
     expect(screen.getByText('1 Slipanlage · 1 Pegel')).toBeInTheDocument()
-    expect(screen.getByText('Keine Slipanlagen oder Pegel')).toBeInTheDocument()
-    expect(screen.getByText('3 Gewässer')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Donau/ })).toHaveAttribute('href', `/waters/${waters[0].id}`)
-    expect(fetchMock).toHaveBeenCalledWith('/api/waters', expect.anything())
+    // Without a position it is not on the map, so only a search lists it.
+    expect(screen.queryByText('Blömer')).not.toBeInTheDocument()
   })
 
   it('shows the reading of a single gauge', async () => {
     stubApi()
-
     renderAt('/waters')
+    await screen.findByText(/3 Gewässer auf der Karte/)
 
-    expect(await screen.findByText('412 cm · hoch')).toHaveClass('level-high')
+    moveMap([5, 47, 15, 55], 8)
+
+    expect(screen.getByText('412 cm · hoch')).toHaveClass('level-high')
     expect(screen.getByText(/Pegel STADE/)).toBeInTheDocument()
   })
 
-  it('puts waters with a position on the map', async () => {
-    stubApi()
-
-    renderAt('/waters')
-
-    await screen.findByText('Donau')
-    expect(mapProps.at(-1)?.markers.map((m) => m.title)).toEqual(['Donau', 'Schwinge'])
-    expect(mapProps.at(-1)?.markers[0].to).toBe(`/waters/${waters[0].id}`)
-  })
-
-  it('draws the shapes of all waters faintly', async () => {
+  it('draws the shapes in the map view instead of bubbles, further out only the large ones', async () => {
     const fetchMock = stubApi()
-
     renderAt('/waters')
+    await screen.findByText(/3 Gewässer auf der Karte/)
+    expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining('/api/waters/shapes'), expect.anything())
+
+    moveMap([5, 47, 15, 55], 6)
 
     await waitFor(() => expect(mapProps.at(-1)?.shapes).toHaveLength(2))
+    expect(mapProps.at(-1)?.markers).toEqual([])
     expect(mapProps.at(-1)?.shapes?.map((s) => [s.id, s.highlighted, s.popup?.to])).toEqual([
       [waters[0].id, false, `/waters/${waters[0].id}`],
       [waters[1].id, false, `/waters/${waters[1].id}`],
     ])
-    expect(fetchMock).toHaveBeenCalledWith('/api/waters/shapes', expect.anything())
+    expect(fetchMock).toHaveBeenCalledWith('/api/waters/shapes?bbox=-5.625,39.375,22.5,61.875&minExtent=0.4375', expect.anything())
   })
 
-  it('highlights the water whose marker or shape is selected', async () => {
+  it('highlights the water whose shape is selected', async () => {
     stubApi()
-
     renderAt('/waters')
+    await screen.findByText(/3 Gewässer auf der Karte/)
+    moveMap([5, 47, 15, 55], 6)
     await waitFor(() => expect(mapProps.at(-1)?.shapes).toHaveLength(2))
 
     act(() => mapProps.at(-1)!.onSelect?.(waters[1].id))
@@ -154,25 +158,27 @@ describe('WatersPage', () => {
     expect(mapProps.at(-1)?.shapes?.map((s) => s.highlighted)).toEqual([false, false])
   })
 
-  it('lists the waters of the chosen country', async () => {
+  it('keeps to the chosen country', async () => {
     stubApi()
     renderAt('/waters')
-    await screen.findByText('3 Gewässer')
+    await screen.findByText(/3 Gewässer auf der Karte/)
     expect(screen.getByRole('option', { name: 'Deutschland (2)' })).toBeInTheDocument()
 
     await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Land' }), 'AT')
-    expect(screen.getByText('1 Gewässer')).toBeInTheDocument()
-    expect(screen.queryByText('Schwinge')).not.toBeInTheDocument()
-    expect(mapProps.at(-1)?.markers.map((m) => m.title)).toEqual(['Donau'])
     expect(mapProps.at(-1)?.focus).toEqual({ south: 48.93, west: 11.99, north: 48.93, east: 11.99 })
+    moveMap([5, 47, 15, 55], 8)
+    expect(screen.getByText('1 Gewässer im Kartenausschnitt')).toBeInTheDocument()
+    expect(screen.queryByText('Schwinge')).not.toBeInTheDocument()
+    await waitFor(() => expect(mapProps.at(-1)?.shapes?.map((s) => s.id)).toEqual([waters[0].id]))
   })
 
-  it('passes the search term from the URL to the API', async () => {
-    const fetchMock = stubApi([], { type: 'FeatureCollection', features: [] })
+  it('lists every hit of a search and loads their shapes', async () => {
+    const fetchMock = stubApi()
 
     renderAt('/waters?q=Donau')
 
-    expect(await screen.findByText('0 Gewässer')).toBeInTheDocument()
+    expect(await screen.findByText('3 Treffer')).toBeInTheDocument()
+    expect(screen.getByText('Blömer')).toBeInTheDocument()
     expect(screen.getByRole('searchbox')).toHaveValue('Donau')
     expect(fetchMock).toHaveBeenCalledWith('/api/waters?search=Donau', expect.anything())
     expect(fetchMock).toHaveBeenCalledWith('/api/waters/shapes?search=Donau', expect.anything())

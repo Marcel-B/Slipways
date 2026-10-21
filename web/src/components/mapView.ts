@@ -35,3 +35,28 @@ export function boundsOf(places: Position[]): Bounds | null {
   const lons = places.map((p) => p.longitude)
   return { south: Math.min(...lats), west: Math.min(...lons), north: Math.max(...lats), east: Math.max(...lons) }
 }
+
+/** Below this zoom a water has to be this many degrees wide or high to be drawn: smaller ones would be a dot. */
+export const SHAPE_ALL_ZOOM = 12
+
+/**
+ * Which water shapes to load for a map view: those reaching into it (widened to a grid, so small moves reuse what was
+ * loaded) and, further out, only those large enough to see, about 20 pixels.
+ */
+export function shapeArea(view: MapView): { bbox: string; minExtent: number } {
+  // About one tile of 256 pixels at this zoom.
+  const step = 360 / 2 ** Math.max(0, Math.floor(view.zoom))
+  const [west, south, east, north] = view.bbox
+  const snap = (value: number, round: (v: number) => number, min: number, max: number) =>
+    Math.min(max, Math.max(min, round(value / step) * step))
+  const bbox = [
+    snap(west - step, Math.floor, -180, 180),
+    snap(south - step, Math.floor, -90, 90),
+    snap(east + step, Math.ceil, -180, 180),
+    snap(north + step, Math.ceil, -90, 90),
+  ]
+    .map((v) => +v.toFixed(4))
+    .join(',')
+  const minExtent = view.zoom >= SHAPE_ALL_ZOOM ? 0 : +(28 / 2 ** view.zoom).toFixed(4)
+  return { bbox, minExtent }
+}
