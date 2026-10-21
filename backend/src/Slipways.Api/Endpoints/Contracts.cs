@@ -13,7 +13,8 @@ public record BoundsDto(double South, double West, double North, double East);
 /// <summary>
 /// A water for the overview. <paramref name="Position"/> is a slipway, gauge or marina near the middle of the
 /// water and null when nothing on it has coordinates. <paramref name="Gauge"/> is set only when the water has
-/// exactly one gauge with a reading.
+/// exactly one gauge with a reading. <paramref name="Countries"/> are the ISO codes of the countries its slipways,
+/// marinas and gauges lie in, the one with the most first; empty when nothing lies on it.
 /// </summary>
 public record WaterSummaryDto(
     Guid Id,
@@ -22,7 +23,8 @@ public record WaterSummaryDto(
     int SlipwayCount,
     int StationCount,
     PositionDto? Position,
-    GaugeReadingDto? Gauge);
+    GaugeReadingDto? Gauge,
+    IReadOnlyList<string> Countries);
 
 public record GaugeReadingDto(Guid StationId, string StationName, WaterLevelDto WaterLevel);
 
@@ -106,7 +108,10 @@ public record SlipwayDetailsDto(
     DateTime? Updated,
     IReadOnlyList<PlaceInfoDto> Infos);
 
-/// <summary>Fields and <paramref name="Source"/> as in <see cref="SlipwayDetailsDto"/>.</summary>
+/// <summary>
+/// Fields and <paramref name="Source"/> as in <see cref="SlipwayDetailsDto"/>. <paramref name="Country"/> is the ISO
+/// code of the country the import found it in, for our own marinas that of their slipways.
+/// </summary>
 public record MarinaDto(
     Guid Id,
     string Name,
@@ -116,6 +121,7 @@ public record MarinaDto(
     string? Street,
     string? PostalCode,
     string? City,
+    string? Country,
     string? Phone,
     string? Email,
     string? Operator,

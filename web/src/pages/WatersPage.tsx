@@ -1,9 +1,11 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { ChevronRight, Waves } from 'lucide-react'
-import { useDeferredValue, useState } from 'react'
-import { Link, useSearchParams } from 'react-router'
+import { useDeferredValue, useMemo, useState } from 'react'
+import { Link } from 'react-router'
 import { api } from '../api/client'
 import type { WaterShapes, WaterSummary } from '../api/types'
+import { coreBounds } from '../components/countries'
+import { CountrySelect } from '../components/CountrySelect'
 import { LazyMarkerMap } from '../components/LazyMarkerMap'
 import { ListSkeleton } from '../components/ListSkeleton'
 import type { MapMarker, MapShape } from '../components/mapMarkers'
@@ -11,6 +13,7 @@ import { Overview } from '../components/Overview'
 import { SearchField } from '../components/SearchField'
 import { WaterLevelText } from '../components/WaterLevelText'
 import { count } from './count'
+import { useQueryParams } from './searchParams'
 
 function contents(water: WaterSummary): string {
   const parts = [
@@ -25,7 +28,18 @@ function popup(water: WaterSummary) {
 }
 
 function waterMarkers(waters: WaterSummary[]): MapMarker[] {
-  return waters.flatMap((w) => (w.position ? [{ id: w.id, kind: 'water', ...w.position, ...popup(w) }] : []))
+  return waters.flatMap((w) =>
+    w.position ? [{ id: w.id, kind: 'water', ...w.position, ...popup(w), country: w.countries[0] ?? null }] : [],
+  )
+}
+
+/** How many waters touch each country, most first; a river through three countries counts in all three. */
+function countryOptions(waters: WaterSummary[]): { code: string; count: number }[] {
+  const counts = new Map<string, number>()
+  for (const code of waters.flatMap((w) => w.countries)) counts.set(code, (counts.get(code) ?? 0) + 1)
+  return [...counts]
+    .map(([code, n]) => ({ code, count: n }))
+    .sort((a, b) => b.count - a.count || a.code.localeCompare(b.code))
 }
 
 function waterShapes(shapes: WaterShapes | undefined, waters: WaterSummary[], selectedId: string | null): MapShape[] {
@@ -38,8 +52,9 @@ function waterShapes(shapes: WaterShapes | undefined, waters: WaterSummary[], se
 }
 
 export function WatersPage() {
-  const [params, setParams] = useSearchParams()
+  const [params, setParam] = useQueryParams()
   const search = params.get('q') ?? ''
+  const country = params.get('land')
   const deferredSearch = useDeferredValue(search.trim())
   const {
     data: waters,
@@ -56,31 +71,42 @@ export function WatersPage() {
     placeholderData: keepPreviousData,
   })
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  // Counted over all waters the search finds, so the choice keeps its numbers.
+  const countries = useMemo(() => countryOptions(waters ?? []), [waters])
+  const shown = useMemo(
+    () => (country && waters ? waters.filter((w) => w.countries.includes(country)) : waters),
+    [waters, country],
+  )
+  // A chosen country moves the map to it.
+  const focus = useMemo(
+    () => (country && shown ? coreBounds(shown.flatMap((w) => (w.position ? [w.position] : []))) : null),
+    [shown, country],
+  )
 
   return (
     <>
       <title>Gewässer · Slipways</title>
-      <section className="hero">
-        <h1>Gewässer</h1>
-        <p className="hero-lead">Flüsse, Seen und Kanäle mit ihren Slipanlagen und Pegeln.</p>
+      <section className="toolbar">
+        <h1>Gewässer finden</h1>
         <SearchField
           value={search}
-          onChange={(value) => setParams(value ? { q: value } : {}, { replace: true })}
+          onChange={(value) => setParam('q', value)}
           placeholder="Nach Gewässer suchen"
           label="Gewässer durchsuchen"
         />
+        <CountrySelect options={countries} value={country} onChange={(code) => setParam('land', code)} />
       </section>
       <Overview
         list={
           <>
             {error && <p className="error">Gewässer konnten nicht geladen werden: {error.message}</p>}
             {isPending && <ListSkeleton />}
-            {waters && (
+            {shown && (
               <>
-                <p className="list-count">{count(waters.length, 'Gewässer', 'Gewässer')}</p>
-                {waters.length === 0 && <p className="empty">Kein Gewässer passt zu dieser Suche.</p>}
+                <p className="list-count">{count(shown.length, 'Gewässer', 'Gewässer')}</p>
+                {shown.length === 0 && <p className="empty">Kein Gewässer passt zu dieser Suche.</p>}
                 <ul className="item-list">
-                  {waters.map((w) => (
+                  {shown.map((w) => (
                     <li key={w.id}>
                       <Link to={`/waters/${w.id}`} className="item">
                         <span className="item-icon item-icon-water">
@@ -106,10 +132,11 @@ export function WatersPage() {
         }
         map={
           <LazyMarkerMap
-            markers={waterMarkers(waters ?? [])}
-            shapes={waterShapes(shapes, waters ?? [], selectedId)}
+            markers={waterMarkers(shown ?? [])}
+            shapes={waterShapes(shapes, shown ?? [], selectedId)}
             onSelect={setSelectedId}
             cluster
+            focus={focus}
           />
         }
       />

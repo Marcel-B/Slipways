@@ -16,6 +16,7 @@ const marina: MarinaDetails = {
   street: null,
   postalCode: null,
   city: null,
+  country: null,
   phone: null,
   email: null,
   operator: null,

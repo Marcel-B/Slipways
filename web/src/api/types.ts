@@ -74,6 +74,8 @@ export interface WaterSummary extends Water {
   position: Position | null
   /** Set only when the water has exactly one gauge with a reading. */
   gauge: { stationId: string; stationName: string; waterLevel: WaterLevel } | null
+  /** ISO 3166-1 codes of the countries its slipways, marinas and gauges lie in, the one with the most first. */
+  countries: string[]
 }
 
 export interface Station {
@@ -97,6 +99,8 @@ export interface Marina extends OsmTags {
   street: string | null
   postalCode: string | null
   city: string | null
+  /** ISO 3166-1 code; for our own marinas that of their slipways. */
+  country: string | null
   phone: string | null
   email: string | null
   water: Water | null

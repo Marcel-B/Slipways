@@ -50,10 +50,10 @@ Vorschläge, Proof of Work, Moderation und Abgleich nach dem OSM-Import sind im 
 
 ## Übersichtskarte mit vielen Einträgen (21.10.2026)
 
-Die Slipanlagen-Karte zeigt bis Zoom 5 eine Blase je Land, darunter Cluster mit einem Radius, der beim Herauszoomen wächst (`clusterRadius` in `web/src/components/mapView.ts`). Über der Karte wählt ein Auswahlfeld das Land (`?land=FR`).
+Die Karten für Slipanlagen und Marinas zeigen bis Zoom 5 eine Blase je Land, darunter Cluster mit einem Radius, der beim Herauszoomen wächst (`clusterRadius` in `web/src/components/mapView.ts`). Über der Karte wählt ein Auswahlfeld das Land (`?land=FR`), auch bei den Gewässern. `MarinaDto.country` ist `OsmCountry`, bei eigenen Marinas das Land ihrer Slipanlagen; `WaterSummaryDto.countries` kommt aus dem, was am Gewässer liegt (Pegel mit Rijkswaterstaat-Code zählen als NL, alle anderen als DE).
 
-1. **Marinas ohne Land.** `MarinaDto` hat kein `country`, obwohl die Tabelle `OsmCountry` kennt. Die Marina-Karte bekommt deshalb nur die gröberen Cluster, keine Länderblasen und keine Länderwahl. Feld in Backend, Web und Apps ergänzen, dann wie bei den Slipanlagen.
-2. **Apps.** Android clustert mit festem Radius 50 (`OverviewMap.kt`), iOS im Raster (`MapArea.clusters`). Länderblasen und Länderwahl fehlen dort noch; bei Android eine zweite Quelle mit den Länderblasen bis Zoom 5.
+1. **Gewässer ohne Länderblasen.** Gewässer, an denen nichts liegt, haben kein Land; solange es solche mit Verlauf (und damit mit Pin) gibt, zeigt die Gewässer-Karte nur Cluster.
+2. **Apps.** Android clustert mit festem Radius 50 (`OverviewMap.kt`), iOS im Raster (`MapArea.clusters`). Länderblasen und Länderwahl fehlen dort noch; bei Android eine zweite Quelle mit den Länderblasen bis Zoom 5. Die Modelle kennen `Marina.country` und `WaterSummary.countries` noch nicht (die Apps ignorieren unbekannte Felder).
 3. **Eng liegende Länder.** NL und BE, AT und HR überlappen sich bei Zoom 4 leicht. Bei weiteren Ländern ggf. Blasen, die sich berühren, beiseiteschieben.
 
 ## Suchmaschinen (20.10.2026)

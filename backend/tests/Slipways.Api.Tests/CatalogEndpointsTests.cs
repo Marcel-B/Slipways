@@ -89,6 +89,16 @@ public class CatalogEndpointsTests(SlipwaysApiFactory factory) : IClassFixture<S
     }
 
     [Fact]
+    public async Task Lists_the_countries_of_a_water()
+    {
+        var waters = await _client.GetFromJsonAsync<List<WaterSummaryDto>>("/api/waters", TestContext.Current.CancellationToken);
+
+        Assert.NotNull(waters);
+        Assert.Equal(["DE"], Assert.Single(waters, w => w.Id == DonauId).Countries);
+        Assert.Empty(Assert.Single(waters, w => w.Id == BloemerId).Countries);
+    }
+
+    [Fact]
     public async Task Filters_waters_by_search_term()
     {
         var waters = await _client.GetFromJsonAsync<List<WaterSummaryDto>>("/api/waters?search=donau", TestContext.Current.CancellationToken);
@@ -285,6 +295,16 @@ public class CatalogEndpointsTests(SlipwaysApiFactory factory) : IClassFixture<S
         Assert.NotNull(marinas);
         Assert.Contains(marinas, m => m.Id == slipway.Marina.Id);
         Assert.All(marinas, m => Assert.Contains(term, $"{m.Name} {m.City} {m.Water?.Name}", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task Gives_our_own_marinas_the_country_of_their_slipways()
+    {
+        var marinas = await _client.GetFromJsonAsync<List<MarinaDto>>("/api/marinas", TestContext.Current.CancellationToken);
+
+        Assert.NotNull(marinas);
+        Assert.All(marinas, m => Assert.NotNull(m.Country));
+        Assert.Equal("NL", Assert.Single(marinas, m => m.Name == "WSV Hanssum").Country);
     }
 
     [Fact]

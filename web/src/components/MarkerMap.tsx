@@ -163,7 +163,7 @@ function MarkerLayer({ markers, cluster, highlightedId, selectHandlers }: Marker
     // Up to zoom 12 places a few hundred metres apart still merge; beyond that each slipway stands alone.
     return new Supercluster<MapMarker>({ radius, maxZoom: 12 }).load(points)
   }, [markers, cluster, radius])
-  // Only when every marker has a country, so a zoomed-out map never loses places (marinas have none yet).
+  // Only when every marker has a country, so a zoomed-out map never loses places.
   const countries = useMemo(
     () => (cluster && markers.length > 0 && markers.every((m) => m.country) ? byCountry(markers) : null),
     [markers, cluster],

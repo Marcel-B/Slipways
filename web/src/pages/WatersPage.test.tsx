@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { WaterShapes, WaterSummary } from '../api/types'
@@ -23,6 +24,7 @@ const waters: WaterSummary[] = [
     stationCount: 17,
     position: { latitude: 48.93, longitude: 11.99 },
     gauge: null,
+    countries: ['DE', 'AT'],
   },
   {
     id: '714b47c3-c63b-426f-accc-bcb7ebdde0e3',
@@ -36,6 +38,7 @@ const waters: WaterSummary[] = [
       stationName: 'STADE',
       waterLevel: { value: 412, measuredAt: '2026-10-20T09:45:00Z', state: 'high' },
     },
+    countries: ['DE'],
   },
   {
     id: 'c64f3da2-f392-4fb3-8a70-170b5a52b54f',
@@ -45,6 +48,7 @@ const waters: WaterSummary[] = [
     stationCount: 0,
     position: null,
     gauge: null,
+    countries: [],
   },
 ]
 
@@ -148,6 +152,19 @@ describe('WatersPage', () => {
 
     act(() => mapProps.at(-1)!.onSelect?.(null))
     expect(mapProps.at(-1)?.shapes?.map((s) => s.highlighted)).toEqual([false, false])
+  })
+
+  it('lists the waters of the chosen country', async () => {
+    stubApi()
+    renderAt('/waters')
+    await screen.findByText('3 Gewässer')
+    expect(screen.getByRole('option', { name: 'Deutschland (2)' })).toBeInTheDocument()
+
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Land' }), 'AT')
+    expect(screen.getByText('1 Gewässer')).toBeInTheDocument()
+    expect(screen.queryByText('Schwinge')).not.toBeInTheDocument()
+    expect(mapProps.at(-1)?.markers.map((m) => m.title)).toEqual(['Donau'])
+    expect(mapProps.at(-1)?.focus).toEqual({ south: 48.93, west: 11.99, north: 48.93, east: 11.99 })
   })
 
   it('passes the search term from the URL to the API', async () => {

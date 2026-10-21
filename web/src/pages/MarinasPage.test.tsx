@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Marina, MarinaDetails } from '../api/types'
@@ -24,6 +25,7 @@ const marina: Marina = {
   street: 'Am Hafen 1',
   postalCode: '93309',
   city: 'Kelheim',
+  country: 'DE',
   phone: '+49 9441 123',
   email: null,
   operator: null,
@@ -33,6 +35,18 @@ const marina: Marina = {
   water: { id: 'd19708ca-ac42-4ad4-8d62-e85722f946f6', name: 'Donau' },
   source: 'manual',
   osmElement: null,
+}
+
+const amsterdam: Marina = {
+  ...marina,
+  id: '0e0b3b55-3a40-4a5b-9a43-6f1d1f4d7e02',
+  name: 'Sixhaven',
+  latitude: 52.38,
+  longitude: 4.9,
+  postalCode: null,
+  city: 'Amsterdam',
+  country: 'NL',
+  water: null,
 }
 
 const details: MarinaDetails = {
@@ -93,6 +107,17 @@ describe('MarinasPage', () => {
 
     expect(await screen.findByText('1 Marina auf der Karte.')).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /Yachthafen Kelheim/ })).not.toBeInTheDocument()
+  })
+
+  it('narrows the map to the chosen country', async () => {
+    renderAt('/marinas', [marina, amsterdam])
+    await screen.findByText('2 Marinas auf der Karte.')
+    expect(mapProps.at(-1)?.markers.map((m) => m.country)).toEqual(['DE', 'NL'])
+
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Land' }), 'NL')
+    expect(screen.getByText('1 Marina auf der Karte.')).toBeInTheDocument()
+    expect(mapProps.at(-1)?.markers.map((m) => m.title)).toEqual(['Sixhaven'])
+    expect(mapProps.at(-1)?.focus).toEqual({ south: 52.38, west: 4.9, north: 52.38, east: 4.9 })
   })
 
   it('shows a marina with its slipways', async () => {
