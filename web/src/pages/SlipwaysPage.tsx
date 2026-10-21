@@ -7,15 +7,20 @@ import type { SlipwaySummary } from '../api/types'
 import { LazyMarkerMap } from '../components/LazyMarkerMap'
 import { ListSkeleton } from '../components/ListSkeleton'
 import { slipwayMarker } from '../components/mapMarkers'
+import { byCountry, coreBounds, countryName } from '../components/countries'
 import { boundsOf, listedInView, type MapView } from '../components/mapView'
 import { Overview } from '../components/Overview'
 import { SearchField } from '../components/SearchField'
 import { ZoomHint } from '../components/ZoomHint'
 import { count } from './count'
 
+// Starts with every country on screen, one bubble each.
+const EUROPE: [number, number] = [50, 5]
+
 export function SlipwaysPage() {
   const [params, setParams] = useSearchParams()
   const search = params.get('q') ?? ''
+  const country = params.get('land')
   const deferredSearch = useDeferredValue(search.trim())
   const {
     data: slipways,
@@ -27,14 +32,29 @@ export function SlipwaysPage() {
     queryFn: ({ signal }) => api.slipways(deferredSearch, signal),
     placeholderData: keepPreviousData,
   })
-  const markers = useMemo(() => (slipways ?? []).map(slipwayMarker), [slipways])
+  // Counted over all slipways, so the choice keeps its numbers while a search narrows the map.
+  const countries = useMemo(() => byCountry(slipways ?? []), [slipways])
+  const shown = useMemo(
+    () => (country && slipways ? slipways.filter((s) => s.country === country) : slipways),
+    [slipways, country],
+  )
+  const markers = useMemo(() => (shown ?? []).map(slipwayMarker), [shown])
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const [view, setView] = useState<MapView | null>(null)
   // While a new search loads, the previous results stand in; they only count as hits once they belong to it.
   const searching = deferredSearch !== '' && !isPlaceholderData
-  const listed = useMemo(() => slipways && listedInView(slipways, view, searching), [slipways, view, searching])
-  // A search moves the map to its hits, so they are on screen next to the list.
-  const focus = useMemo(() => (searching && slipways ? boundsOf(slipways) : null), [slipways, searching])
+  const listed = useMemo(() => shown && listedInView(shown, view, searching), [shown, view, searching])
+  // A search moves the map to its hits, so they are on screen next to the list; a chosen country to that country.
+  const focus = useMemo(
+    () => (shown && searching ? boundsOf(shown) : shown && country ? coreBounds(shown) : null),
+    [shown, searching, country],
+  )
+  const setParam = (key: string, value: string) => {
+    const next = new URLSearchParams(params)
+    if (value) next.set(key, value)
+    else next.delete(key)
+    setParams(next, { replace: true })
+  }
   // A new slipway starts where the sender is looking, if they zoomed in far enough to mean a place.
   const newSlipway =
     view && view.zoom >= 10
@@ -49,10 +69,25 @@ export function SlipwaysPage() {
         <h1>Slipanlagen finden</h1>
         <SearchField
           value={search}
-          onChange={(value) => setParams(value ? { q: value } : {}, { replace: true })}
+          onChange={(value) => setParam('q', value)}
           placeholder="Nach Name, Ort oder Gewässer suchen"
           label="Slipanlagen durchsuchen"
         />
+        {countries.length > 1 && (
+          <select
+            className="toolbar-select"
+            aria-label="Land"
+            value={country ?? ''}
+            onChange={(e) => setParam('land', e.target.value)}
+          >
+            <option value="">Alle Länder</option>
+            {countries.map(({ code, items }) => (
+              <option key={code} value={code}>
+                {countryName(code)} ({items.length.toLocaleString('de-DE')})
+              </option>
+            ))}
+          </select>
+        )}
         <Link to={newSlipway} className="toolbar-link" aria-label="Slipanlage fehlt? Vorschlagen">
           <MapPinPlus size={18} /> <span>Slipanlage fehlt?</span>
         </Link>
@@ -62,7 +97,7 @@ export function SlipwaysPage() {
           <>
             {error && <p className="error">Slipanlagen konnten nicht geladen werden: {error.message}</p>}
             {isPending && <ListSkeleton />}
-            {slipways && !listed && <ZoomHint total={slipways.length} singular="Slipanlage" plural="Slipanlagen" />}
+            {shown && !listed && <ZoomHint total={shown.length} singular="Slipanlage" plural="Slipanlagen" />}
             {listed && (
               <>
                 <p className="list-count">
@@ -84,7 +119,15 @@ export function SlipwaysPage() {
         }
         initialView="map"
         map={
-          <LazyMarkerMap markers={markers} cluster highlightedId={hoveredId} onViewChange={setView} focus={focus} />
+          <LazyMarkerMap
+            markers={markers}
+            center={EUROPE}
+            zoom={4}
+            cluster
+            highlightedId={hoveredId}
+            onViewChange={setView}
+            focus={focus}
+          />
         }
       />
     </>

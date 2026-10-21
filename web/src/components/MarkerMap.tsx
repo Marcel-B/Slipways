@@ -6,8 +6,9 @@ import { Link } from 'react-router'
 import Supercluster, { type PointFeature } from 'supercluster'
 import type { Bounds } from '../api/types'
 import { faintShapeStyle, shapeStyle, type MapMarker, type MapShape } from './mapMarkers'
-import type { MapView } from './mapView'
-import { clusterIcon, pinIcon } from './markerIcons'
+import { byCountry, countryName } from './countries'
+import { clusterRadius, COUNTRY_MAX_ZOOM, type MapView } from './mapView'
+import { clusterIcon, countryIcon, pinIcon } from './markerIcons'
 
 const GERMANY: [number, number] = [51.2, 10.4]
 
@@ -20,7 +21,7 @@ interface MarkerMapProps {
   shapes?: MapShape[]
   /** Called with the id of the marker or shape whose popup opens, and with null when it closes. */
   onSelect?: (id: string | null) => void
-  /** Groups nearby markers into counted clusters that open on click. */
+  /** Groups nearby markers into counted clusters that open on click, and far out into one bubble per country. */
   cluster?: boolean
   /** Draws this marker larger and on top, even when it would be in a cluster. */
   highlightedId?: string | null
@@ -153,14 +154,20 @@ function MarkerLayer({ markers, cluster, highlightedId, selectHandlers }: Marker
   const [view, setView] = useState(() => viewOf(map))
   useMapEvents({ moveend: () => setView(viewOf(map)) })
 
+  const radius = clusterRadius(view.zoom)
   const index = useMemo(() => {
     if (!cluster) return null
     const points = markers.map(
       (m): MarkerFeature => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [m.longitude, m.latitude] }, properties: m }),
     )
     // Up to zoom 12 places a few hundred metres apart still merge; beyond that each slipway stands alone.
-    return new Supercluster<MapMarker>({ radius: 48, maxZoom: 12 }).load(points)
-  }, [markers, cluster])
+    return new Supercluster<MapMarker>({ radius, maxZoom: 12 }).load(points)
+  }, [markers, cluster, radius])
+  // Only when every marker has a country, so a zoomed-out map never loses places (marinas have none yet).
+  const countries = useMemo(
+    () => (cluster && markers.length > 0 && markers.every((m) => m.country) ? byCountry(markers) : null),
+    [markers, cluster],
+  )
 
   const highlighted = markers.find((m) => m.id === highlightedId)
   const pin = (marker: MapMarker, isHighlighted = false) => (
@@ -179,6 +186,27 @@ function MarkerLayer({ markers, cluster, highlightedId, selectHandlers }: Marker
 
   if (!index) {
     return markers.map((m) => pin(m, m === highlighted))
+  }
+
+  if (countries && countries.length > 1 && view.zoom <= COUNTRY_MAX_ZOOM) {
+    return countries.map(({ code, items, center, bounds }) => (
+      <Marker
+        key={`country-${code}`}
+        position={[center.latitude, center.longitude]}
+        icon={countryIcon(code, items.length)}
+        title={`${countryName(code)}: ${items.length.toLocaleString('de-DE')} Orte`}
+        eventHandlers={{
+          click: () =>
+            map.flyToBounds(
+              [
+                [bounds.south, bounds.west],
+                [bounds.north, bounds.east],
+              ],
+              { padding: [24, 24], duration: 0.8 },
+            ),
+        }}
+      />
+    ))
   }
 
   return (

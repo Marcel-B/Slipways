@@ -36,11 +36,27 @@ export function pinIcon(kind: MarkerKind, highlighted = false): DivIcon {
   return icon
 }
 
+const compact = new Intl.NumberFormat('de-DE', { notation: 'compact', maximumFractionDigits: 1 })
+
+/** A counted bubble that grows with the logarithm of its count, so 3,000 and 30 differ at a glance. */
 export function clusterIcon(count: number): DivIcon {
-  const size = count < 10 ? 34 : count < 50 ? 40 : 48
+  const size = Math.round(Math.min(64, 28 + Math.log10(count) * 11))
+  const label = count >= 1000 ? compact.format(count) : String(count)
   return divIcon({
     className: 'map-pin-anchor',
-    html: `<span class="map-cluster" style="--cluster-size:${size}px">${count}</span>`,
+    html: `<span class="map-cluster" style="--cluster-size:${size}px">${label}</span>`,
+    iconSize: [size, size],
+  })
+}
+
+/** A bubble for a whole country, with its ISO code and the number of places in it. */
+export function countryIcon(code: string, count: number): DivIcon {
+  const size = Math.round(Math.min(66, 34 + Math.log10(count) * 9))
+  return divIcon({
+    className: 'map-pin-anchor',
+    html:
+      `<span class="map-country" style="--cluster-size:${size}px">` +
+      `<span class="map-country-code">${code}</span><span>${count.toLocaleString('de-DE')}</span></span>`,
     iconSize: [size, size],
   })
 }

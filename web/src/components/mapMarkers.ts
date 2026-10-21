@@ -27,6 +27,8 @@ export interface MapMarker {
   subtitle?: string
   /** Route the title links to. */
   to?: string
+  /** ISO 3166-1 code; a clustered map zoomed far out groups the markers by it. */
+  country?: string | null
 }
 
 export interface MapShape {
@@ -47,6 +49,7 @@ export function slipwayMarker(slipway: SlipwaySummary): MapMarker {
     title: slipway.name,
     subtitle: slipway.water?.name,
     to: `/slipways/${slipway.id}`,
+    country: slipway.country,
   }
 }
 

@@ -421,6 +421,25 @@ svg {
   padding-bottom: 0.7rem;
 }
 
+.toolbar-select {
+  align-self: stretch;
+  max-width: 12rem;
+  padding: 0 0.85rem;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+
+.toolbar-select:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--buoy) 70%, transparent);
+  outline-offset: 2px;
+}
+
 .toolbar-link {
   display: inline-flex;
   gap: 0.4rem;
@@ -439,10 +458,18 @@ svg {
   text-decoration: underline;
 }
 
-/* On phones the link shows only its icon. */
+/* On phones the link shows only its icon, and the country choice gets a row of its own. */
 @media (max-width: 600px) {
   .toolbar-link span {
     display: none;
+  }
+
+  .toolbar-select {
+    flex-basis: 100%;
+    order: 1;
+    max-width: none;
+    padding-top: 0.6rem;
+    padding-bottom: 0.6rem;
   }
 }
 
@@ -742,18 +769,43 @@ a.item:hover .item-chevron {
   width: var(--cluster-size);
   height: var(--cluster-size);
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: max(0.75rem, calc(var(--cluster-size) * 0.27));
   color: #fff;
   background: #0b5394;
   border-radius: 50%;
   box-shadow:
-    0 0 0 5px rgb(11 83 148 / 30%),
+    0 0 0 calc(var(--cluster-size) * 0.1) rgb(11 83 148 / 25%),
     0 2px 6px rgb(0 0 0 / 30%);
   cursor: pointer;
   transition: transform 0.15s;
 }
 
-.map-cluster:hover {
+.map-country {
+  display: grid;
+  place-content: center;
+  width: var(--cluster-size);
+  height: var(--cluster-size);
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.1;
+  text-align: center;
+  color: #fff;
+  background: #0b5394;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 35%);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.map-country-code {
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.map-cluster:hover,
+.map-country:hover {
   transform: scale(1.08);
 }
 

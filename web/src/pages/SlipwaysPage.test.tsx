@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { SlipwaySummary } from '../api/types'
@@ -7,10 +8,17 @@ import type { MarkerMap } from '../components/MarkerMap'
 import type { MapView } from '../components/mapView'
 import { SlipwaysPage } from './SlipwaysPage'
 
-const map = vi.hoisted(() => ({ onViewChange: undefined as ((view: MapView) => void) | undefined }))
+type MapProps = Parameters<typeof MarkerMap>[0]
+const map = vi.hoisted(() => ({
+  onViewChange: undefined as ((view: MapView) => void) | undefined,
+  markers: undefined as MapProps['markers'] | undefined,
+  focus: undefined as MapProps['focus'],
+}))
 vi.mock('../components/LazyMarkerMap', () => ({
-  LazyMarkerMap: (props: Parameters<typeof MarkerMap>[0]) => {
+  LazyMarkerMap: (props: MapProps) => {
     map.onViewChange = props.onViewChange
+    map.markers = props.markers
+    map.focus = props.focus
     return null
   },
 }))
@@ -81,6 +89,28 @@ describe('SlipwaysPage', () => {
     expect(screen.getByText('1 Treffer')).toBeInTheDocument()
     expect(screen.getByRole('searchbox')).toHaveValue('Kelheim')
     expect(fetchMock).toHaveBeenCalledWith('/api/slipways?search=Kelheim', expect.anything())
+  })
+
+  it('narrows map and list to the chosen country', async () => {
+    const amsterdam: SlipwaySummary = {
+      ...slipways[0],
+      id: '0b1f6c1e-3d7a-4b8e-9f2a-5c6d7e8f9a0b',
+      name: 'Sloepenhelling',
+      latitude: 52.37,
+      longitude: 4.9,
+      country: 'NL',
+    }
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify([...slipways, amsterdam]), { status: 200 })))
+    renderAt('/')
+
+    expect(await screen.findByText('2 Slipanlagen auf der Karte.')).toBeInTheDocument()
+    const select = screen.getByRole('combobox', { name: 'Land' })
+    expect(screen.getByRole('option', { name: 'Deutschland (1)' })).toBeInTheDocument()
+
+    await userEvent.selectOptions(select, 'NL')
+    expect(screen.getByText('1 Slipanlage auf der Karte.')).toBeInTheDocument()
+    expect(map.markers?.map((m) => m.title)).toEqual(['Sloepenhelling'])
+    expect(map.focus).toEqual({ south: 52.37, west: 4.9, north: 52.37, east: 4.9 })
   })
 
   it('shows an error when the API fails', async () => {
