@@ -66,8 +66,14 @@ export const api = {
   slipway: (id: string, signal?: AbortSignal) => request<SlipwayDetails>(`/slipways/${id}`, { signal }),
   waters: (search?: string, signal?: AbortSignal) =>
     request<WaterSummary[]>(search ? `/waters?search=${encodeURIComponent(search)}` : '/waters', { signal }),
-  waterShapes: (search?: string, signal?: AbortSignal) =>
-    request<WaterShapes>(search ? `/waters/shapes?search=${encodeURIComponent(search)}` : '/waters/shapes', { signal }),
+  /** Shapes of the waters a search finds, or without a search those in a map area that are at least minExtent large. */
+  waterShapes: (filter: { search: string } | { bbox: string; minExtent: number }, signal?: AbortSignal) =>
+    request<WaterShapes>(
+      'search' in filter
+        ? `/waters/shapes?search=${encodeURIComponent(filter.search)}`
+        : `/waters/shapes?bbox=${filter.bbox}&minExtent=${filter.minExtent}`,
+      { signal },
+    ),
   water: (id: string, signal?: AbortSignal) => request<WaterDetails>(`/waters/${id}`, { signal }),
   marinas: (search?: string, signal?: AbortSignal) =>
     request<Marina[]>(search ? `/marinas?search=${encodeURIComponent(search)}` : '/marinas', { signal }),

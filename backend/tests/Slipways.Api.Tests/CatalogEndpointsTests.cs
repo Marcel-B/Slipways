@@ -233,6 +233,30 @@ public class CatalogEndpointsTests(SlipwaysApiFactory factory) : IClassFixture<S
     }
 
     [Fact]
+    public async Task Lists_only_the_shapes_reaching_into_a_map_view()
+    {
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<SlipwaysDbContext>();
+            var aller = await db.Waters.SingleAsync(w => w.Shortname == "ALLER", TestContext.Current.CancellationToken);
+            aller.Shape = """{"type":"LineString","coordinates":[[9.0,52.6],[9.3,52.7],[9.6,52.8]]}""";
+            aller.ShapeUpdated = DateTime.UtcNow;
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        var inView = await _client.GetFromJsonAsync<JsonObject>("/api/waters/shapes?bbox=9.1,52.5,9.2,52.9", TestContext.Current.CancellationToken);
+        var elsewhere = await _client.GetFromJsonAsync<JsonObject>("/api/waters/shapes?bbox=12,50,13,51", TestContext.Current.CancellationToken);
+        var tooSmall = await _client.GetFromJsonAsync<JsonObject>("/api/waters/shapes?bbox=9.1,52.5,9.2,52.9&minExtent=1", TestContext.Current.CancellationToken);
+        var invalid = await _client.GetAsync("/api/waters/shapes?bbox=9,52", TestContext.Current.CancellationToken);
+
+        Assert.Contains("Aller", inView!["features"]!.AsArray().Select(f => (string?)f!["properties"]!["name"]));
+        // 0.6° wide: too small to draw on a map of half of Europe.
+        Assert.DoesNotContain("Aller", tooSmall!["features"]!.AsArray().Select(f => (string?)f!["properties"]!["name"]));
+        Assert.DoesNotContain("Aller", elsewhere!["features"]!.AsArray().Select(f => (string?)f!["properties"]!["name"]));
+        Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode);
+    }
+
+    [Fact]
     public async Task Leaves_out_stations_without_coordinates()
     {
         var stations = await _client.GetFromJsonAsync<List<StationDto>>("/api/stations", TestContext.Current.CancellationToken);

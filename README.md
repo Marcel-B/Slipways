@@ -53,7 +53,7 @@ Einstellungen (Abschnitt `Rijkswaterstaat`):
 
 ## Gewässerverläufe
 
-Die Detailseite eines Gewässers hebt seinen Verlauf (Flüsse, Kanäle) bzw. seine Fläche (Seen) aus [OpenStreetMap](https://www.openstreetmap.org/) hervor. Die Übersicht zeichnet die Verläufe aller Gewässer, die die Suche findet, und hebt das angeklickte hervor; dafür liefert `/api/waters/shapes` sie gröber vereinfacht (etwa 500 m, zusammen rund 160 KB, mit gzip rund 55 KB). Welche OSM-Elemente zu einem Gewässer gehören, steht in [`waterShapes.json`](backend/src/Slipways.Infrastructure/Seed/waterShapes.json), zugeordnet über den Kurznamen, den auch PEGELONLINE verwendet. Eine leere Liste heißt: geprüft, es gibt keinen passenden Verlauf (Nord- und Ostsee, Grundwassermessstellen, Abschnitte, die OSM nicht kennt).
+Die Detailseite eines Gewässers hebt seinen Verlauf (Flüsse, Kanäle) bzw. seine Fläche (Seen) aus [OpenStreetMap](https://www.openstreetmap.org/) hervor. Die Übersicht zeigt Gewässer als Verläufe statt als Blasen und hebt das angeklickte hervor. Seit dem OSM-Import sind es Tausende (zusammen über 4 MB), deshalb lädt sie die Verläufe des Kartenausschnitts und herausgezoomt nur die großen; mit einer Suche die aller Treffer. `/api/waters/shapes` liefert sie gröber vereinfacht (etwa 500 m) und hält sie dafür im Speicher, bis der Nominatim-Job neue holt. Die Liste neben der Karte zeigt wie bei Slipanlagen und Marinas den Kartenausschnitt. Welche OSM-Elemente zu einem Gewässer gehören, steht in [`waterShapes.json`](backend/src/Slipways.Infrastructure/Seed/waterShapes.json), zugeordnet über den Kurznamen, den auch PEGELONLINE verwendet. Eine leere Liste heißt: geprüft, es gibt keinen passenden Verlauf (Nord- und Ostsee, Grundwassermessstellen, Abschnitte, die OSM nicht kennt).
 
 Ein Hintergrund-Job in der API übernimmt die Zuordnung beim Start und holt die Formen bei [Nominatim](https://nominatim.org/), auf etwa 100 m vereinfacht (zusammen rund 0,6 MB). Danach prüft er stündlich, ob ein Gewässer noch keine Form hat (etwa weil PEGELONLINE es gerade erst angelegt hat) oder seine Form älter als 30 Tage ist; nur dann fragt er Nominatim. Clients fragen Nominatim nie selbst ab, sondern lesen `/api/waters/{id}`.
 
@@ -282,7 +282,7 @@ Gegen die lokale API: im Schema unter Run > Arguments die Umgebungsvariable `SLI
 | GET | `/api/slipways?search=&waterId=` | Slipanlagen, optional gefiltert |
 | GET | `/api/slipways/{id}` | Details einer Slipanlage, mit `infos` (Werte von Nutzern, Fakten, Tipps) |
 | GET | `/api/waters?search=` | Gewässer mit Anzahl Slipanlagen und Pegel, Kartenposition (`position`) und dem Wasserstand, wenn es genau einen Pegel gibt (`gauge`) |
-| GET | `/api/waters/shapes?search=` | Verläufe der gefundenen Gewässer als GeoJSON-FeatureCollection für die Übersichtskarte (ODbL), Feature-ID = Gewässer-ID |
+| GET | `/api/waters/shapes?search=&bbox=&minExtent=` | Verläufe der gefundenen Gewässer als GeoJSON-FeatureCollection für die Übersichtskarte (ODbL), Feature-ID = Gewässer-ID; mit `bbox` (`west,south,east,north`) nur die im Kartenausschnitt, mit `minExtent` nur die mindestens so viele Grad breiten oder hohen |
 | GET | `/api/waters/{id}` | Details eines Gewässers mit Slipanlagen, Pegeln, Marinas, Verlauf als GeoJSON (`shape`, ODbL) und Kartenausschnitt (`bounds`) |
 | GET | `/api/marinas?search=&waterId=` | Marinas, optional gefiltert nach Name, Ort oder Gewässer bzw. nach Gewässer-ID |
 | GET | `/api/marinas/{id}` | Details einer Marina mit den zugehörigen Slipanlagen |

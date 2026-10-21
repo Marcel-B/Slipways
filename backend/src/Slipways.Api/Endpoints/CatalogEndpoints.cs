@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -188,25 +189,42 @@ public static class CatalogEndpoints
             water.OsmElements, slipways, stations, marinas));
     }
 
-    // About 500 m: invisible on a map of Germany, and it brings all shapes from 565 KB down to under 200 KB.
-    private const double OverviewTolerance = 0.005;
-
-    /// <summary>Shapes of the waters a search finds, thinned out for drawing them all on one map.</summary>
-    private static async Task<WaterShapeCollectionDto> ListWaterShapes(
-        SlipwaysDbContext db, string? search, CancellationToken ct)
+    /// <summary>
+    /// Shapes of the waters a search finds, thinned out for drawing many on one map. With <paramref name="bbox"/>
+    /// ("west,south,east,north") only those reaching into that part of the map, so a map zoomed in loads only its own;
+    /// with <paramref name="minExtent"/> only those at least that many degrees wide or high, so a map zoomed out
+    /// loads the large rivers and lakes and leaves out what would be a dot.
+    /// </summary>
+    private static async Task<Results<Ok<WaterShapeCollectionDto>, BadRequest<string>>> ListWaterShapes(
+        SlipwaysDbContext db, WaterShapeOverview overview, string? search, string? bbox, double? minExtent, CancellationToken ct)
     {
-        var shapes = await SearchWaters(db, search)
-            .Where(w => w.Shape != null)
-            .OrderBy(w => w.Name)
-            .Select(w => new { w.Id, w.Name, w.Shape })
-            .ToListAsync(ct);
+        BoundsDto? view = null;
+        if (bbox is not null)
+        {
+            var parts = bbox.Split(',');
+            var values = new double[4];
+            if (parts.Length != 4 || !parts.Select((p, i) => double.TryParse(p, NumberStyles.Float, CultureInfo.InvariantCulture, out values[i])).All(ok => ok))
+                return TypedResults.BadRequest("bbox: west,south,east,north");
+            view = new BoundsDto(values[1], values[0], values[3], values[2]);
+        }
 
-        return new WaterShapeCollectionDto(shapes
-            .Select(w => new WaterShapeDto(
-                w.Id, new WaterShapePropertiesDto(w.Name),
-                ShapeSimplifier.Simplify(JsonNode.Parse(w.Shape!)!, OverviewTolerance)))
-            .ToList());
+        HashSet<Guid>? found = string.IsNullOrWhiteSpace(search)
+            ? null
+            : (await SearchWaters(db, search).Select(w => w.Id).ToListAsync(ct)).ToHashSet();
+        var shapes = (await overview.GetAsync(db, ct))
+            .Where(w => found is null || found.Contains(w.Id))
+            .Where(w => view is null || (w.Bounds.South <= view.North && w.Bounds.North >= view.South
+                && w.Bounds.West <= view.East && w.Bounds.East >= view.West))
+            .Where(w => minExtent is not { } extent
+                || Math.Max(w.Bounds.North - w.Bounds.South, w.Bounds.East - w.Bounds.West) >= extent);
+
+        return TypedResults.Ok(new WaterShapeCollectionDto(shapes
+            .Select(w => new WaterShapeDto(w.Id, new WaterShapePropertiesDto(w.Name), JsonNode.Parse(w.Geometry)!))
+            .ToList()));
     }
+
+    /// <summary>The bounds of a GeoJSON geometry, or null when it has no vertex.</summary>
+    internal static BoundsDto? ShapeBounds(string shape) => BoundsOf(ShapePositions(shape).ToList());
 
     /// <summary>Every vertex of a GeoJSON geometry.</summary>
     private static IEnumerable<PositionDto> ShapePositions(string shape)
