@@ -9,6 +9,14 @@ export interface MapView {
 /** Below this zoom the map shows a whole region or more, and a list of everything on it would help no one. */
 export const LIST_MIN_ZOOM = 8
 
+/** Up to this zoom a clustered map shows one bubble per country instead of clusters. */
+export const COUNTRY_MAX_ZOOM = 5
+
+/** The cluster radius in pixels: wide while a country or more is on screen, finer once a region is. */
+export function clusterRadius(zoom: number): number {
+  return zoom < 6 ? 130 : zoom < 8 ? 100 : zoom < 10 ? 72 : 52
+}
+
 /**
  * What the list next to the map shows: every search hit, or without a search the places in the map view.
  * Null when the map is zoomed out too far (or not measured yet) and the list should ask to zoom in or search.
