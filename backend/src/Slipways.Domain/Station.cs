@@ -14,7 +14,10 @@ public class Station : Entity
     /// <summary>Station id at PEGELONLINE; null until the station was synced once.</summary>
     public Guid? ExternalId { get; set; }
 
-    /// <summary>Latest water level in centimetres at the gauge.</summary>
+    /// <summary>Location code at Rijkswaterstaat, e.g. "delfzijl"; only set for Dutch gauges.</summary>
+    public string? ExternalCode { get; set; }
+
+    /// <summary>Latest water level in centimetres at the gauge; for Dutch gauges relative to NAP.</summary>
     public double? WaterLevel { get; set; }
     public DateTime? WaterLevelMeasuredAt { get; set; }
 

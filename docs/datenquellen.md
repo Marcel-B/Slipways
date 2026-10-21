@@ -90,7 +90,7 @@ Seit dem 20.10.2026 importiert der OSM-Job auch DK, SE, NO, IT und HR. Pegel gib
 
 | Land | Quelle | Zugriff | Lizenz | geprüft |
 |---|---|---|---|---|
-| NL | Rijkswaterstaat Waterinfo / DDL (Waterkwantiteit-Dataservice) | REST, ohne Schlüssel | Publiek domein (data.overheid.nl) | Katalog |
+| NL | Rijkswaterstaat Waterinfo / DDL (Waterkwantiteit-Dataservice), **umgesetzt** (`RijkswaterstaatWorker`, 21.10.2026) | REST, ohne Schlüssel | Publiek domein (data.overheid.nl) | Katalog |
 | DK | DMI oceanObs (Meerespegel, inkl. Kystdirektoratet) | OGC API Features, **API-Schlüssel** | CC BY 4.0 | Katalog; Flusspegel (Miljøportal) offen |
 | FR | Hub'Eau Hydrométrie (`observations_tr`, ca. 3.000 Stationen) | REST, ohne Schlüssel | vermutlich Licence Ouverte, nicht bestätigt | teilweise |
 | PL | IMGW-PIB danepubliczne.imgw.pl | Dateien/API | Quellenangabe IMGW-PIB | nicht bestätigt |

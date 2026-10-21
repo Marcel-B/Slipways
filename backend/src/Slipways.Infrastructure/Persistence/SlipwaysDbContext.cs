@@ -36,6 +36,7 @@ public class SlipwaysDbContext(DbContextOptions<SlipwaysDbContext> options)
         {
             e.Property(x => x.Name).HasMaxLength(200);
             e.Property(x => x.Shortname).HasMaxLength(100);
+            e.Property(x => x.Source).HasMaxLength(10).HasDefaultValue(Sources.Manual);
             e.PrimitiveCollection(x => x.OsmElements);
         });
 
@@ -110,6 +111,8 @@ public class SlipwaysDbContext(DbContextOptions<SlipwaysDbContext> options)
             e.Property(x => x.Name).HasMaxLength(200);
             e.Property(x => x.WaterLevelState).HasMaxLength(20);
             e.HasIndex(x => x.ExternalId).IsUnique();
+            e.Property(x => x.ExternalCode).HasMaxLength(50);
+            e.HasIndex(x => x.ExternalCode).IsUnique();
             e.HasOne(x => x.Water).WithMany().HasForeignKey(x => x.WaterId).OnDelete(DeleteBehavior.Restrict);
         });
     }

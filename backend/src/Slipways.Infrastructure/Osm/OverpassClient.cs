@@ -8,19 +8,38 @@ using Slipways.Infrastructure.Monitoring;
 namespace Slipways.Infrastructure.Osm;
 
 /// <summary>
-/// Reads elements with a <c>leisure</c> tag from the Overpass API (OpenStreetMap, ODbL), one country per query.
+/// Reads elements with a <c>leisure</c> tag and the waters next to them from the Overpass API (OpenStreetMap, ODbL),
+/// one country per query.
 /// When Overpass is busy, the query is repeated with exponential backoff, as its usage policy asks.
 /// </summary>
 public sealed class OverpassClient(HttpClient http, IOptions<OsmOptions> options, TimeProvider time)
 {
-    public async Task<IReadOnlyList<OverpassElement>> GetElementsAsync(
+    public Task<IReadOnlyList<OverpassElement>> GetElementsAsync(
         string country, string leisure, CancellationToken cancellationToken = default)
     {
         var timeout = (int)options.Value.QueryTimeout.TotalSeconds;
         // `out center` gives ways and relations a middle point, so every element has a position.
-        var query = string.Create(CultureInfo.InvariantCulture,
-            $"""[out:json][timeout:{timeout}];area["ISO3166-1"="{country}"][admin_level=2]->.a;nwr[leisure={leisure}](area.a);out center tags;""");
+        return QueryAsync(country, string.Create(CultureInfo.InvariantCulture,
+            $"""[out:json][timeout:{timeout}];area["ISO3166-1"="{country}"][admin_level=2]->.a;nwr[leisure={leisure}](area.a);out center tags;"""),
+            cancellationToken);
+    }
 
+    /// <summary>
+    /// Named rivers, canals and lakes within <paramref name="distance"/> metres of a slipway or marina in the country.
+    /// A river comes as its waterway relation; only river ways that belong to none come on their own. Water areas
+    /// that are part of a river or a harbour are left out.
+    /// </summary>
+    public Task<IReadOnlyList<OverpassElement>> GetWatersAsync(
+        string country, double distance, CancellationToken cancellationToken = default)
+    {
+        var timeout = (int)options.Value.QueryTimeout.TotalSeconds;
+        return QueryAsync(country, string.Create(CultureInfo.InvariantCulture,
+            $"""[out:json][timeout:{timeout}];area["ISO3166-1"="{country}"][admin_level=2]->.a;nwr[leisure~"^(slipway|marina)$"](area.a)->.p;way(around.p:{distance})[waterway~"^(river|canal)$"][name]->.w;rel(bw.w)[type=waterway][name]->.r;(way.w; - way(r.r);)->.f;(.r;.f;wr(around.p:{distance})[natural=water][name][water!~"^(river|canal|stream|ditch|drain|wastewater|moat|basin|harbour|lock|fish_pass)$"];);out tags;"""),
+            cancellationToken);
+    }
+
+    private async Task<IReadOnlyList<OverpassElement>> QueryAsync(string country, string query, CancellationToken cancellationToken)
+    {
         var backoff = options.Value.BusyBackoff;
         for (var attempt = 1; ; attempt++)
         {

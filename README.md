@@ -35,6 +35,22 @@ Einstellungen (Abschnitt `Pegelonline`, z. B. als Umgebungsvariable `Pegelonline
 | `Interval` | `00:15:00` | Abstand der Abrufe |
 | `BaseUrl` | `https://www.pegelonline.wsv.de/webservices/rest-api/v2/` | REST-API |
 
+### Niederlande (Rijkswaterstaat)
+
+Ein zweiter Job holt die Pegel der Niederlande aus den [WaterWebservices](https://www.rijkswaterstaat.nl/zakelijk/open-data) von Rijkswaterstaat (offene Daten, ohne Schlüssel). Beim Start und dann einmal am Tag liest er den Katalog und nimmt jeden Ort, der den Wasserstand (`WATHTE`) in Oberflächenwasser relativ zu NAP misst. Rijkswaterstaat nennt kein Gewässer zu einem Ort, deshalb wird ein Ort nur dann ein Pegel, wenn der Verlauf eines unserer Gewässer höchstens 1 km entfernt ist (Gewässer von PEGELONLINE und die, die der OSM-Import neben Slipanlagen findet). Orte auf See oder an Gewässern ohne Verlauf bleiben weg; der nächste Katalog-Abruf versucht es erneut. Alle 15 Minuten holt er die letzten Messwerte der bekannten Orte, je 100 Orte eine Anfrage mit 1 s Pause, und nimmt den jüngsten gültigen Wert (Qualitätscode 99 und Werte über 9999 cm gelten als fehlend, Werte älter als 2 Tage bleiben weg). Die Wasserstände sind Zentimeter über NAP, nicht über einem Pegelnullpunkt wie bei PEGELONLINE, und haben keine Einordnung niedrig/normal/hoch. Die Stationen haben `Agency = Rijkswaterstaat` und den Ortscode in `ExternalCode`.
+
+Einstellungen (Abschnitt `Rijkswaterstaat`):
+
+| Schlüssel | Standard | Bedeutung |
+| --- | --- | --- |
+| `Enabled` | `true` | Job ein/aus |
+| `Interval` | `00:15:00` | Abstand der Abrufe der Messwerte |
+| `StationsInterval` | `1.00:00:00` | Abstand der Katalog-Abrufe |
+| `WaterDistance` | `1000` | Höchstabstand in Metern zwischen Ort und Gewässerverlauf |
+| `BatchSize`, `RequestSpacing` | `100`, `00:00:01` | Orte je Anfrage und Pause dazwischen |
+| `MaxAge` | `2.00:00:00` | Ältere Messwerte werden nicht übernommen |
+| `BaseUrl` | `https://ddapi20-waterwebservices.rijkswaterstaat.nl/` | WaterWebservices |
+
 ## Gewässerverläufe
 
 Die Detailseite eines Gewässers hebt seinen Verlauf (Flüsse, Kanäle) bzw. seine Fläche (Seen) aus [OpenStreetMap](https://www.openstreetmap.org/) hervor. Die Übersicht zeichnet die Verläufe aller Gewässer, die die Suche findet, und hebt das angeklickte hervor; dafür liefert `/api/waters/shapes` sie gröber vereinfacht (etwa 500 m, zusammen rund 160 KB, mit gzip rund 55 KB). Welche OSM-Elemente zu einem Gewässer gehören, steht in [`waterShapes.json`](backend/src/Slipways.Infrastructure/Seed/waterShapes.json), zugeordnet über den Kurznamen, den auch PEGELONLINE verwendet. Eine leere Liste heißt: geprüft, es gibt keinen passenden Verlauf (Nord- und Ostsee, Grundwassermessstellen, Abschnitte, die OSM nicht kennt).
@@ -82,7 +98,9 @@ Abgleich, getrennt für Slipanlagen und Marinas:
 
 Übernommen werden `name` (sonst „Slipanlage“ bzw. „Marina“ und `addr:city`), `addr:street`/`addr:housenumber`, `addr:postcode`, `addr:city`, `addr:country` (sonst das abgefragte Land, nur Slipanlagen), `website` (oder `contact:website`), bei Marinas `phone`/`contact:phone` und `email`/`contact:email`, `operator`, `fee`, `access`, `opening_hours` und bei Slipanlagen `surface`. Eigene Angaben (Kommentar, Bewertung, Kosten, Pro/Contra, Extras, Marina, Telefon, E-Mail) überschreibt der Import nie. Was aus OSM verschwindet, löscht er nicht, sondern schreibt es ins Log.
 
-OSM kennt kein Gewässer zu einer Slipanlage. Der Import ordnet deshalb das Gewässer zu, dessen Verlauf (siehe oben) höchstens 300 m entfernt ist oder dessen Fläche den Punkt enthält, sonst bleibt `WaterId` leer. Das betrifft vor allem Seen und kleine Flüsse, die PEGELONLINE nicht kennt. Einträge ohne Gewässer bekommen bei jedem Lauf eine neue Chance.
+OSM kennt kein Gewässer zu einer Slipanlage. Der Import ordnet deshalb das Gewässer zu, dessen Verlauf (siehe oben) höchstens 300 m entfernt ist oder dessen Fläche den Punkt enthält, sonst bleibt `WaterId` leer. Einträge ohne Gewässer bekommen bei jedem Lauf eine neue Chance.
+
+Damit auch Seen, kleine Flüsse und Gewässer außerhalb Deutschlands (die PEGELONLINE nicht kennt) ein Gewässer haben, fragt jeder Lauf zusätzlich nach benannten Flüssen und Kanälen (`waterway=river|canal`) und Seen (`natural=water`, ohne Flussflächen, Hafenbecken und Schleusen) höchstens 300 m neben einer Slipanlage oder Marina des Landes. Ein Fluss kommt als seine Waterway-Relation; Flusswege ohne Relation werden nach Namen zusammengefasst. Was noch kein Gewässer als OSM-Element hat, wird ein neues Gewässer mit `Source = osm` (Name aus OSM, also ODbL). Gibt es schon ein gleichnamiges Gewässer ohne Elemente (etwa von PEGELONLINE), entsteht kein zweites. Die Verläufe holt danach der Nominatim-Job (siehe oben); hat er neue Verläufe, ordnet er gleich die Slipanlagen und Marinas ohne Gewässer zu, statt bis zum nächsten Import des Landes zu warten. Gelöscht werden Gewässer nie.
 
 Einstellungen (Abschnitt `Osm`):
 
@@ -180,11 +198,11 @@ Die API liefert Messwerte für Prometheus unter `/metrics`, aber nur auf einem e
 
 | Messwert | Bedeutung |
 | --- | --- |
-| `slipways_job_runs_total{task, result}` | Läufe der Hintergrund-Jobs `gauges`, `shapes`, `osm`, `websites`, nach `success`/`failure` |
+| `slipways_job_runs_total{task, result}` | Läufe der Hintergrund-Jobs `gauges`, `rijkswaterstaat`, `shapes`, `osm`, `websites`, nach `success`/`failure` |
 | `slipways_job_duration_seconds{task}` | Dauer der Läufe (Histogramm) |
 | `slipways_job_last_success_timestamp_seconds{task}` | Zeitpunkt des letzten erfolgreichen Laufs (für `osm` nach einem Neustart aus der Datenbank) |
 | `slipways_gauge_water_levels_updated_total` | übernommene Wasserstände |
-| `slipways_osm_import_changes_total{kind, change}` | OSM-Import: `added`/`updated`/`linked` je `slipway`/`marina` |
+| `slipways_osm_import_changes_total{kind, change}` | OSM-Import: `added`/`updated`/`linked` je `slipway`/`marina`, neue Gewässer als `water`/`added` |
 | `slipways_osm_missing_elements{country}` | Einträge, deren OSM-Element der letzte Import ihres Landes nicht mehr fand |
 | `slipways_overpass_busy_responses_total` | „Overpass ausgelastet“, jeweils mit neuem Versuch |
 | `slipways_website_checks_total{result}` | gelesene Webseiten von Marinas nach Ergebnis (`found`, `empty`, `disallowed`, `refused`, `failed`) |
@@ -293,8 +311,10 @@ Die API ist bewusst ohne Anmeldung lesbar, Web und Apps brauchen keinen Schlüss
 | Daten | Quelle | Lizenz | Pflichten |
 | --- | --- | --- | --- |
 | Pegelstationen, Wasserstände, Gewässer an Pegeln | [PEGELONLINE](https://www.pegelonline.wsv.de/webservice/ueberblick) der WSV | [DL-DE->Zero-2.0](https://www.govdata.de/dl-de/zero-2-0) | keine; wir nennen die Quelle trotzdem |
+| Pegelstationen und Wasserstände in den Niederlanden (`agency = Rijkswaterstaat`) | [Rijkswaterstaat WaterWebservices](https://www.rijkswaterstaat.nl/zakelijk/open-data) | gemeinfrei (data.overheid.nl: „Publiek domein“), Rijkswaterstaat: Weiterverwendung in der Regel ohne Quellenangabe | keine; wir nennen die Quelle trotzdem |
 | Kartenkacheln | [OpenStreetMap](https://www.openstreetmap.org/copyright) | ODbL 1.0 / CC BY-SA | „© OpenStreetMap-Mitwirkende“ sichtbar an der Karte |
 | Kartenkacheln der Android-App | [OpenFreeMap](https://openfreemap.org/) (OpenMapTiles, Daten aus OpenStreetMap) | ODbL 1.0 (Daten), Stil BSD/CC BY | Namensnennung an der Karte; der Kartenstil bringt sie mit |
+| Gewässer mit `Source = osm` (Name, OSM-Elemente) | [OpenStreetMap](https://www.openstreetmap.org/copyright) über Overpass | [ODbL 1.0](https://opendatacommons.org/licenses/odbl/) | wie Gewässerverläufe; getrennt über `Source` |
 | Gewässerverläufe (`shape`) | [OpenStreetMap](https://www.openstreetmap.org/copyright) über Nominatim | [ODbL 1.0](https://opendatacommons.org/licenses/odbl/) | Namensnennung (Seitenfuß, Link zum OSM-Element auf der Detailseite); die API gibt die Formen weiter, sie stehen deshalb selbst unter ODbL (Share-Alike) |
 | Slipanlagen, Marinas, Motorservices (Seed) | von Hand erfasst (2019/20) | eigene Daten | – |
 | Telefon, E-Mail, Öffnungszeiten von Marinas (`infos` mit `source = website`) | Startseite der Marina, die in OSM verlinkt ist | Fakten, kein Werkschutz; ggf. personenbezogen (DSGVO, siehe Datenschutzseite) | Quelle und Abrufdatum an der Angabe; robots.txt beachten; auf Widerspruch löschen und ausschließen |
