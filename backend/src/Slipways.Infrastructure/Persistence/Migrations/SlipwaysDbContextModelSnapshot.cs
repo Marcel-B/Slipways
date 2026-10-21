@@ -630,6 +630,9 @@ namespace Slipways.Infrastructure.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime?>("Notified")
+                        .HasColumnType("TEXT");
+
                     b.Property<Guid?>("PlaceId")
                         .HasColumnType("TEXT");
 

@@ -1,0 +1,40 @@
+# Eigener ntfy-Server für Push-Nachrichten bei neuen Vorschlägen, ergänzt compose.yaml und deploy/compose.lxc.yaml
+# (siehe deploy/README.md, „Benachrichtigungen“). In der .env im Repo-Root z. B.:
+#   COMPOSE_FILE=compose.yaml:deploy/compose.lxc.yaml:deploy/compose.https.yaml:deploy/compose.ntfy.yaml
+#   SLIPWAYS_NTFY_BASE_URL=https://slipways-1.<tailnet>.ts.net:2586
+#   SLIPWAYS_NTFY_TOPIC=slipways-<zufall>
+# ntfy ist nur lokal auf 127.0.0.1:2586 erreichbar; ins Tailnet bringt es "tailscale serve" wie die Moderation.
+services:
+  api:
+    environment:
+      Notifications__BaseUrl: http://ntfy/
+    depends_on:
+      - ntfy
+
+  ntfy:
+    image: binwiederhier/ntfy:v2
+    command: serve
+    environment:
+      # Adresse, unter der die App den Server erreicht; ohne sie startet ntfy mit Upstream nicht
+      NTFY_BASE_URL: ${SLIPWAYS_NTFY_BASE_URL:?SLIPWAYS_NTFY_BASE_URL fehlt in der .env}
+      # Nur für iPhones: Apple stellt Push nur über ntfy.sh zu. ntfy.sh bekommt dabei nur einen Hash des Topics und
+      # die ID der Nachricht, der Inhalt bleibt hier und wird von der App abgeholt.
+      NTFY_UPSTREAM_BASE_URL: https://ntfy.sh
+      NTFY_BEHIND_PROXY: "true"
+      NTFY_CACHE_FILE: /var/cache/ntfy/cache.db
+      NTFY_CACHE_DURATION: 72h
+      NTFY_ENABLE_LOGIN: "false"
+      TZ: Europe/Berlin
+    ports:
+      - "127.0.0.1:${SLIPWAYS_NTFY_PORT:-2586}:80"
+    volumes:
+      - ntfy-cache:/var/cache/ntfy
+    restart: unless-stopped
+    logging:
+      driver: local
+      options:
+        max-size: 5m
+        max-file: "2"
+
+volumes:
+  ntfy-cache:

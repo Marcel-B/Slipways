@@ -144,9 +144,30 @@ tailscale serve status
 
 Danach von jedem Gerät im Tailnet (auch vom Handy mit der Tailscale-App): `https://slipways-1.<tailnet>.ts.net:9465/moderation`. Wer im Tailnet ist, kann moderieren; soll das nur für eigene Geräte gelten, in der Tailscale-Policy den Zugriff auf `tcp:9465` von `slipways-1` beschränken.
 
-Neue Vorschläge zeigt der Messwert `slipways_suggestions_pending`. Ein Alarm darauf (z. B. `slipways_suggestions_pending > 0` seit einem Tag) fehlt noch, wie die anderen Alarme (`docs/offene-punkte.md`).
+Neue Vorschläge zeigt der Messwert `slipways_suggestions_pending`; als Push aufs Handy siehe [Benachrichtigungen](#benachrichtigungen).
 
 Lokal mit `docker compose up` liegt die Moderation unter `http://localhost:9465/moderation`.
+
+## Benachrichtigungen
+
+Bei neuen Vorschlägen schickt die API eine Push-Nachricht über einen eigenen [ntfy](https://ntfy.sh)-Server auf slipways-1 (`deploy/compose.ntfy.yaml`). Wie Moderation und `/metrics` ist er nur lokal auf `127.0.0.1:2586` erreichbar und kommt per `tailscale serve` ins Tailnet; das Handy braucht also die Tailscale-App. Die Nachrichten enthalten nur Anzahlen, keine Inhalte der Vorschläge.
+
+Einrichten mit einem Skript, sobald das Update mit den Benachrichtigungen läuft:
+
+```bash
+# auf slipways-1 als root; sofort benachrichtigen
+bash /opt/slipways/deploy/lxc/setup-ntfy.sh
+# oder gesammelt, z. B. montags und donnerstags um 18 Uhr
+NOTIFY_DAYS=Mo,Do NOTIFY_TIMES=18:00 bash /opt/slipways/deploy/lxc/setup-ntfy.sh
+```
+
+Das Skript erzeugt ein zufälliges Topic (wer den Namen kennt und im Tailnet ist, kann mitlesen), ergänzt `COMPOSE_FILE` um `deploy/compose.ntfy.yaml`, trägt `SLIPWAYS_NTFY_BASE_URL`, `SLIPWAYS_NTFY_TOPIC`, `SLIPWAYS_MODERATION_URL`, `SLIPWAYS_NOTIFY_DAYS` und `SLIPWAYS_NOTIFY_TIMES` in `/opt/slipways/.env` ein, startet ntfy und die API, richtet `tailscale serve` für ntfy (2586) und die Moderation (9465) ein und schickt eine Testnachricht. Am Ende nennt es Topic und Server für die App. Erneut aufrufen behält das Topic und ersetzt den Zeitplan (ohne `NOTIFY_TIMES` also wieder sofort).
+
+In der ntfy-App (iOS, Android) unter „Thema abonnieren“ das Topic eintragen, „Anderen Server verwenden“ wählen und `https://slipways-1.<tailnet>.ts.net:2586` angeben.
+
+iPhones bekommen Push nur über Apple; dafür reicht der eigene Server bei ntfy.sh eine Anfrage weiter, die nur einen Hash des Topics und die ID der Nachricht enthält (`NTFY_UPSTREAM_BASE_URL`). Den Inhalt holt die App danach vom eigenen Server. Android verbindet sich direkt.
+
+Ohne eigenen Server geht es auch mit ntfy.sh: dann nur `SLIPWAYS_NTFY_TOPIC` setzen und `deploy/compose.ntfy.yaml` weglassen. Ob die Nachrichten rausgehen, zeigen das Log („Notified about … new suggestions“) und `slipways_notifications_sent_total`.
 
 ## Auto-Update
 

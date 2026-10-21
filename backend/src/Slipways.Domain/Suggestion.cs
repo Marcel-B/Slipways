@@ -31,6 +31,9 @@ public class Suggestion : Entity
     public string? TokenHash { get; set; }
 
     public DateTime? Decided { get; set; }
+
+    /// <summary>When the moderator was told about it; null while it has not been in a notification yet.</summary>
+    public DateTime? Notified { get; set; }
 }
 
 public static class SuggestionKinds

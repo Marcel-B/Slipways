@@ -18,6 +18,14 @@ services:
       # Logs an Loki, z. B. SLIPWAYS_LOKI_URL=http://monitoring:3100 und SLIPWAYS_MONITORING_HOST=slipways-1; leer: aus
       Monitoring__Loki__Url: ${SLIPWAYS_LOKI_URL:-}
       Monitoring__Loki__Host: ${SLIPWAYS_MONITORING_HOST:-unknown}
+      # Push bei neuen Vorschlägen über ntfy, z. B. SLIPWAYS_NTFY_TOPIC=slipways-<zufall>; leer: aus.
+      # Ohne Uhrzeiten sofort, sonst gesammelt, z. B. SLIPWAYS_NOTIFY_DAYS=Mo,Do und SLIPWAYS_NOTIFY_TIMES=18:00
+      Notifications__BaseUrl: ${SLIPWAYS_NTFY_URL:-https://ntfy.sh/}
+      Notifications__Topic: ${SLIPWAYS_NTFY_TOPIC:-}
+      Notifications__Token: ${SLIPWAYS_NTFY_TOKEN:-}
+      Notifications__ModerationUrl: ${SLIPWAYS_MODERATION_URL:-}
+      Notifications__Days: ${SLIPWAYS_NOTIFY_DAYS:-}
+      Notifications__Times: ${SLIPWAYS_NOTIFY_TIMES:-}
     # Nur lokal für Health-Check und Updater; von außen geht es über das Web unter /api.
     # /metrics und die Moderation nur lokal; ins Tailnet bringt sie "tailscale serve" (siehe deploy/README.md,
     # „Überwachung“ und „Moderation“).

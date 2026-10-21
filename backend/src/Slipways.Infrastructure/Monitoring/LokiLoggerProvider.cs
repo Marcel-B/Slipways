@@ -25,6 +25,7 @@ public sealed class LokiLoggerProvider(LokiLogQueue queue, TimeProvider time) : 
         _ when category.StartsWith("Slipways.Infrastructure.Shapes", StringComparison.Ordinal) => "shapes",
         _ when category.StartsWith("Slipways.Infrastructure.Osm", StringComparison.Ordinal) => "osm",
         _ when category.StartsWith("Slipways.Infrastructure.Websites", StringComparison.Ordinal) => "websites",
+        _ when category.StartsWith("Slipways.Infrastructure.Notifications", StringComparison.Ordinal) => "notifications",
         _ when category.StartsWith("Microsoft.EntityFrameworkCore", StringComparison.Ordinal) => "db",
         _ when category.StartsWith("System.Net.Http", StringComparison.Ordinal) => "http-client",
         _ when category.StartsWith("Microsoft.AspNetCore", StringComparison.Ordinal) => "http",

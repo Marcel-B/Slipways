@@ -9,6 +9,7 @@ using Microsoft.Extensions.Options;
 using Slipways.Infrastructure.Gauges;
 using Slipways.Infrastructure.Identity;
 using Slipways.Infrastructure.Monitoring;
+using Slipways.Infrastructure.Notifications;
 using Slipways.Infrastructure.Osm;
 using Slipways.Infrastructure.Persistence;
 using Slipways.Infrastructure.Shapes;
@@ -107,6 +108,16 @@ public static class DependencyInjection
         services.AddOptions<SuggestionOptions>().Bind(configuration.GetSection(SuggestionOptions.SectionName));
         services.AddSingleton<ProofOfWork>();
         services.AddScoped<SuggestionService>();
+
+        services.AddOptions<NotificationOptions>().Bind(configuration.GetSection(NotificationOptions.SectionName));
+        services.AddHttpClient<NtfyClient>((sp, http) =>
+        {
+            http.BaseAddress = sp.GetRequiredService<IOptions<NotificationOptions>>().Value.BaseUrl;
+            http.Timeout = TimeSpan.FromSeconds(30);
+            http.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgent);
+        });
+        services.AddScoped<SuggestionNotifier>();
+        services.AddHostedService<SuggestionNotifierWorker>();
 
         services.AddOptions<MonitoringOptions>().Bind(configuration.GetSection(MonitoringOptions.SectionName));
         services.AddHostedService<CatalogMetricsWorker>();
