@@ -62,7 +62,7 @@ Die Vorschläge vor dem Übernehmen prüfen. Große internationale Flüsse finde
 
 ## Slipanlagen und Marinas aus OpenStreetMap
 
-Ein Hintergrund-Job in der API importiert Slipanlagen (`leisure=slipway`) und Marinas (`leisure=marina`) aus [OpenStreetMap](https://www.openstreetmap.org/) über die [Overpass API](https://wiki.openstreetmap.org/wiki/Overpass_API), je Land und Art eine Abfrage mit `out center tags;` (Wege und Relationen bekommen so einen Mittelpunkt). Jedes Land wird alle 30 Tage importiert, ein Land pro Lauf. Die Länder wechseln sich ab, ein Lauf alle 30 Tage geteilt durch die Zahl der Länder (bei neun Ländern etwa alle 3,3 Tage), damit Overpass und der Server kleine Läufe über den Monat verteilt bekommen. Ein Land, das noch nie importiert wurde, läuft sofort. Die beiden Abfragen eines Laufs laufen nacheinander mit Pause dazwischen und Timeout in der Abfrage. Ist Overpass ausgelastet (429, 502, 503, 504), wiederholt der Client mit exponentiellem Backoff; scheitert der Lauf, versucht der Job dieses Land nach einer Stunde erneut. Stand Oktober 2026 waren es für DE, AT, CH und NL etwa 5.100 Slipanlagen und 4.600 Marinas (DE 3.342 / 2.727, AT 391 / 199, CH 447 / 446, NL 916 / 1.224). Dazu kommen DK, SE, NO, IT und HR.
+Ein Hintergrund-Job in der API importiert Slipanlagen (`leisure=slipway`) und Marinas (`leisure=marina`) aus [OpenStreetMap](https://www.openstreetmap.org/) über die [Overpass API](https://wiki.openstreetmap.org/wiki/Overpass_API), je Land und Art eine Abfrage mit `out center tags;` (Wege und Relationen bekommen so einen Mittelpunkt). Jedes Land wird alle 30 Tage importiert, ein Land pro Lauf. Die Länder wechseln sich ab, ein Lauf alle 30 Tage geteilt durch die Zahl der Länder (bei zwölf Ländern etwa alle 2,5 Tage), damit Overpass und der Server kleine Läufe über den Monat verteilt bekommen. Ein Land, das noch nie importiert wurde, läuft sofort. Die beiden Abfragen eines Laufs laufen nacheinander mit Pause dazwischen und Timeout in der Abfrage. Ist Overpass ausgelastet (429, 502, 503, 504), wiederholt der Client mit exponentiellem Backoff; scheitert der Lauf, versucht der Job dieses Land nach einer Stunde erneut. Stand Oktober 2026 waren es für DE, AT, CH und NL etwa 5.100 Slipanlagen und 4.600 Marinas (DE 3.342 / 2.727, AT 391 / 199, CH 447 / 446, NL 916 / 1.224). Dazu kommen BE, FR, ES, IT, HR, DK, SE und NO. Die Flächen mancher Länder umfassen auch Überseegebiete (Réunion, Martinique, Bonaire …); der Import behält nur Elemente in Europa, Kanaren, Azoren und Svalbard eingeschlossen (`OsmImport.InEurope`).
 
 Ein Element, das in den Flächen zweier Länder liegt, gehört dem Land, dessen Import es zuerst gefunden hat (Spalte `OsmCountry`). Nur dieser Import aktualisiert es und meldet es als verschwunden.
 
@@ -89,7 +89,7 @@ Einstellungen (Abschnitt `Osm`):
 | Schlüssel | Standard | Bedeutung |
 | --- | --- | --- |
 | `Enabled` | `true` | Job ein/aus |
-| `Countries` | `DE`, `AT`, `CH`, `NL`, `DK`, `SE`, `NO`, `IT`, `HR` | ISO-3166-1-Codes, z. B. `Osm__Countries__0=DE` |
+| `Countries` | `DE`, `AT`, `CH`, `NL`, `BE`, `FR`, `ES`, `IT`, `HR`, `DK`, `SE`, `NO` | ISO-3166-1-Codes, z. B. `Osm__Countries__0=DE` |
 | `Interval` | `30.00:00:00` | Abstand der Importe eines Landes, gerechnet ab seinem letzten Erfolg; die Länder verteilen sich darüber |
 | `RetryInterval` | `01:00:00` | Wartezeit nach einem gescheiterten Lauf, auch über Neustarts hinweg |
 | `QueryTimeout` | `00:03:00` | Timeout in der Overpass-Abfrage |
@@ -147,7 +147,7 @@ Wer Slipways nutzt, kann ohne Konto Angaben ergänzen oder korrigieren, ankreuze
 - **Proof of Work** im Format von [ALTCHA](https://altcha.org/): `GET /api/suggestions/challenge` liefert eine signierte Aufgabe (SHA-256, HMAC, Ablauf in `salt`), der Client sucht die Zahl dazu (im Browser per Web Worker, etwa eine Sekunde), jede Lösung gilt nur einmal. Keine Cookies, keine Daten über den Client.
 - **Rate-Limit** eigens für `POST`/`DELETE /api/suggestions`: 5 in Folge, dann einer je 10 Minuten pro Adresse (`RateLimit:SuggestionTokenLimit`, `SuggestionReplenishmentPeriod`).
 - **Honeypot-Feld** `homepage`: Wer es ausfüllt, bekommt eine Antwort wie bei Erfolg, gespeichert wird nichts.
-- **Prüfungen:** nur bekannte Felder mit festen Werten (`SuggestionFields`), Texte ohne Links und mit Längengrenzen, neue Slipanlagen nur in DE, AT, CH und NL. Liegt eine bekannte Slipanlage näher als 100 m, antwortet die API mit `409` und der Liste; erst mit `confirmNew` wird der Vorschlag angenommen.
+- **Prüfungen:** nur bekannte Felder mit festen Werten (`SuggestionFields`), Texte ohne Links und mit Längengrenzen, neue Slipanlagen nur in Europa (wie der OSM-Import, ohne Überseegebiete). Liegt eine bekannte Slipanlage näher als 100 m, antwortet die API mit `409` und der Liste; erst mit `confirmNew` wird der Vorschlag angenommen.
 
 Gespeichert werden nur Inhalt, Zeitpunkt und der Hash eines Tokens, mit dem der Absender den Stand sieht und den Vorschlag zurückzieht (`/beitrag/{id}#{token}` im Web). Keine IP-Adresse, kein Name. Abgelehnte Vorschläge werden nach 30 Tagen gelöscht, angenommene nach 90 (`Suggestions:KeepRejected`, `KeepAccepted`).
 
