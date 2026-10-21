@@ -23,6 +23,7 @@ public sealed class SlipwaysApiFactory : WebApplicationFactory<Program>, IAsyncL
         builder.UseSetting("Nominatim:Enabled", "false");
         builder.UseSetting("Osm:Enabled", "false");
         builder.UseSetting("Websites:Enabled", "false");
+        builder.UseSetting("Notifications:Enabled", "false");
         builder.UseSetting("Monitoring:CatalogMetricsEnabled", "false");
         builder.UseSetting("RateLimit:Enabled", "false");
 

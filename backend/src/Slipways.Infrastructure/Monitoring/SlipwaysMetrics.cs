@@ -11,7 +11,7 @@ public static class SlipwaysMetrics
 {
     // The label is called "task" because Prometheus sets "job" itself, to the scrape job, and renames a "job"
     // label of the app to "exported_job".
-    public static readonly string[] Jobs = ["gauges", "rijkswaterstaat", "shapes", "osm", "websites"];
+    public static readonly string[] Jobs = ["gauges", "rijkswaterstaat", "shapes", "osm", "websites", "notifications"];
 
     public static readonly Counter JobRuns = Metrics.CreateCounter(
         "slipways_job_runs_total", "Runs of background jobs, by task and result (success, failure).", "task", "result");
@@ -53,6 +53,9 @@ public static class SlipwaysMetrics
 
     public static readonly Gauge SuggestionsPending = Metrics.CreateGauge(
         "slipways_suggestions_pending", "Suggestions waiting for moderation.");
+
+    public static readonly Counter NotificationsSent = Metrics.CreateCounter(
+        "slipways_notifications_sent_total", "Messages to the moderator about new suggestions.");
 
     public static readonly string[] SuggestionResults = ["queued", "invalid", "proof_failed", "honeypot", "nearby"];
 

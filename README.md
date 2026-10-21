@@ -182,6 +182,8 @@ Werte von Nutzern gewinnen in Web und API über die eigenen Felder des Eintrags.
 
 **Moderation** gibt es nur im Tailnet: Die API beantwortet `/moderation` (eine kleine Seite) und `/api/moderation/…` ausschließlich auf Port 9465 (`Moderation:Port`), alle anderen Ports nie. Änderungen brauchen zusätzlich den Header `X-Moderation`, damit eine fremde Seite im Browser nichts auslösen kann. Einrichtung in [`deploy/README.md`](deploy/README.md#moderation).
 
+**Benachrichtigungen** über neue Vorschläge schickt die API per [ntfy](https://ntfy.sh) als Push aufs Handy (`backend/src/Slipways.Infrastructure/Notifications/`). Ohne `Notifications:Topic` ist das aus. Die API sieht jede Minute nach (`Notifications:Interval`) und fasst alles, was seit der letzten Nachricht dazugekommen ist, in einer Nachricht zusammen. Mit `Notifications:Times` (z. B. `18:00` oder `08:00,18:00`) und optional `Notifications:Days` (z. B. `Mo,Do`, deutsch oder englisch; leer heißt jeden Tag) kommt sie stattdessen gesammelt zu diesen Zeiten (`Notifications:TimeZone`, Standard `Europe/Berlin`); war die API zu einer Zeit aus, kommt die Nachricht beim Start. Sie enthält nur Anzahlen je Art („2 neue Slipanlagen, 1 Meldung. Insgesamt warten 5 Vorschläge.“), nie Text oder Ort eines Vorschlags; ein Tipp darauf öffnet `Notifications:ModerationUrl`. Gemeldete Vorschläge bekommen `Notified`, so meldet die API jeden nur einmal, auch über Neustarts. Ein eigener ntfy-Server läuft mit `deploy/compose.ntfy.yaml`, Einrichtung in [`deploy/README.md`](deploy/README.md#benachrichtigungen).
+
 Einstellungen (Abschnitt `Suggestions`):
 
 | Schlüssel | Standard | Bedeutung |
@@ -198,7 +200,7 @@ Die API liefert Messwerte für Prometheus unter `/metrics`, aber nur auf einem e
 
 | Messwert | Bedeutung |
 | --- | --- |
-| `slipways_job_runs_total{task, result}` | Läufe der Hintergrund-Jobs `gauges`, `rijkswaterstaat`, `shapes`, `osm`, `websites`, nach `success`/`failure` |
+| `slipways_job_runs_total{task, result}` | Läufe der Hintergrund-Jobs `gauges`, `rijkswaterstaat`, `shapes`, `osm`, `websites`, `notifications`, nach `success`/`failure` |
 | `slipways_job_duration_seconds{task}` | Dauer der Läufe (Histogramm) |
 | `slipways_job_last_success_timestamp_seconds{task}` | Zeitpunkt des letzten erfolgreichen Laufs (für `osm` nach einem Neustart aus der Datenbank) |
 | `slipways_gauge_water_levels_updated_total` | übernommene Wasserstände |
@@ -208,6 +210,7 @@ Die API liefert Messwerte für Prometheus unter `/metrics`, aber nur auf einem e
 | `slipways_website_checks_total{result}` | gelesene Webseiten von Marinas nach Ergebnis (`found`, `empty`, `disallowed`, `refused`, `failed`) |
 | `slipways_suggestions_received_total{result}` | eingegangene Vorschläge nach Ergebnis (`queued`, `invalid`, `proof_failed`, `honeypot`, `nearby`) |
 | `slipways_suggestions_decided_total{decision}` | Entscheidungen in der Moderation (`accepted`, `rejected`) |
+| `slipways_notifications_sent_total` | Benachrichtigungen über neue Vorschläge (ntfy) |
 | `slipways_suggestions_pending` | Vorschläge, die auf die Moderation warten (jede Minute gezählt) |
 | `slipways_places{kind, source}` | Slipanlagen, Marinas und Pegel in der Datenbank (jede Minute gezählt) |
 | `slipways_database_size_bytes` | Größe der SQLite-Datei samt WAL |
@@ -217,7 +220,7 @@ Die API liefert Messwerte für Prometheus unter `/metrics`, aber nur auf einem e
 
 Labels haben nur wenige feste Werte. Das Label der Jobs heißt `task`, weil Prometheus `job` selbst vergibt. Benutzer, Inhalte und IDs kommen nicht vor.
 
-Mit `Monitoring:Loki:Url` (z. B. `http://monitoring:3100`) schickt die API ihre Logzeilen zusätzlich an Loki, mit den Labels `app=slipways`, `host` (`Monitoring:Loki:Host`), `level` und `source` (`api`, `http`, `db`, `gauges`, `shapes`, `osm`, `websites`, `http-client`). Die Zeilen werden alle 2 Sekunden gebündelt verschickt. Ist Loki nicht erreichbar, verwirft die API sie, statt zu warten. Das Konsolen-Log bleibt vollständig. Ohne Url ist der Versand aus. Angebunden ist nur slipways.de; Einrichten: [`deploy/README.md`](deploy/README.md#überwachung).
+Mit `Monitoring:Loki:Url` (z. B. `http://monitoring:3100`) schickt die API ihre Logzeilen zusätzlich an Loki, mit den Labels `app=slipways`, `host` (`Monitoring:Loki:Host`), `level` und `source` (`api`, `http`, `db`, `gauges`, `shapes`, `osm`, `websites`, `notifications`, `http-client`). Die Zeilen werden alle 2 Sekunden gebündelt verschickt. Ist Loki nicht erreichbar, verwirft die API sie, statt zu warten. Das Konsolen-Log bleibt vollständig. Ohne Url ist der Versand aus. Angebunden ist nur slipways.de; Einrichten: [`deploy/README.md`](deploy/README.md#überwachung).
 
 ## Entwickeln ohne Docker
 
