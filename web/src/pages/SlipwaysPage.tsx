@@ -1,24 +1,26 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { ChevronRight, MapPinPlus, Sailboat } from 'lucide-react'
 import { memo, useDeferredValue, useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router'
+import { Link } from 'react-router'
 import { api } from '../api/client'
 import type { SlipwaySummary } from '../api/types'
 import { LazyMarkerMap } from '../components/LazyMarkerMap'
 import { ListSkeleton } from '../components/ListSkeleton'
 import { slipwayMarker } from '../components/mapMarkers'
-import { byCountry, coreBounds, countryName } from '../components/countries'
+import { byCountry, coreBounds } from '../components/countries'
+import { CountrySelect } from '../components/CountrySelect'
 import { boundsOf, listedInView, type MapView } from '../components/mapView'
 import { Overview } from '../components/Overview'
 import { SearchField } from '../components/SearchField'
 import { ZoomHint } from '../components/ZoomHint'
 import { count } from './count'
+import { useQueryParams } from './searchParams'
 
 // Starts with every country on screen, one bubble each.
 const EUROPE: [number, number] = [50, 5]
 
 export function SlipwaysPage() {
-  const [params, setParams] = useSearchParams()
+  const [params, setParam] = useQueryParams()
   const search = params.get('q') ?? ''
   const country = params.get('land')
   const deferredSearch = useDeferredValue(search.trim())
@@ -49,12 +51,6 @@ export function SlipwaysPage() {
     () => (shown && searching ? boundsOf(shown) : shown && country ? coreBounds(shown) : null),
     [shown, searching, country],
   )
-  const setParam = (key: string, value: string) => {
-    const next = new URLSearchParams(params)
-    if (value) next.set(key, value)
-    else next.delete(key)
-    setParams(next, { replace: true })
-  }
   // A new slipway starts where the sender is looking, if they zoomed in far enough to mean a place.
   const newSlipway =
     view && view.zoom >= 10
@@ -73,21 +69,11 @@ export function SlipwaysPage() {
           placeholder="Nach Name, Ort oder Gewässer suchen"
           label="Slipanlagen durchsuchen"
         />
-        {countries.length > 1 && (
-          <select
-            className="toolbar-select"
-            aria-label="Land"
-            value={country ?? ''}
-            onChange={(e) => setParam('land', e.target.value)}
-          >
-            <option value="">Alle Länder</option>
-            {countries.map(({ code, items }) => (
-              <option key={code} value={code}>
-                {countryName(code)} ({items.length.toLocaleString('de-DE')})
-              </option>
-            ))}
-          </select>
-        )}
+        <CountrySelect
+          options={countries.map(({ code, items }) => ({ code, count: items.length }))}
+          value={country}
+          onChange={(code) => setParam('land', code)}
+        />
         <Link to={newSlipway} className="toolbar-link" aria-label="Slipanlage fehlt? Vorschlagen">
           <MapPinPlus size={18} /> <span>Slipanlage fehlt?</span>
         </Link>

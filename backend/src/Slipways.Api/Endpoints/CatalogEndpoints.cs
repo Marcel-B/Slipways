@@ -104,16 +104,23 @@ public static class CatalogEndpoints
 
         // The position comes from what lies on a water, which is far less data than its shape.
         var slipways = (await db.Slipways.AsNoTracking()
-            .Select(s => new { s.WaterId, Position = new PositionDto(s.Latitude, s.Longitude) })
-            .ToListAsync(ct)).ToLookup(s => s.WaterId, s => s.Position);
+            .Select(s => new { s.WaterId, Position = new PositionDto(s.Latitude, s.Longitude), s.Country })
+            .ToListAsync(ct)).ToLookup(s => s.WaterId);
         var marinas = (await db.Marinas.AsNoTracking()
-            .Select(m => new { m.WaterId, Position = new PositionDto(m.Latitude, m.Longitude) })
-            .ToListAsync(ct)).ToLookup(m => m.WaterId, m => m.Position);
+            .Select(m => new
+            {
+                m.WaterId,
+                Position = new PositionDto(m.Latitude, m.Longitude),
+                Country = m.OsmCountry ?? m.Slipways.Where(s => s.Country != null).OrderBy(s => s.Name).Select(s => s.Country).FirstOrDefault(),
+            })
+            .ToListAsync(ct)).ToLookup(m => m.WaterId);
         var stations = (await db.Stations.AsNoTracking()
             .Select(s => new
             {
                 s.WaterId,
                 Position = new PositionDto(s.Latitude, s.Longitude),
+                // Gauges come from Rijkswaterstaat (with a location code) or from PEGELONLINE, which covers Germany.
+                Country = s.ExternalCode != null ? "NL" : "DE",
                 Gauge = s.WaterLevel == null || s.WaterLevelMeasuredAt == null
                     ? null
                     : new GaugeReadingDto(s.Id, s.Name,
@@ -135,14 +142,27 @@ public static class CatalogEndpoints
 
         return waters.Select(w =>
         {
+            var waterSlipways = slipways[w.Id].ToList();
+            var waterMarinas = marinas[w.Id].ToList();
             var waterStations = stations[w.Id].ToList();
-            var positions = slipways[w.Id].Concat(marinas[w.Id]).Concat(waterStations.Select(s => s.Position))
+            var positions = waterSlipways.Select(s => s.Position)
+                .Concat(waterMarinas.Select(m => m.Position))
+                .Concat(waterStations.Select(s => s.Position))
                 .Concat(shapes.GetValueOrDefault(w.Id) ?? [])
                 .ToList();
+            var countries = waterSlipways.Select(s => s.Country)
+                .Concat(waterMarinas.Select(m => m.Country))
+                .Concat(waterStations.Select(s => s.Country))
+                .OfType<string>()
+                .GroupBy(c => c)
+                .OrderByDescending(g => g.Count()).ThenBy(g => g.Key, StringComparer.Ordinal)
+                .Select(g => g.Key)
+                .ToList();
             return new WaterSummaryDto(
-                w.Id, w.Name, w.Shortname, slipways[w.Id].Count(), waterStations.Count,
+                w.Id, w.Name, w.Shortname, waterSlipways.Count, waterStations.Count,
                 MarkerPosition(positions),
-                waterStations.Count == 1 ? waterStations[0].Gauge : null);
+                waterStations.Count == 1 ? waterStations[0].Gauge : null,
+                countries);
         }).ToList();
     }
 
@@ -256,7 +276,9 @@ public static class CatalogEndpoints
         return query
             .OrderBy(m => m.Name)
             .Select(m => new MarinaDto(
-                m.Id, m.Name, m.Latitude, m.Longitude, m.Url, m.Street, m.PostalCode, m.City, m.Phone, m.Email,
+                m.Id, m.Name, m.Latitude, m.Longitude, m.Url, m.Street, m.PostalCode, m.City,
+                m.OsmCountry ?? m.Slipways.Where(s => s.Country != null).OrderBy(s => s.Name).Select(s => s.Country).FirstOrDefault(),
+                m.Phone, m.Email,
                 m.Operator, m.Fee, m.Access, m.OpeningHours,
                 m.Water == null ? null : new WaterDto(m.Water.Id, m.Water.Name),
                 m.Source, m.OsmId == null ? null : m.OsmType + "/" + m.OsmId))

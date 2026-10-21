@@ -62,5 +62,6 @@ export function marinaMarker(marina: Marina): MapMarker {
     title: marina.name,
     subtitle: marina.water?.name ?? 'Marina',
     to: `/marinas/${marina.id}`,
+    country: marina.country,
   }
 }
