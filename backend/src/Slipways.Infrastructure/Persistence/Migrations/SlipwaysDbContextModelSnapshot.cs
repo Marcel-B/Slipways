@@ -681,6 +681,13 @@ namespace Slipways.Infrastructure.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("manual");
+
                     b.Property<DateTime?>("Updated")
                         .HasColumnType("TEXT");
 

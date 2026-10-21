@@ -229,13 +229,46 @@ public sealed class OsmImportTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Queries_both_kinds_of_one_country_one_after_another_with_a_timeout()
+    public async Task Adds_named_waters_next_to_the_places_once()
+    {
+        // A river relation, a river mapped only as ways, a lake, an unnamed lake and the Donau, which we know by name.
+        _overpass.Respond("DE", "water", """
+            {
+              "version": 0.6,
+              "elements": [
+                { "type": "relation", "id": 900, "tags": { "type": "waterway", "waterway": "river", "name": "Testfluss" } },
+                { "type": "way", "id": 901, "tags": { "waterway": "river", "name": "Kleine Aue" } },
+                { "type": "way", "id": 902, "tags": { "waterway": "river", "name": "Kleine Aue" } },
+                { "type": "way", "id": 903, "tags": { "natural": "water", "water": "lake", "name": "Testsee" } },
+                { "type": "way", "id": 904, "tags": { "natural": "water" } },
+                { "type": "relation", "id": 905, "tags": { "natural": "water", "name": "Donau" } }
+              ]
+            }
+            """);
+        var before = await _db.Waters.CountAsync(TestContext.Current.CancellationToken);
+
+        var first = await CreateImport().RunAsync("DE", TestContext.Current.CancellationToken);
+        var second = await CreateImport().RunAsync("DE", TestContext.Current.CancellationToken);
+
+        Assert.Equal((3, 0), (first.WatersAdded, second.WatersAdded));
+        var added = await _db.Waters.AsNoTracking().Where(w => w.Source == Sources.Osm).OrderBy(w => w.Name)
+            .ToListAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(
+            [("Kleine Aue", "way/901,way/902"), ("Testfluss", "relation/900"), ("Testsee", "way/903")],
+            added.Select(w => (w.Name, string.Join(',', w.OsmElements))));
+        Assert.All(added, w => Assert.Null(w.Shape));
+        Assert.Equal(before + 3, await _db.Waters.CountAsync(TestContext.Current.CancellationToken));
+        Assert.Contains("(around.p:300)", _overpass.Queries.Last().Text);
+    }
+
+    [Fact]
+    public async Task Queries_both_kinds_and_the_waters_of_one_country_one_after_another_with_a_timeout()
     {
         await CreateImport().RunAsync("DE", TestContext.Current.CancellationToken);
 
-        Assert.Equal(["DE slipway", "DE marina"], _overpass.Queries.Select(q => $"{q.Country} {q.Leisure}"));
+        Assert.Equal(["DE slipway", "DE marina", "DE water"], _overpass.Queries.Select(q => $"{q.Country} {q.Leisure}"));
         Assert.All(_overpass.Queries, q => Assert.Contains("[timeout:180]", q.Text));
-        Assert.All(_overpass.Queries, q => Assert.EndsWith("out center tags;", q.Text));
+        Assert.All(_overpass.Queries.SkipLast(1), q => Assert.EndsWith("out center tags;", q.Text));
         Assert.Equal(1, _overpass.MaxConcurrent);
     }
 
@@ -281,7 +314,7 @@ public sealed class OsmImportTests : IAsyncLifetime
         var result = await CreateImport().RunAsync("DE", TestContext.Current.CancellationToken);
 
         Assert.Equal(2, result.Slipways.Added);
-        Assert.Equal(4, _overpass.Queries.Count);
+        Assert.Equal(5, _overpass.Queries.Count);
     }
 
     private static void AssertManualFieldsUnchanged(Slipway before, Slipway after)
@@ -330,7 +363,7 @@ public sealed class OsmImportTests : IAsyncLifetime
                 await Task.Yield();
                 var query = HttpUtility.ParseQueryString(await request.Content!.ReadAsStringAsync(cancellationToken))["data"]!;
                 var country = query.Split("\"ISO3166-1\"=\"")[1][..2];
-                var leisure = query.Split("leisure=")[1].Split(']')[0];
+                var leisure = query.Contains("leisure=") ? query.Split("leisure=")[1].Split(']')[0] : "water";
                 Queries.Add((country, leisure, query));
 
                 if (BusyResponses > 0)

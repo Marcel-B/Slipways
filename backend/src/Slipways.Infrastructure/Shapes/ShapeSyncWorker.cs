@@ -27,8 +27,8 @@ public sealed class ShapeSyncWorker(
                 var result = await SlipwaysMetrics.MeasureJobAsync("shapes", time,
                     () => scope.ServiceProvider.GetRequiredService<ShapeSync>().RunAsync(stoppingToken), stoppingToken);
                 logger.LogInformation(
-                    "Shape sync finished: {Assignments} assignments changed, {Shapes} shapes updated",
-                    result.AssignmentsChanged, result.ShapesUpdated);
+                    "Shape sync finished: {Assignments} assignments changed, {Shapes} shapes updated, {Places} places put on a water",
+                    result.AssignmentsChanged, result.ShapesUpdated, result.PlacesAssigned);
                 if (result.MissingElements.Count > 0)
                     logger.LogWarning("Nominatim does not know {Elements}", string.Join(", ", result.MissingElements));
             }

@@ -6,6 +6,7 @@ using System.Web;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Slipways.Domain;
 using Slipways.Infrastructure.Persistence;
 using Slipways.Infrastructure.Shapes;
 
@@ -55,6 +56,26 @@ public sealed class ShapeSyncTests : IAsyncLifetime
         Assert.Equal(_time.GetUtcNow().UtcDateTime, rhein.ShapeUpdated);
         Assert.Equal(2, result.ShapesUpdated);
         Assert.True(result.AssignmentsChanged > 100);
+    }
+
+    [Fact]
+    public async Task Puts_places_without_a_water_on_a_new_shape()
+    {
+        // Halfway along the Rhine line, and far away from any water.
+        _db.Slipways.Add(new Slipway { Id = Guid.NewGuid(), Name = "Am Rhein", Latitude = 48.3, Longitude = 7.9, Source = Sources.Osm });
+        _db.Slipways.Add(new Slipway { Id = Guid.NewGuid(), Name = "Im Nirgendwo", Latitude = 40.0, Longitude = 20.0, Source = Sources.Osm });
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        _db.ChangeTracker.Clear();
+
+        var result = await CreateSync().RunAsync(TestContext.Current.CancellationToken);
+
+        var rhein = await _db.Waters.AsNoTracking().SingleAsync(w => w.Shortname == "RHEIN", TestContext.Current.CancellationToken);
+        var onRhine = await _db.Slipways.AsNoTracking().SingleAsync(s => s.Name == "Am Rhein", TestContext.Current.CancellationToken);
+        var nowhere = await _db.Slipways.AsNoTracking().SingleAsync(s => s.Name == "Im Nirgendwo", TestContext.Current.CancellationToken);
+        Assert.Equal(rhein.Id, onRhine.WaterId);
+        Assert.Equal(_time.GetUtcNow().UtcDateTime, onRhine.Updated);
+        Assert.Null(nowhere.WaterId);
+        Assert.True(result.PlacesAssigned >= 1);
     }
 
     [Fact]

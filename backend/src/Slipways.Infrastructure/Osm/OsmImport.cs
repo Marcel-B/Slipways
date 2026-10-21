@@ -8,12 +8,14 @@ namespace Slipways.Infrastructure.Osm;
 
 public sealed record OsmImportCounts(int Added, int Updated, int Linked);
 
+/// <param name="WatersAdded">Waters next to the places that were new, see <see cref="OsmImport"/>.</param>
 /// <param name="Missing">Elements we know, such as "node/123", that the import no longer found in OpenStreetMap.</param>
 /// <param name="UserValuesResolved">Values from users that OpenStreetMap now has as well, so they were removed.</param>
 /// <param name="UserValuesConflicting">Values from users where OpenStreetMap changed to something else; sent back to moderation.</param>
 public sealed record OsmImportResult(
     OsmImportCounts Slipways,
     OsmImportCounts Marinas,
+    int WatersAdded,
     IReadOnlyList<string> Missing,
     int UserValuesResolved = 0,
     int UserValuesConflicting = 0);
@@ -24,6 +26,9 @@ public sealed record OsmImportResult(
 /// entered by hand only links that place to it; anything else becomes a new place with <see cref="Sources.Osm"/>.
 /// Imported places take their fields from OpenStreetMap on every run; places entered by hand keep theirs, so their
 /// data stays apart from the ODbL data. Elements that disappear from OpenStreetMap are only reported, never deleted.
+/// Named rivers, canals and lakes next to the places become waters with <see cref="Sources.Osm"/> unless a water
+/// already has the element; their shapes come later from <see cref="Shapes.ShapeSync"/>, which then also puts places
+/// on them.
 /// </summary>
 public sealed class OsmImport(SlipwaysDbContext db, OverpassClient client, IOptions<OsmOptions> options, TimeProvider time)
 {
@@ -40,8 +45,11 @@ public sealed class OsmImport(SlipwaysDbContext db, OverpassClient client, IOpti
         var slipwayElements = await FetchAsync(country, "slipway", cancellationToken);
         await Task.Delay(options.Value.RequestSpacing, time, cancellationToken);
         var marinaElements = await FetchAsync(country, "marina", cancellationToken);
+        await Task.Delay(options.Value.RequestSpacing, time, cancellationToken);
+        var waterElements = await client.GetWatersAsync(country, WaterDistance, cancellationToken);
 
         var now = time.GetUtcNow().UtcDateTime;
+        var watersAdded = await ImportWatersAsync(waterElements, now, cancellationToken);
         var shapes = await db.Waters.AsNoTracking()
             .Where(w => w.Shape != null)
             .Select(w => new { w.Id, w.Shape })
@@ -60,7 +68,7 @@ public sealed class OsmImport(SlipwaysDbContext db, OverpassClient client, IOpti
         // In the same save as the places, so the recorded success and the data never disagree.
         await OsmImportSchedule.MarkSuccessAsync(db, country, now, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
-        return new OsmImportResult(slipways, marinas, missing, resolved, conflicts);
+        return new OsmImportResult(slipways, marinas, watersAdded, missing, resolved, conflicts);
     }
 
     /// <summary>
@@ -75,6 +83,35 @@ public sealed class OsmImport(SlipwaysDbContext db, OverpassClient client, IOpti
             .Where(e => e is { Latitude: { } latitude, Longitude: { } longitude } && InEurope(latitude, longitude))
             .Select(e => new OsmPlace(e, country, e.Latitude!.Value, e.Longitude!.Value))
             .ToList();
+
+    /// <summary>
+    /// Adds a water for every relation or lake we do not know yet. River ways outside a waterway relation are put
+    /// together by name, since a river without a relation is mapped as many ways. A water already named the same but
+    /// without elements, e.g. one from PEGELONLINE without a shape, is not added a second time.
+    /// </summary>
+    private async Task<int> ImportWatersAsync(IReadOnlyList<OverpassElement> elements, DateTime now, CancellationToken cancellationToken)
+    {
+        var existing = await db.Waters.ToListAsync(cancellationToken);
+        var known = existing.SelectMany(w => w.OsmElements).ToHashSet();
+        var namesWithoutShape = existing.Where(w => w.OsmElements.Count == 0).Select(w => w.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var groups = elements
+            .Where(e => e.Type is "way" or "relation" && e.Tag("name") is not null)
+            .GroupBy(e => e is { Type: "way" } && e.Tag("waterway") is not null ? $"way:{e.Tag("name")}" : $"{e.Type}/{e.Id}")
+            .Select(g => (Name: g.First().Tag("name")!, Elements: g.Select(e => $"{e.Type}/{e.Id}").Order().ToList()));
+
+        var added = 0;
+        foreach (var (name, members) in groups)
+        {
+            if (members.Any(known.Contains) || namesWithoutShape.Contains(name))
+                continue;
+
+            db.Waters.Add(new Water { Id = Guid.NewGuid(), Created = now, Name = name, Source = Sources.Osm, OsmElements = members });
+            known.UnionWith(members);
+            added++;
+        }
+        return added;
+    }
 
     private OsmImportCounts Import<T>(
         List<T> existing,

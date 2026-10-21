@@ -5,6 +5,12 @@ public class Water : Entity
     public required string Name { get; set; }
     public string? Shortname { get; set; }
 
+    /// <summary>
+    /// <see cref="Sources.Manual"/> for our own waters and those from PEGELONLINE, <see cref="Sources.Osm"/> for waters
+    /// the OpenStreetMap import found next to slipways and marinas; their names are under the ODbL.
+    /// </summary>
+    public string Source { get; set; } = Sources.Manual;
+
     /// <summary>OpenStreetMap elements that make up the water, such as "relation/123924"; empty when it has no shape.</summary>
     public List<string> OsmElements { get; set; } = [];
 

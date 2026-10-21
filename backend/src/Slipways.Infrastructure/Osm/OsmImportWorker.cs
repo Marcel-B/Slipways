@@ -80,12 +80,13 @@ public sealed class OsmImportWorker(
                 () => scope.ServiceProvider.GetRequiredService<OsmImport>().RunAsync(country, stoppingToken), stoppingToken);
             Record("slipway", result.Slipways);
             Record("marina", result.Marinas);
+            SlipwaysMetrics.OsmImportChanges.WithLabels("water", "added").Inc(result.WatersAdded);
             SlipwaysMetrics.OsmMissingElements.WithLabels(country).Set(result.Missing.Count);
             logger.LogInformation(
                 "OpenStreetMap import of {Country} finished: slipways {SlipwaysAdded} added, {SlipwaysUpdated} updated, {SlipwaysLinked} linked; " +
-                "marinas {MarinasAdded} added, {MarinasUpdated} updated, {MarinasLinked} linked",
+                "marinas {MarinasAdded} added, {MarinasUpdated} updated, {MarinasLinked} linked; waters {WatersAdded} added",
                 country, result.Slipways.Added, result.Slipways.Updated, result.Slipways.Linked,
-                result.Marinas.Added, result.Marinas.Updated, result.Marinas.Linked);
+                result.Marinas.Added, result.Marinas.Updated, result.Marinas.Linked, result.WatersAdded);
             if (result.UserValuesResolved + result.UserValuesConflicting > 0)
                 logger.LogInformation(
                     "Values from users: {Resolved} now in OpenStreetMap as well, {Conflicting} sent back to moderation",
