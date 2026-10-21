@@ -67,8 +67,24 @@ public sealed class OsmImport(SlipwaysDbContext db, OverpassClient client, IOpti
 
         // In the same save as the places, so the recorded success and the data never disagree.
         await OsmImportSchedule.MarkSuccessAsync(db, country, now, cancellationToken);
+        await OsmImportSchedule.MarkWatersImportedAsync(db, country, now, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
         return new OsmImportResult(slipways, marinas, watersAdded, missing, resolved, conflicts);
+    }
+
+    /// <summary>
+    /// Imports only the waters next to the places of one <paramref name="country"/>, for a country whose places were
+    /// imported before the import took waters, so it does not wait a whole interval for them.
+    /// </summary>
+    /// <returns>The number of waters added.</returns>
+    public async Task<int> RunWatersAsync(string country, CancellationToken cancellationToken = default)
+    {
+        var elements = await client.GetWatersAsync(country, WaterDistance, cancellationToken);
+        var now = time.GetUtcNow().UtcDateTime;
+        var added = await ImportWatersAsync(elements, now, cancellationToken);
+        await OsmImportSchedule.MarkWatersImportedAsync(db, country, now, cancellationToken);
+        await db.SaveChangesAsync(cancellationToken);
+        return added;
     }
 
     /// <summary>

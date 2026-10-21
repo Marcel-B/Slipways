@@ -32,7 +32,7 @@ public sealed class OsmImportWorker(
         while (true)
         {
             var now = time.GetUtcNow().UtcDateTime;
-            string? country = null;
+            string? country = null, withoutWaters = null;
             DateTime due;
             try
             {
@@ -44,11 +44,23 @@ public sealed class OsmImportWorker(
                     SlipwaysMetrics.JobLastSuccess.WithLabels(OsmImportSchedule.JobName)
                         .Set(new DateTimeOffset(success, TimeSpan.Zero).ToUnixTimeMilliseconds() / 1000.0);
                 (country, due) = OsmImportSchedule.NextRun(states, options.Value);
+                withoutWaters = await OsmImportSchedule.WithoutWatersAsync(
+                    scope.ServiceProvider.GetRequiredService<SlipwaysDbContext>(), options.Value.CountriesToImport, now, options.Value, stoppingToken);
             }
             catch (Exception ex) when (!stoppingToken.IsCancellationRequested)
             {
                 logger.LogWarning(ex, "OpenStreetMap import schedule could not be read; trying again in {RetryInterval}", options.Value.RetryInterval);
                 due = now + options.Value.RetryInterval;
+            }
+
+            // A full run takes the waters as well, so catching up only fills the time until the next one.
+            if (due > now && withoutWaters is not null)
+            {
+                if (ran)
+                    await Task.Delay(options.Value.RequestSpacing, time, stoppingToken);
+                await RunWatersAsync(withoutWaters, stoppingToken);
+                ran = true;
+                continue;
             }
 
             if (due > now)
@@ -110,6 +122,33 @@ public sealed class OsmImportWorker(
             {
                 // Without the failure in the database the next loop would start right away; wait here instead.
                 logger.LogWarning(recordEx, "OpenStreetMap import failure could not be recorded");
+                await Task.Delay(options.Value.RetryInterval, time, stoppingToken);
+            }
+        }
+    }
+
+    private async Task RunWatersAsync(string country, CancellationToken stoppingToken)
+    {
+        try
+        {
+            await using var scope = scopes.CreateAsyncScope();
+            var added = await SlipwaysMetrics.MeasureJobAsync(OsmImportSchedule.JobName, time,
+                () => scope.ServiceProvider.GetRequiredService<OsmImport>().RunWatersAsync(country, stoppingToken), stoppingToken);
+            SlipwaysMetrics.OsmImportChanges.WithLabels("water", "added").Inc(added);
+            logger.LogInformation("OpenStreetMap waters of {Country} caught up: {WatersAdded} added", country, added);
+        }
+        catch (Exception ex) when (!stoppingToken.IsCancellationRequested)
+        {
+            logger.LogWarning(ex, "OpenStreetMap waters of {Country} failed; retrying in {RetryInterval}", country, options.Value.RetryInterval);
+            try
+            {
+                await using var scope = scopes.CreateAsyncScope();
+                await OsmImportSchedule.RecordWatersFailureAsync(
+                    scope.ServiceProvider.GetRequiredService<SlipwaysDbContext>(), country, time.GetUtcNow().UtcDateTime, stoppingToken);
+            }
+            catch (Exception recordEx) when (!stoppingToken.IsCancellationRequested)
+            {
+                logger.LogWarning(recordEx, "OpenStreetMap waters failure could not be recorded");
                 await Task.Delay(options.Value.RetryInterval, time, stoppingToken);
             }
         }

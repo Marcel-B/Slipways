@@ -21,6 +21,27 @@ public static class OsmImportSchedule
     public static string StateName(string country) => $"{JobName}:{country}";
 
     /// <summary>
+    /// Name of the row that records the waters of a country were imported. Waters came to the import later than the
+    /// places; countries imported before that catch up on them once, see <see cref="WithoutWatersAsync"/>.
+    /// </summary>
+    public static string WatersStateName(string country) => $"{JobName}-waters:{country}";
+
+    /// <summary>
+    /// The first of the <paramref name="countries"/> whose waters were never imported, leaving out one that failed
+    /// less than <see cref="OsmOptions.RetryInterval"/> ago; null when there is none.
+    /// </summary>
+    public static async Task<string?> WithoutWatersAsync(
+        SlipwaysDbContext db, IReadOnlyList<string> countries, DateTime now, OsmOptions options, CancellationToken cancellationToken = default)
+    {
+        var prefix = WatersStateName("");
+        var states = await db.JobStates.AsNoTracking()
+            .Where(s => s.Name.StartsWith(prefix))
+            .ToDictionaryAsync(s => s.Name, cancellationToken);
+        return countries.FirstOrDefault(c => !states.TryGetValue(WatersStateName(c), out var state)
+            || (state.LastSuccess is null && (state.LastFailure is null || state.LastFailure + options.RetryInterval <= now)));
+    }
+
+    /// <summary>
     /// States of the <paramref name="countries"/>. Before the import ran per country, a single row "osm" covered all
     /// of them, and before that row existed the newest imported place stood in for it. That last success still counts
     /// for the countries it imported, i.e. those with imported slipways, so they are not all fetched again at once.
@@ -77,12 +98,24 @@ public static class OsmImportSchedule
     /// <summary>Marks a success in <paramref name="db"/>; it is saved together with the imported places.</summary>
     public static async Task MarkSuccessAsync(
         SlipwaysDbContext db, string country, DateTime now, CancellationToken cancellationToken = default) =>
-        (await FindOrAddAsync(db, country, cancellationToken)).LastSuccess = now;
+        (await FindOrAddAsync(db, StateName(country), cancellationToken)).LastSuccess = now;
 
     public static async Task RecordFailureAsync(
         SlipwaysDbContext db, string country, DateTime now, CancellationToken cancellationToken = default)
     {
-        (await FindOrAddAsync(db, country, cancellationToken)).LastFailure = now;
+        (await FindOrAddAsync(db, StateName(country), cancellationToken)).LastFailure = now;
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <summary>Marks the waters of a country as imported in <paramref name="db"/>; saved together with the waters.</summary>
+    public static async Task MarkWatersImportedAsync(
+        SlipwaysDbContext db, string country, DateTime now, CancellationToken cancellationToken = default) =>
+        (await FindOrAddAsync(db, WatersStateName(country), cancellationToken)).LastSuccess = now;
+
+    public static async Task RecordWatersFailureAsync(
+        SlipwaysDbContext db, string country, DateTime now, CancellationToken cancellationToken = default)
+    {
+        (await FindOrAddAsync(db, WatersStateName(country), cancellationToken)).LastFailure = now;
         await db.SaveChangesAsync(cancellationToken);
     }
 
@@ -95,9 +128,8 @@ public static class OsmImportSchedule
         return Max(newestSlipway, newestMarina);
     }
 
-    private static async Task<JobState> FindOrAddAsync(SlipwaysDbContext db, string country, CancellationToken cancellationToken)
+    private static async Task<JobState> FindOrAddAsync(SlipwaysDbContext db, string name, CancellationToken cancellationToken)
     {
-        var name = StateName(country);
         return await db.JobStates.SingleOrDefaultAsync(s => s.Name == name, cancellationToken)
             ?? db.JobStates.Add(new JobState { Name = name }).Entity;
     }
