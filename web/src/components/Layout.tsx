@@ -35,7 +35,8 @@ export function Layout() {
           <p className="muted">
             Kartendaten ©{' '}
             <a href="https://www.openstreetmap.org/copyright">OpenStreetMap-Mitwirkende</a> (ODbL) · Pegelstände{' '}
-            <a href="https://www.pegelonline.wsv.de/">PEGELONLINE</a> der WSV (DL-DE-&gt;Zero-2.0)
+            <a href="https://www.pegelonline.wsv.de/">PEGELONLINE</a> der WSV (DL-DE-&gt;Zero-2.0) und{' '}
+            <a href="https://waterinfo.rws.nl/">Rijkswaterstaat</a>
           </p>
           <p className="muted">
             © 2019–2026 Marcel Benders ·{' '}

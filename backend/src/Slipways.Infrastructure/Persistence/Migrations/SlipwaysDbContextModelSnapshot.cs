@@ -543,6 +543,10 @@ namespace Slipways.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("Created")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("ExternalCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
                     b.Property<Guid?>("ExternalId")
                         .HasColumnType("TEXT");
 
@@ -583,6 +587,9 @@ namespace Slipways.Infrastructure.Persistence.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ExternalCode")
+                        .IsUnique();
 
                     b.HasIndex("ExternalId")
                         .IsUnique();

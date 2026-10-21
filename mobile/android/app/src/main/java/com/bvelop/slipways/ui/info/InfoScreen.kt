@@ -36,7 +36,8 @@ fun InfoScreen() {
             LinkText("openstreetmap.org/copyright", Links.OSM_COPYRIGHT)
             Text(
                 "Pegel und Wasserstände: PEGELONLINE der Wasserstraßen- und Schifffahrtsverwaltung des Bundes (WSV), " +
-                    "Datenlizenz Deutschland – Zero – Version 2.0.",
+                    "Datenlizenz Deutschland – Zero – Version 2.0. In den Niederlanden: Rijkswaterstaat (offene Daten), " +
+                    "Wasserstand über NAP.",
             )
             LinkText("pegelonline.wsv.de", Links.PEGELONLINE)
 

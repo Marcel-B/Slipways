@@ -26,7 +26,8 @@ export function SupportPage() {
         <dd>
           Angaben zu Slipanlagen stammen aus eigener Erfassung und aus <a href="https://www.openstreetmap.org/">OpenStreetMap</a>,
           Pegelstände
-          von <a href="https://www.pegelonline.wsv.de/">PEGELONLINE</a> der Wasserstraßen- und Schifffahrtsverwaltung des Bundes.
+          von <a href="https://www.pegelonline.wsv.de/">PEGELONLINE</a> der Wasserstraßen- und Schifffahrtsverwaltung des Bundes,
+          in den Niederlanden von <a href="https://waterinfo.rws.nl/">Rijkswaterstaat</a> (Wasserstand über NAP).
         </dd>
 
         <dt>Wie aktuell sind die Pegelstände?</dt>

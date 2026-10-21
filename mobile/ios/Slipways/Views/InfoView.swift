@@ -26,7 +26,7 @@ struct InfoView: View {
                 }
                 VStack(alignment: .leading, spacing: 4) {
                     Text("PEGELONLINE")
-                    Text("Pegel und Wasserstände: PEGELONLINE der Wasserstraßen- und Schifffahrtsverwaltung des Bundes (WSV), Datenlizenz Deutschland – Zero – Version 2.0.")
+                    Text("Pegel und Wasserstände: PEGELONLINE der Wasserstraßen- und Schifffahrtsverwaltung des Bundes (WSV), Datenlizenz Deutschland – Zero – Version 2.0. In den Niederlanden: Rijkswaterstaat (offene Daten), Wasserstand über NAP.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                     Link("pegelonline.wsv.de", destination: Links.pegelonline).font(.subheadline)

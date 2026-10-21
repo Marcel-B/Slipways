@@ -49,6 +49,15 @@ public static class DependencyInjection
         services.AddScoped<GaugeSync>();
         services.AddHostedService<GaugeSyncWorker>();
 
+        services.AddOptions<RijkswaterstaatOptions>().Bind(configuration.GetSection(RijkswaterstaatOptions.SectionName));
+        services.AddHttpClient<RijkswaterstaatClient>((sp, http) =>
+        {
+            http.BaseAddress = sp.GetRequiredService<IOptions<RijkswaterstaatOptions>>().Value.BaseUrl;
+            http.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgent);
+        });
+        services.AddScoped<RijkswaterstaatSync>();
+        services.AddHostedService<RijkswaterstaatWorker>();
+
         services.AddOptions<NominatimOptions>().Bind(configuration.GetSection(NominatimOptions.SectionName));
         services.AddHttpClient<NominatimClient>((sp, http) =>
         {
