@@ -117,8 +117,11 @@ public sealed class OsmImportTests : IAsyncLifetime
     {
         await CreateImport().RunAsync("DE", TestContext.Current.CancellationToken);
 
-        var state = await _db.JobStates.AsNoTracking().SingleAsync(TestContext.Current.CancellationToken);
-        Assert.Equal(("osm:DE", _time.GetUtcNow().UtcDateTime, (DateTime?)null), (state.Name, state.LastSuccess, state.LastFailure));
+        var now = _time.GetUtcNow().UtcDateTime;
+        var states = await _db.JobStates.AsNoTracking().OrderBy(s => s.Name).ToListAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(
+            [("osm-waters:DE", now, (DateTime?)null), ("osm:DE", now, null)],
+            states.Select(s => (s.Name, s.LastSuccess, s.LastFailure)));
     }
 
     [Fact]
@@ -259,6 +262,24 @@ public sealed class OsmImportTests : IAsyncLifetime
         Assert.All(added, w => Assert.Null(w.Shape));
         Assert.Equal(before + 3, await _db.Waters.CountAsync(TestContext.Current.CancellationToken));
         Assert.Contains("(around.p:300)", _overpass.Queries.Last().Text);
+    }
+
+    [Fact]
+    public async Task Catches_up_on_waters_alone_and_a_full_run_counts_as_caught_up()
+    {
+        _overpass.Respond("AT", "water", """
+            { "version": 0.6, "elements": [{ "type": "way", "id": 910, "tags": { "natural": "water", "name": "Testsee" } }] }
+            """);
+
+        var added = await CreateImport().RunWatersAsync("AT", TestContext.Current.CancellationToken);
+        await CreateImport().RunAsync("DE", TestContext.Current.CancellationToken);
+
+        Assert.Equal(1, added);
+        Assert.Equal("AT water", $"{_overpass.Queries[0].Country} {_overpass.Queries[0].Leisure}");
+        Assert.True(await _db.Waters.AnyAsync(w => w.Name == "Testsee" && w.Source == Sources.Osm, TestContext.Current.CancellationToken));
+        Assert.False(await _db.JobStates.AnyAsync(s => s.Name == "osm:AT", TestContext.Current.CancellationToken));
+        Assert.Null(await OsmImportSchedule.WithoutWatersAsync(
+            _db, ["AT", "DE"], DateTime.UtcNow, new OsmOptions(), TestContext.Current.CancellationToken));
     }
 
     [Fact]

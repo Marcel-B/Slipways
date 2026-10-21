@@ -108,6 +108,25 @@ public sealed class OsmImportScheduleTests : IAsyncLifetime
         Assert.Equal([new("DE", Monday, Monday.AddDays(31))], await LoadAsync("DE"));
     }
 
+    [Fact]
+    public async Task Catches_up_on_the_waters_of_each_country_once_and_after_a_failure_not_before_the_retry_interval()
+    {
+        _db.JobStates.Add(new JobState { Name = "osm-waters:DE", LastSuccess = Monday });
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        Assert.Equal("AT", await WithoutWatersAsync(Monday, "DE", "AT"));
+
+        await OsmImportSchedule.RecordWatersFailureAsync(_db, "AT", Monday, TestContext.Current.CancellationToken);
+        Assert.Null(await WithoutWatersAsync(Monday.AddMinutes(10), "DE", "AT"));
+        Assert.Equal("AT", await WithoutWatersAsync(Monday + Options.RetryInterval, "DE", "AT"));
+
+        await OsmImportSchedule.MarkWatersImportedAsync(_db, "AT", Monday.AddDays(1), TestContext.Current.CancellationToken);
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        Assert.Null(await WithoutWatersAsync(Monday.AddDays(40), "DE", "AT"));
+    }
+
+    private Task<string?> WithoutWatersAsync(DateTime now, params string[] countries) =>
+        OsmImportSchedule.WithoutWatersAsync(_db, countries, now, Options, TestContext.Current.CancellationToken);
+
     private Task<IReadOnlyList<OsmCountryState>> LoadAsync(params string[] countries) =>
         OsmImportSchedule.LoadAsync(_db, countries, TestContext.Current.CancellationToken);
 
