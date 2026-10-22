@@ -335,6 +335,11 @@ public struct Geometry: Codable, Hashable, Sendable {
 
     private enum CodingKeys: String, CodingKey { case type, coordinates, geometries }
 
+    public init(lines: [[Position]], polygons: [[[Position]]]) {
+        self.lines = lines
+        self.polygons = polygons
+    }
+
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         switch try container.decode(String.self, forKey: .type) {
@@ -388,6 +393,17 @@ public struct WaterShape: Decodable, Hashable, Identifiable, Sendable {
 
     private enum CodingKeys: String, CodingKey { case id, properties, geometry }
     private struct Properties: Decodable { let name: String }
+
+    init(id: String, name: String, geometry: Geometry) {
+        self.id = id
+        self.name = name
+        self.geometry = geometry
+    }
+
+    /// The shape with only its parts in `area`; see `Geometry.clipped(to:resolution:)`.
+    public func clipped(to area: MapArea, resolution: Double = 0) -> WaterShape {
+        WaterShape(id: id, name: name, geometry: geometry.clipped(to: area, resolution: resolution))
+    }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)

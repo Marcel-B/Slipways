@@ -59,8 +59,14 @@ struct WaterOverviewView: View {
 
     private var map: some View {
         let shown = Set(candidates.map(\.id))
-        // Shapes and list are fetched separately; draw only what the list shows, too.
-        let drawn = shapes.filter { shown.contains($0.id) }
+        // Shapes and list are fetched separately; draw only what the list shows, too. Only the parts in and around the
+        // view, at about a point's precision: MapKit would otherwise draw whole rivers at street level and run out of memory.
+        let clip = area.expanded(by: 0.5)
+        let resolution = area.longitudeDelta / max(mapWidth, 1)
+        let drawn = shapes
+            .filter { shown.contains($0.id) }
+            .map { $0.clipped(to: clip, resolution: resolution) }
+            .filter { !$0.geometry.isEmpty }
         return MapReader { proxy in
             Map(position: $position) {
                 ForEach(drawn) { shape in
