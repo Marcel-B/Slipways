@@ -16,6 +16,12 @@ struct InfoView: View {
                 Link(destination: Links.website) { Label("slipways.de", systemImage: "safari") }
             }
 
+            Section {
+                NavigationLink { MySuggestionsView() } label: { Label("Meine Vorschläge", systemImage: "tray.full") }
+            } footer: {
+                Text("Fehlt eine Slipanlage oder stimmt etwas nicht? Vorschläge gehen ohne Konto: auf der Seite einer Slipanlage oder Marina unter „Mitmachen“, neue Slipanlagen mit dem Plus auf der Karte. Alles wird vor der Veröffentlichung geprüft.")
+            }
+
             Section("Datenquellen") {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("OpenStreetMap")

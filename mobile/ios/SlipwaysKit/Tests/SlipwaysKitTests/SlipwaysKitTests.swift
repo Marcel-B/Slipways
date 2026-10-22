@@ -322,3 +322,115 @@ private let marinaDetails = """
     #expect(WaterShape.hit(shapes, latitude: 51.1, longitude: 10.1, tolerance: 0.001)?.id == "lake")
     #expect(WaterShape.hit(shapes, latitude: 51.1, longitude: 10.3, tolerance: 0.001) == nil)
 }
+
+// MARK: - Suggestions
+
+private func hex(_ bytes: [UInt8]) -> String { bytes.map { String(format: "%02x", $0) }.joined() }
+
+@Test func hashesLikeTheServer() {
+    #expect(hex(Proof.sha256(Array("abc".utf8))) == "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
+    // Longer than one block of 64 bytes.
+    let long = Array(String(repeating: "a", count: 100).utf8)
+    #expect(hex(Proof.sha256(long)) == "2816597888e4a0d3a36b82b83316ab32680eb8f00f8cd3b904d681246d285a0e")
+}
+
+@Test func solvesProofOfWork() async throws {
+    let salt = "0a1b2c?expires=1792700000"
+    let challenge = ProofChallenge(
+        algorithm: "SHA-256", challenge: hex(Proof.sha256(Array("\(salt)4711".utf8))), maxNumber: 10_000,
+        salt: salt, signature: "sig")
+
+    let solution = try await Proof.solve(challenge)
+
+    #expect(solution.number == 4711)
+    #expect(solution.salt == salt && solution.signature == "sig" && solution.challenge == challenge.challenge)
+}
+
+@Test func sendsSuggestionAsJson() async throws {
+    let transport = StubTransport(["/api/suggestions": (202, #"{"id":"s1","token":"t1"}"#)])
+    let api = SlipwaysAPI(baseURL: baseURL, transport: transport)
+    var request = SuggestionRequest(kind: .edit)
+    request.placeType = .slipway
+    request.placeId = "1"
+    request.fields = ["fee": "no"]
+
+    let created = try await api.suggest(request)
+
+    #expect(created == SuggestionCreated(id: "s1", token: "t1"))
+    let sent = try #require(transport.requests.first)
+    #expect(sent.httpMethod == "POST")
+    let body = try JSONSerialization.jsonObject(with: try #require(sent.httpBody)) as? [String: Any]
+    #expect(body?["kind"] as? String == "edit")
+    #expect(body?["placeType"] as? String == "slipway")
+    #expect((body?["fields"] as? [String: String]) == ["fee": "no"])
+    #expect(body?["name"] == nil)
+}
+
+@Test func reportsNearbySlipways() async throws {
+    let nearby = #"{"slipways":[{"id":"2","name":"Nonnensteg","distance":120,"source":"osm"}]}"#
+    let api = SlipwaysAPI(baseURL: baseURL, transport: StubTransport(["/api/suggestions": (409, nearby)]))
+
+    do {
+        _ = try await api.suggest(SuggestionRequest(kind: .newSlipway))
+        Issue.record("expected NearbySlipwaysError")
+    } catch let error as NearbySlipwaysError {
+        #expect(error.slipways.map(\.name) == ["Nonnensteg"])
+        #expect(error.slipways.first?.source == .osm)
+    }
+}
+
+@Test func showsTheServersReasonForRejectedSuggestions() async throws {
+    let problem = #"{"title":"Bad Request","status":400,"detail":"Der Wert für „costs“ ist nicht gültig."}"#
+    let api = SlipwaysAPI(baseURL: baseURL, transport: StubTransport(["/api/suggestions": (400, problem)]))
+
+    await #expect(throws: APIError(status: 400, message: "Der Wert für „costs“ ist nicht gültig.")) {
+        try await api.suggest(SuggestionRequest(kind: .edit))
+    }
+    #expect(APIError(status: 429).userMessage.hasPrefix("Du hast gerade viele Vorschläge"))
+}
+
+@Test func readsAndWithdrawsSuggestion() async throws {
+    let status = #"{"id":"s1","kind":"new_slipway","status":"pending","created":"2026-10-22T10:00:00Z","decided":null}"#
+    let transport = StubTransport(["/api/suggestions/s1": (200, status)])
+    let api = SlipwaysAPI(baseURL: baseURL, transport: transport)
+
+    let state = try await api.suggestion(id: "s1", token: "a b")
+    try await api.withdrawSuggestion(id: "s1", token: "a b")
+
+    #expect(state.kind == .newSlipway && state.status == .pending && state.decided == nil)
+    #expect(transport.requests[0].url?.query == "token=a%20b")
+    #expect(transport.requests[1].httpMethod == "DELETE")
+}
+
+@Test func remembersSentSuggestions() throws {
+    let defaults = try #require(UserDefaults(suiteName: "slipways-tests-\(UUID())"))
+    let store = SuggestionStore(defaults: defaults)
+    let now = Date()
+    let day = 86_400.0
+    func sent(_ id: String, fields: [String], daysAgo: Double) -> SentSuggestion {
+        SentSuggestion(
+            created: SuggestionCreated(id: id, token: "t"), kind: .edit, placeType: .slipway, placeId: "1",
+            name: "Kelheim", fields: fields, sent: now.addingTimeInterval(-daysAgo * day))
+    }
+    store.remember(sent("old", fields: ["fee"], daysAgo: 100))
+    store.remember(sent("month", fields: ["surface"], daysAgo: 40))
+    store.remember(sent("new", fields: ["access", "opening_hours"], daysAgo: 1))
+
+    #expect(store.all(now: now).map(\.id) == ["new", "month"])
+    #expect(store.pendingFields(.slipway, "1", changed: nil, now: now) == ["access", "opening_hours"])
+    #expect(store.pendingFields(.slipway, "1", changed: now, now: now).isEmpty)
+    #expect(store.pendingFields(.marina, "1", changed: nil, now: now).isEmpty)
+
+    store.forget("new")
+    #expect(store.all(now: now).map(\.id) == ["month"])
+}
+
+@Test func sendsOnlyChangedValues() {
+    let changed = Contributions.changed(
+        ["fee": "no", "access": "yes", "opening_hours": " ", "surface": "gravel"],
+        from: ["fee": "no", "access": "private"])
+
+    #expect(changed == ["access": "yes", "surface": "gravel"])
+    #expect(Contributions.fields["access"]?.label(of: "customers") == "nur für Kunden")
+    #expect(Contributions.osmEditURL("way/7")?.absoluteString == "https://www.openstreetmap.org/edit?way=7")
+}

@@ -237,3 +237,7 @@ extension WaterShape {
             .0
     }
 }
+
+extension MapArea: Identifiable {
+    public var id: Self { self }
+}

@@ -11,6 +11,9 @@ struct MarinaDetailView: View {
     @State private var details: MarinaDetails?
     @State private var water: WaterDetails?
     @State private var failed = false
+    @State private var suggest: SuggestMode?
+    @State private var pending: Set<String> = []
+    @Environment(\.suggestions) private var store
 
     var body: some View {
         content
@@ -20,6 +23,31 @@ struct MarinaDetailView: View {
                 ToolbarItem(placement: .confirmationAction) { Button("Fertig") { dismiss() } }
             }
             .task { await load() }
+            .sheet(item: $suggest, onDismiss: refreshPending) { mode in
+                if let details {
+                    SuggestSheet(place: place(details), mode: mode, current: values(details))
+                }
+            }
+    }
+
+    private func place(_ details: MarinaDetails) -> SuggestPlace {
+        SuggestPlace(type: .marina, id: details.id, name: details.name, source: details.source)
+    }
+
+    private static let fields = ["fee", "operator", "access", "opening_hours", "phone", "email"]
+
+    private func values(_ details: MarinaDetails) -> [String: String] {
+        Dictionary(uniqueKeysWithValues: Self.fields.compactMap { field in details.value(field).map { (field, $0.value) } })
+    }
+
+    private func refreshPending() {
+        pending = store.pendingFields(.marina, marina.id, changed: details?.lastChanged)
+    }
+
+    private func sourced(_ label: String, _ systemImage: String, _ field: String, _ details: MarinaDetails,
+                         display: @escaping (String) -> String = { $0 }, link: ((String) -> URL?)? = nil) -> SourcedFact {
+        SourcedFact(label: label, systemImage: systemImage, value: details.value(field), display: display, link: link,
+                    pending: pending.contains(field), onEdit: { suggest = .field(field) })
     }
 
     @ViewBuilder
@@ -48,6 +76,9 @@ struct MarinaDetailView: View {
                     }
                 }
                 TipsSection(tips: details.tips)
+                ContributeSections(
+                    place: place(details), values: values(details), osmElement: details.osmElement, pending: pending,
+                    suggest: { suggest = $0 })
                 NearestGaugeSection(water: water, latitude: details.latitude, longitude: details.longitude)
                 Section {
                     Button("Route planen", systemImage: "car") {
@@ -88,12 +119,12 @@ struct MarinaDetailView: View {
                 }
             }
             Fact(label: "Adresse", systemImage: "mappin.and.ellipse", value: details.address)
-            SourcedFact(label: "Gebühr", systemImage: "eurosign.circle", value: details.value("fee"), display: Labels.fee)
-            SourcedFact(label: "Betreiber", systemImage: "building.2", value: details.value("operator"))
-            SourcedFact(label: "Zugang", systemImage: "door.left.hand.open", value: details.value("access"), display: Labels.access)
-            SourcedFact(label: "Öffnungszeiten", systemImage: "clock", value: details.value("opening_hours"))
-            SourcedFact(label: "Telefon", systemImage: "phone", value: details.value("phone"), link: Links.phone)
-            SourcedFact(label: "E-Mail", systemImage: "envelope", value: details.value("email"), link: Links.mail)
+            sourced("Gebühr", "eurosign.circle", "fee", details, display: Labels.fee)
+            sourced("Betreiber", "building.2", "operator", details)
+            sourced("Zugang", "door.left.hand.open", "access", details, display: Labels.access)
+            sourced("Öffnungszeiten", "clock", "opening_hours", details)
+            sourced("Telefon", "phone", "phone", details, link: Links.phone)
+            sourced("E-Mail", "envelope", "email", details, link: Links.mail)
             if let text = details.url, let url = Links.web(text) {
                 Link(destination: url) { Label(text, systemImage: "link") }
             }
@@ -108,6 +139,7 @@ struct MarinaDetailView: View {
             let loaded = try await api.marina(id: marina.id)
             details = loaded
             failed = false
+            refreshPending()
             if let waterId = loaded.water?.id {
                 water = try? await api.water(id: waterId)
             }

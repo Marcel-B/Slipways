@@ -98,6 +98,8 @@ public enum Links {
     public static let impressum = URL(string: "https://slipways.de/impressum")!
     public static let datenschutz = URL(string: "https://slipways.de/datenschutz")!
     public static let support = URL(string: "https://slipways.de/support")!
+    /// How contributing works and what happens to suggestions.
+    public static let contribute = URL(string: "https://slipways.de/support#mitmachen")!
     public static let osmCopyright = URL(string: "https://www.openstreetmap.org/copyright")!
     public static let pegelonline = URL(string: "https://www.pegelonline.wsv.de/")!
     public static let pegelonlineLicence = URL(string: "https://www.govdata.de/dl-de/zero-2-0")!

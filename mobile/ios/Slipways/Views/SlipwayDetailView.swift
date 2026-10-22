@@ -10,6 +10,9 @@ struct SlipwayDetailView: View {
     @State private var water: WaterDetails?
     @State private var failed = false
     @State private var marina: MarinaRef?
+    @State private var suggest: SuggestMode?
+    @State private var pending: Set<String> = []
+    @Environment(\.suggestions) private var store
 
     private var coordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: slipway.latitude, longitude: slipway.longitude)
@@ -37,8 +40,10 @@ struct SlipwayDetailView: View {
                         if let contra = details.contra { Label(contra, systemImage: "hand.thumbsdown") }
                     }
                 }
-                ticked(details)
                 TipsSection(tips: details.tips)
+                ContributeSections(
+                    place: place(details), values: values(details), ticked: details.ticked, osmElement: details.osmElement,
+                    pending: pending, suggest: { suggest = $0 })
             } else if failed {
                 Section { Text("Details konnten nicht geladen werden.").foregroundStyle(.secondary) }
             } else {
@@ -63,6 +68,27 @@ struct SlipwayDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
         .marinaSheet($marina)
+        .sheet(item: $suggest, onDismiss: refreshPending) { mode in
+            if let details {
+                SuggestSheet(place: place(details), mode: mode, current: values(details))
+            }
+        }
+    }
+
+    private func place(_ details: SlipwayDetails) -> SuggestPlace {
+        SuggestPlace(type: .slipway, id: details.id, name: details.name, source: details.source)
+    }
+
+    /// What the page shows now, from any source, to fill in the form; facts only as users ticked them.
+    private func values(_ details: SlipwayDetails) -> [String: String] {
+        let fields = ["fee", "costs", "operator", "access", "opening_hours", "surface"]
+        var values = Dictionary(uniqueKeysWithValues: fields.compactMap { field in details.value(field).map { (field, $0.value) } })
+        for fact in details.ticked { values[fact.field] = fact.present ? "yes" : "no" }
+        return values
+    }
+
+    private func refreshPending() {
+        pending = store.pendingFields(.slipway, slipway.id, changed: details?.lastChanged)
     }
 
     @ViewBuilder
@@ -79,15 +105,19 @@ struct SlipwayDetailView: View {
                     if let note = (details.value("costs") ?? details.value("fee"))?.note {
                         Text(note).font(.caption).foregroundStyle(.secondary)
                     }
+                    if !pending.isDisjoint(with: ["fee", "costs"]) {
+                        Text("Dein Vorschlag wird geprüft").font(.caption).foregroundStyle(.orange)
+                    }
                 }
+                EditButton(label: "Kosten") { suggest = .edit(fields: ["fee", "costs"], title: "Kosten korrigieren") }
             } label: {
                 Label("Kosten", systemImage: "eurosign.circle")
             }
             Fact(label: "Adresse", systemImage: "mappin.and.ellipse", value: details.address)
-            SourcedFact(label: "Betreiber", systemImage: "building.2", value: details.value("operator"))
-            SourcedFact(label: "Zugang", systemImage: "door.left.hand.open", value: details.value("access"), display: Labels.access)
-            SourcedFact(label: "Öffnungszeiten", systemImage: "clock", value: details.value("opening_hours"))
-            SourcedFact(label: "Untergrund", systemImage: "square.3.layers.3d", value: details.value("surface"), display: Labels.surface)
+            SourcedFact(label: "Betreiber", systemImage: "building.2", value: details.value("operator"), pending: pending.contains("operator"), onEdit: { suggest = .field("operator") })
+            SourcedFact(label: "Zugang", systemImage: "door.left.hand.open", value: details.value("access"), display: Labels.access, pending: pending.contains("access"), onEdit: { suggest = .field("access") })
+            SourcedFact(label: "Öffnungszeiten", systemImage: "clock", value: details.value("opening_hours"), pending: pending.contains("opening_hours"), onEdit: { suggest = .field("opening_hours") })
+            SourcedFact(label: "Untergrund", systemImage: "square.3.layers.3d", value: details.value("surface"), display: Labels.surface, pending: pending.contains("surface"), onEdit: { suggest = .field("surface") })
             if let text = details.url, let url = Links.web(text) {
                 Link(destination: url) { Label(text, systemImage: "link") }
             }
@@ -112,28 +142,11 @@ struct SlipwayDetailView: View {
         }
     }
 
-    /// What users ticked, such as a jetty or a crane.
-    @ViewBuilder
-    private func ticked(_ details: SlipwayDetails) -> some View {
-        let facts = details.ticked
-        if let first = facts.first {
-            Section {
-                ForEach(facts, id: \.field) { fact in
-                    Label(fact.label, systemImage: fact.present ? "checkmark" : "xmark")
-                        .foregroundStyle(fact.present ? Color.primary : Color.secondary)
-                }
-            } header: {
-                Text("Was gibt es dort?")
-            } footer: {
-                Text("von Nutzern ergänzt, Stand \(Format.monthYear(first.retrieved))")
-            }
-        }
-    }
-
     private func load() async {
         do {
             let loaded = try await api.slipway(id: slipway.id)
             details = loaded
+            refreshPending()
             if let waterId = loaded.water?.id {
                 water = try? await api.water(id: waterId)
             }

@@ -94,26 +94,35 @@ extension Error {
     }
 }
 
-/// Like `Fact`, with where the value comes from when users or the place's website sent it.
+/// Like `Fact`, with where the value comes from when users or the place's website sent it, a note when this device
+/// sent a value that waits, and a pencil to suggest another one.
 struct SourcedFact: View {
     let label: String
     let systemImage: String
     let value: SourcedValue?
     var display: (String) -> String = { $0 }
     var link: ((String) -> URL?)? = nil
+    var pending = false
+    var onEdit: (() -> Void)? = nil
 
     var body: some View {
         if let value, !value.value.isEmpty {
             LabeledContent {
-                VStack(alignment: .trailing, spacing: 2) {
-                    if let url = link?(value.value) {
-                        Link(display(value.value), destination: url)
-                    } else {
-                        Text(display(value.value)).multilineTextAlignment(.trailing)
+                HStack(spacing: 8) {
+                    VStack(alignment: .trailing, spacing: 2) {
+                        if let url = link?(value.value) {
+                            Link(display(value.value), destination: url)
+                        } else {
+                            Text(display(value.value)).multilineTextAlignment(.trailing)
+                        }
+                        if let note = value.note {
+                            Text(note).font(.caption).foregroundStyle(.secondary)
+                        }
+                        if pending {
+                            Text("Dein Vorschlag wird geprüft").font(.caption).foregroundStyle(.orange)
+                        }
                     }
-                    if let note = value.note {
-                        Text(note).font(.caption).foregroundStyle(.secondary)
-                    }
+                    if let onEdit { EditButton(label: label, action: onEdit) }
                 }
             } label: {
                 Label(label, systemImage: systemImage)

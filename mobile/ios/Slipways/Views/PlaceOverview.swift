@@ -15,6 +15,8 @@ struct PlaceOverview<Item: Place, Row: View>: View {
     /// Gets the search term and everything loaded, for places that are searched locally.
     let search: @MainActor (String, [Item]) async throws -> [Item]
     let onSelect: (Item) -> Void
+    /// Shows a plus button that suggests a new entry in the visible area.
+    var onAdd: ((MapArea) -> Void)? = nil
     @ViewBuilder let row: (Item) -> Row
 
     /// More pins than this in the visible area are grouped into bubbles.
@@ -59,6 +61,11 @@ struct PlaceOverview<Item: Place, Row: View>: View {
         .searchable(text: $text, placement: .navigationBarDrawer(displayMode: .always), prompt: "Name, Ort oder Gewässer")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) { CountryMenu(options: countries, selection: $country) }
+            if let onAdd {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("\(singular) fehlt?", systemImage: "plus") { onAdd(area) }
+                }
+            }
         }
         .task { await reload() }
         .task(id: text) { await find() }

@@ -159,6 +159,11 @@ public struct SlipwayDetails: Codable, Hashable, Identifiable, Sendable {
     }
 
     public var tips: [PlaceInfo] { Contributions.tips(infos) }
+
+    /// When the slipway last changed, for `SuggestionStore.pendingFields`.
+    public var lastChanged: Date? {
+        ([updated] + infos.map(\.retrieved)).compactMap { $0 }.max()
+    }
 }
 
 public struct Marina: Codable, Hashable, Identifiable, Sendable {
@@ -232,6 +237,11 @@ public struct MarinaDetails: Codable, Hashable, Identifiable, Sendable {
     }
 
     public var tips: [PlaceInfo] { Contributions.tips(infos) }
+
+    /// When users last changed the marina, for `SuggestionStore.pendingFields`.
+    public var lastChanged: Date? {
+        infos.filter { $0.source == "user" }.map(\.retrieved).max()
+    }
 
     /// True when the page shows anything from OpenStreetMap and so needs the attribution.
     public var usesOpenStreetMap: Bool {

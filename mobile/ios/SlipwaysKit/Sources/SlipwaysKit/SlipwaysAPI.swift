@@ -5,6 +5,14 @@ import FoundationNetworking
 
 public struct APIError: Error, Equatable, Sendable {
     public let status: Int
+    /// The server's explanation, e.g. why a suggestion was not taken.
+    public var message: String? = nil
+
+    /// A German text for people, as the website shows it.
+    public var userMessage: String {
+        if status == 429 { return "Du hast gerade viele Vorschläge geschickt. Bitte versuch es später noch einmal." }
+        return message ?? "Das hat nicht geklappt (Fehler \(status)). Bitte versuch es später noch einmal."
+    }
 }
 
 /// Sends HTTP requests; `URLSession` in the app, a stub in tests.
@@ -20,7 +28,7 @@ extension URLSession: HTTPTransport {
     }
 }
 
-/// Read-only client for the Slipways backend (see backend/ in the repository).
+/// Client for the Slipways backend (see backend/ in the repository): reads places and sends suggestions.
 public struct SlipwaysAPI: Sendable {
     private let baseURL: URL
     private let transport: HTTPTransport
@@ -72,14 +80,66 @@ public struct SlipwaysAPI: Sendable {
         return collection.features
     }
 
+    /// A proof-of-work challenge to solve with `Proof.solve` before sending a suggestion.
+    public func challenge() async throws -> ProofChallenge {
+        try await get("api/suggestions/challenge")
+    }
+
+    /// Sends a suggestion; throws `NearbySlipwaysError` when a new slipway lies close to known ones.
+    public func suggest(_ suggestion: SuggestionRequest) async throws -> SuggestionCreated {
+        var request = request("api/suggestions")
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONEncoder().encode(suggestion)
+        let (data, response) = try await transport.send(request)
+        if response.statusCode == 409 {
+            struct Nearby: Decodable { let slipways: [NearbySlipway] }
+            throw NearbySlipwaysError(slipways: try Self.makeDecoder().decode(Nearby.self, from: data).slipways)
+        }
+        return try decode(data, response)
+    }
+
+    /// The state of a suggestion this device sent.
+    public func suggestion(id: String, token: String) async throws -> SuggestionStatus {
+        try await get("api/suggestions/\(id)", query: [URLQueryItem(name: "token", value: token)])
+    }
+
+    public func withdrawSuggestion(id: String, token: String) async throws {
+        var request = request("api/suggestions/\(id)", query: [URLQueryItem(name: "token", value: token)])
+        request.httpMethod = "DELETE"
+        let (data, response) = try await transport.send(request)
+        try Self.check(data, response)
+    }
+
     private func get<T: Decodable>(_ path: String, query: [URLQueryItem] = []) async throws -> T {
+        let (data, response) = try await transport.send(request(path, query: query))
+        return try decode(data, response)
+    }
+
+    private func request(_ path: String, query: [URLQueryItem] = []) -> URLRequest {
         var components = URLComponents(url: baseURL.appendingPathComponent(path), resolvingAgainstBaseURL: false)!
         if !query.isEmpty { components.queryItems = query }
         var request = URLRequest(url: components.url!)
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        let (data, response) = try await transport.send(request)
-        guard (200..<300).contains(response.statusCode) else { throw APIError(status: response.statusCode) }
+        return request
+    }
+
+    private func decode<T: Decodable>(_ data: Data, _ response: HTTPURLResponse) throws -> T {
+        try Self.check(data, response)
         return try Self.makeDecoder().decode(T.self, from: data)
+    }
+
+    /// Throws for answers other than 2xx, with the text of a problem details answer (RFC 9457) if there is one.
+    private static func check(_ data: Data, _ response: HTTPURLResponse) throws {
+        guard !(200..<300).contains(response.statusCode) else { return }
+        struct Problem: Decodable {
+            let title: String?
+            let detail: String?
+            let errors: [String: [String]]?
+        }
+        let problem = try? JSONDecoder().decode(Problem.self, from: data)
+        let message = problem?.errors.map { $0.values.flatMap { $0 }.joined(separator: " ") } ?? problem?.detail
+        throw APIError(status: response.statusCode, message: message?.isEmpty == false ? message : nil)
     }
 
     static func makeDecoder() -> JSONDecoder {
