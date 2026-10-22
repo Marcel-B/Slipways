@@ -52,6 +52,26 @@ public struct SlipwaysAPI: Sendable {
         try await get("api/waters/\(id)")
     }
 
+    public func marina(id: String) async throws -> MarinaDetails {
+        try await get("api/marinas/\(id)")
+    }
+
+    /// Shapes of the waters a search finds.
+    public func waterShapes(search: String) async throws -> [WaterShape] {
+        let term = search.trimmingCharacters(in: .whitespacesAndNewlines)
+        let collection: WaterShapeCollection = try await get("api/waters/shapes", query: [URLQueryItem(name: "search", value: term)])
+        return collection.features
+    }
+
+    /// Shapes of the waters reaching into an area that are at least `minExtent` large.
+    public func waterShapes(in area: ShapeArea) async throws -> [WaterShape] {
+        let collection: WaterShapeCollection = try await get(
+            "api/waters/shapes",
+            query: [URLQueryItem(name: "bbox", value: area.bbox), URLQueryItem(name: "minExtent", value: ShapeArea.text(area.minExtent))]
+        )
+        return collection.features
+    }
+
     private func get<T: Decodable>(_ path: String, query: [URLQueryItem] = []) async throws -> T {
         var components = URLComponents(url: baseURL.appendingPathComponent(path), resolvingAgainstBaseURL: false)!
         if !query.isEmpty { components.queryItems = query }

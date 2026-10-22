@@ -1,6 +1,6 @@
 # Mobile-Apps
 
-Stand 20.10.2026. Beide Apps sind reine Lesesichten wie die Website: kein Konto, keine Registrierung, nichts wird auf dem Gerät gespeichert. Bauen und Testen steht im README unter „Mobile-Apps“.
+Stand 22.10.2026. Beide Apps sind Lesesichten: kein Konto, keine Registrierung, nichts wird auf dem Gerät gespeichert. Vorschläge senden (Nutzerbeiträge) können sie noch nicht. Bauen und Testen steht im README unter „Mobile-Apps“.
 
 ## Aufbau
 
@@ -14,7 +14,15 @@ Stand 20.10.2026. Beide Apps sind reine Lesesichten wie die Website: kein Konto,
 
 Die Modelle spiegeln `backend/src/Slipways.Api/Endpoints/Contracts.cs`. Ändert sich ein DTO, beide Clients und die Fixtures in den Tests mitziehen. Die Fixtures sind gekürzte echte Antworten, darunter eine OSM-Slipanlage ohne Gewässer. Deutsche Texte für OSM-Tags und Pegelzustände (`Labels`, `Format`) liegen im Client-Paket und entsprechen `web/src/components/osmTags.ts` bzw. `waterLevel.ts`.
 
-Beide Apps haben die Tabs Slipanlagen, Marinas, Gewässer und Info. Slipanlagen und Marinas sind je eine Karte mit Suchfeld (`PlaceOverview` bzw. `PlaceOverviewScreen`); die Liste darunter zeigt nur, was im Kartenausschnitt liegt (höchstens 250, sonst „Zoome hinein oder suche“), oder die Suchtreffer (`MapArea`/`Overview` im Client-Paket). Die Suche startet erst, wenn das Tippen kurz pausiert. Volle Bereiche der Karte zeigen Blasen mit der Anzahl statt einzelner Pins (iOS: Raster in `Overview.clusters`, Android: `GeoJsonSource` mit `cluster`); ein Tipp darauf zoomt hinein. Slipanlagen werden über die API gesucht, Marinas im Gerät. Eine Marina öffnet eine kurze Übersicht (iOS: Sheet, Android: Bottom-Sheet) mit Adresse, Webseite, Telefon, E-Mail, „Route planen“ und „In Karten öffnen“. Die Slipanlage zeigt dieselben Angaben wie im Web samt nächstem Pegel. Das Gewässer zeigt Pegel, Slipanlagen und Marinas, unter iOS dazu eine Karte mit Verlauf (`MapPolyline`/`MapPolygon`).
+Beide Apps haben die Tabs Slipanlagen, Marinas, Gewässer und Info und zeigen dasselbe wie die Website (ohne Mitmachen):
+
+- **Slipanlagen und Marinas** sind je eine Karte mit Suchfeld und Länderwahl (`PlaceOverview` bzw. `PlaceOverviewScreen`). Die Karte startet mit Europa und zeigt bis Zoom 5 eine Blase je Land (`Countries.group`, Schwelle `Overview.countryMaxZoom` bzw. `COUNTRY_MAX_ZOOM` wie `COUNTRY_MAX_ZOOM` im Web), darunter Blasen mit der Anzahl (iOS: Raster in `Overview.clusters`, Android: `GeoJsonSource` mit `cluster`); ein Tipp darauf zoomt hinein. Die Liste darunter zeigt nur, was im Kartenausschnitt liegt (höchstens 250, sonst „Zoome hinein oder suche“), oder die Suchtreffer. Die Suche startet erst, wenn das Tippen kurz pausiert. Slipanlagen werden über die API gesucht, Marinas im Gerät.
+- **Gewässer** sind eine Karte mit Verläufen und Seen aus OpenStreetMap: im Kartenausschnitt geladen über `/api/waters/shapes?bbox=…&minExtent=…` (`ShapeArea`, gleiche Rasterung wie `shapeArea` im Web), bei einer Suche die der Treffer. Ein Tipp auf einen Verlauf zeigt das Gewässer mit „Öffnen“. Länderwahl über `WaterSummary.countries`.
+- **Zoomstufen** zählen in den Client-Paketen wie im Web (Kacheln zu 256 Punkten). MapKit kennt keinen Zoom, iOS rechnet ihn aus Kartenausschnitt und Breite (`MapArea.zoom(width:)`); MapLibre zählt Kacheln zu 512, Android rechnet `+1` (`WEB_ZOOM_OFFSET`).
+- **Slipanlage**: dieselben Angaben wie im Web samt nächstem Pegel, „Route planen“ und „In Karten öffnen“. Werte von Nutzern gewinnen über die eigenen und zeigen „von Nutzern ergänzt, Stand MM.JJJJ“ (`SlipwayDetails.value`); dazu „Was gibt es dort?“ und Tipps.
+- **Marina** öffnet als Sheet (iOS) bzw. Bottom-Sheet (Android) aus der Karte, von der Slipanlage und vom Gewässer: Angaben (Nutzer vor eigenen vor „laut Webseite“, `MarinaDetails.value`), Slipanlagen der Marina, Tipps, nächster Pegel, „Route planen“.
+- **Gewässer-Detail** zeigt Pegel, Slipanlagen und Marinas mit einer Karte samt Verlauf (iOS `MapPolyline`/`MapPolygon`, Android GeoJSON-Ebene); unter Android mit Legende wie im Web.
+- **Detailkarten** starten weiter draußen und zoomen beim Öffnen hinein wie im Web (`DetailMap`), außer die Bewegung ist in den Systemeinstellungen reduziert bzw. Animationen sind aus.
 
 ## Lizenzhinweis
 

@@ -29,16 +29,16 @@ private let baseURL = URL(string: "http://localhost:5080")!
 
 // Shortened answers of https://slipways.de/api from October 2026.
 private let kelheim = """
-{"id":"1","name":"Am Jachthafen, Kelheim","latitude":48.9,"longitude":11.9,"street":"Am Jachthafen 13","postalCode":"93309","city":"Kelheim","country":"DE","url":null,"comment":null,"rating":0,"costs":null,"pro":null,"contra":null,"operator":null,"fee":null,"access":null,"openingHours":null,"surface":null,"water":{"id":"w","name":"Donau"},"marina":null,"extras":["Campingplatz"],"source":"manual","osmElement":null,"created":"2020-02-18T16:14:59Z","updated":"2026-10-20T16:26:23.5072912Z"}
+{"id":"1","name":"Am Jachthafen, Kelheim","latitude":48.9,"longitude":11.9,"street":"Am Jachthafen 13","postalCode":"93309","city":"Kelheim","country":"DE","url":null,"comment":null,"rating":0,"costs":null,"pro":null,"contra":null,"operator":null,"fee":null,"access":null,"openingHours":null,"surface":null,"water":{"id":"w","name":"Donau"},"marina":null,"extras":["Campingplatz"],"source":"manual","osmElement":null,"created":"2020-02-18T16:14:59Z","updated":"2026-10-20T16:26:23.5072912Z","infos":[]}
 """
 private let nonnensteg = """
 {"id":"2","name":"Nonnensteg","latitude":52.3832808,"longitude":13.0360706,"postalCode":null,"city":null,"country":"DE","water":null,"source":"osm"}
 """
 private let importedDetails = """
-{"id":"2","name":"Nonnensteg","latitude":52.38,"longitude":13.03,"street":null,"postalCode":null,"city":null,"country":"DE","url":"www.example.org","comment":null,"rating":0,"costs":null,"pro":null,"contra":null,"operator":"Stadt Potsdam","fee":"no","access":"yes","openingHours":"24/7","surface":"concrete","water":null,"marina":null,"extras":[],"source":"osm","osmElement":"node/42","created":"2026-10-20T12:00:00Z","updated":null}
+{"id":"2","name":"Nonnensteg","latitude":52.38,"longitude":13.03,"street":null,"postalCode":null,"city":null,"country":"DE","url":"www.example.org","comment":null,"rating":0,"costs":null,"pro":null,"contra":null,"operator":"Stadt Potsdam","fee":"no","access":"yes","openingHours":"24/7","surface":"concrete","water":null,"marina":null,"extras":[],"source":"osm","osmElement":"node/42","created":"2026-10-20T12:00:00Z","updated":null,"infos":[]}
 """
 private let bodensee = """
-{"id":"b","name":"Bodensee","shortname":"BODENSEE","slipwayCount":158,"stationCount":1,"position":{"latitude":47.67,"longitude":9.31},"gauge":{"stationId":"k","stationName":"KONSTANZ","waterLevel":{"value":248,"measuredAt":"2026-10-20T17:30:00Z","state":"low"}}}
+{"id":"b","name":"Bodensee","shortname":"BODENSEE","slipwayCount":158,"stationCount":1,"position":{"latitude":47.67,"longitude":9.31},"gauge":{"stationId":"k","stationName":"KONSTANZ","waterLevel":{"value":248,"measuredAt":"2026-10-20T17:30:00Z","state":"low"}},"countries":["DE","CH","AT"]}
 """
 private let bille = """
 {"id":"w","name":"Bille","shortname":"BILLE","bounds":{"south":53.48,"west":10.02,"north":53.65,"east":10.51},
@@ -170,7 +170,7 @@ private let bille = """
 }
 
 private let marina = """
-{"id":"m","name":"Yachthafen Kelheim","latitude":48.91,"longitude":11.88,"url":"www.example.org","street":null,"postalCode":"93309","city":"Kelheim","phone":null,"email":null,"operator":null,"fee":null,"access":null,"openingHours":null,"water":null,"source":"osm","osmElement":"node/7"}
+{"id":"m","name":"Yachthafen Kelheim","latitude":48.91,"longitude":11.88,"url":"www.example.org","street":null,"postalCode":"93309","city":"Kelheim","phone":null,"email":null,"operator":null,"fee":null,"access":null,"openingHours":null,"water":null,"source":"osm","osmElement":"node/7","country":"DE"}
 """
 
 @Test func listsMarinas() async throws {
@@ -208,16 +208,117 @@ private let marina = """
 @Test func clustersEntriesInGridCells() throws {
     let points = [(latitude: 48.90, longitude: 11.90), (latitude: 48.91, longitude: 11.91), (latitude: 52.4, longitude: 13.0), (latitude: 60.0, longitude: 11.9)]
 
-    let clusters = Overview.clusters(points, in: .start) { $0 }
+    let germany = MapArea(south: 46.0, west: 4.5, north: 55.5, east: 16.5)
+    let clusters = Overview.clusters(points, in: germany) { $0 }
 
     #expect(clusters.map(\.items.count).sorted() == [1, 2])
     let kelheim = try #require(clusters.first { $0.items.count == 2 })
     #expect(abs(kelheim.latitude - 48.905) < 0.0001)
-    #expect(Overview.clusters(points, in: .start) { $0 }.map(\.id) == clusters.map(\.id))
+    #expect(Overview.clusters(points, in: germany) { $0 }.map(\.id) == clusters.map(\.id))
 }
 
 @Test func linksPhoneAndMail() {
     #expect(Links.phone("+49 9441 12-34")?.absoluteString == "tel:+4994411234")
     #expect(Links.phone("unbekannt") == nil)
     #expect(Links.mail(" hafen@example.org ")?.absoluteString == "mailto:hafen@example.org")
+}
+
+// Values from users and the marina's website, as /api/slipways/{id} and /api/marinas/{id} send them.
+private let withInfos = importedDetails.replacingOccurrences(of: "\"infos\":[]", with: """
+"infos":[{"field":"fee","value":"yes","source":"user","sourceUrl":null,"retrieved":"2026-10-21T10:00:00Z"},
+ {"field":"costs","value":"5.5","source":"user","sourceUrl":null,"retrieved":"2026-10-21T10:00:00Z"},
+ {"field":"jetty","value":"yes","source":"user","sourceUrl":null,"retrieved":"2026-10-21T10:00:00Z"},
+ {"field":"crane","value":"no","source":"user","sourceUrl":null,"retrieved":"2026-10-21T10:00:00Z"},
+ {"field":"tip","value":"Früh kommen.","source":"user","sourceUrl":null,"retrieved":"2026-10-21T10:00:00Z"},
+ {"field":"surface","value":"gravel","source":"user","sourceUrl":null,"retrieved":"2026-09-01T10:00:00Z"},
+ {"field":"surface","value":"wood","source":"user","sourceUrl":null,"retrieved":"2026-10-01T10:00:00Z"}]
+""")
+private let marinaDetails = """
+{"id":"m","name":"Yachthafen Kelheim","latitude":48.91,"longitude":11.88,"url":"www.example.org","street":"Hafen 1","postalCode":"93309","city":"Kelheim","phone":null,"email":"hafen@example.org","operator":null,"fee":null,"access":null,"openingHours":null,"water":{"id":"w","name":"Donau"},"source":"manual","osmElement":null,
+ "slipways":[\(nonnensteg)],
+ "infos":[{"field":"phone","value":"+49 9441 1234","source":"website","sourceUrl":"https://www.example.org/kontakt","retrieved":"2026-10-20T12:00:00Z"},
+  {"field":"email","value":"info@example.org","source":"website","sourceUrl":"https://www.example.org","retrieved":"2026-10-20T12:00:00Z"},
+  {"field":"opening_hours","value":"Mo–Fr 8–18 Uhr","source":"user","sourceUrl":null,"retrieved":"2026-10-21T12:00:00Z"}]}
+"""
+
+@Test func valuesFromUsersWinOverOwnOnes() async throws {
+    let api = SlipwaysAPI(baseURL: baseURL, transport: StubTransport(["/api/slipways/2": (200, withInfos)]))
+
+    let slipway = try await api.slipway(id: "2")
+
+    #expect(slipway.costsLabel.hasPrefix("5,50"))
+    #expect(slipway.value("surface")?.value == "wood")
+    #expect(slipway.value("surface")?.note == "von Nutzern ergänzt, Stand 10.2026")
+    #expect(slipway.value("access")?.value == "yes")
+    #expect(slipway.value("access")?.note == nil)
+    #expect(slipway.ticked.map(\.label) == ["Steg", "Kran: nein"])
+    #expect(slipway.tips.map(\.value) == ["Früh kommen."])
+}
+
+@Test func marinaDetailsFillGapsFromWebsite() async throws {
+    let transport = StubTransport(["/api/marinas/m": (200, marinaDetails)])
+    let api = SlipwaysAPI(baseURL: baseURL, transport: transport)
+
+    let marina = try await api.marina(id: "m")
+
+    #expect(marina.value("phone")?.value == "+49 9441 1234")
+    #expect(marina.value("phone")?.note == "laut Webseite, Stand 20.10.2026")
+    #expect(marina.value("email")?.value == "hafen@example.org")
+    #expect(marina.value("opening_hours")?.note == "von Nutzern ergänzt, Stand 10.2026")
+    #expect(marina.value("fee") == nil)
+    #expect(marina.slipways.map(\.name) == ["Nonnensteg"])
+    #expect(marina.usesOpenStreetMap)
+}
+
+@Test func groupsPlacesByCountry() throws {
+    let points: [(latitude: Double, longitude: Double, country: String?)] = [
+        (48.9, 11.9, "DE"), (52.4, 13.0, "DE"), (50.0, 8.0, "DE"), (52.1, 5.1, "NL"), (47.0, 9.0, nil),
+    ]
+
+    let groups = Countries.group(points, country: \.country) { ($0.latitude, $0.longitude) }
+
+    #expect(groups.map(\.code) == ["DE", "NL"])
+    #expect(groups[0].items.count == 3)
+    #expect(groups[0].latitude == 50.0)
+    #expect(groups[0].longitude == 11.9)
+    #expect(groups[0].area.contains(latitude: 52.4, longitude: 8.0))
+    #expect(groups[1].name == "Niederlande")
+    #expect(Countries.counts([["DE", "AT"], ["AT"], []]).map(\.code) == ["AT", "DE"])
+}
+
+@Test func zoomMatchesWebsite() {
+    // 360° on 256 points is zoom 0; the website starts at zoom 4 with Europe on screen.
+    #expect(MapArea(south: -10, west: -180, north: 10, east: 180).zoom(width: 256) == 0)
+    #expect(abs(MapArea(south: 40, west: 0, north: 50, east: 22.5).zoom(width: 256) - 4) < 0.0001)
+    #expect(Overview.showsCountries(zoom: 5.9))
+    #expect(!Overview.showsCountries(zoom: 6))
+}
+
+@Test func shapeAreaSnapsToTiles() async throws {
+    let area = ShapeArea(MapArea(south: 48.2, west: 11.3, north: 49.1, east: 12.4), zoom: 8.4)
+    #expect(area.bbox == "9.8438,46.4063,14.0625,50.625")
+    #expect(area.minExtent == 0.1094)
+    #expect(ShapeArea(MapArea(south: 48.2, west: 11.3, north: 48.21, east: 11.31), zoom: 13).minExtent == 0)
+
+    let shapes = """
+    {"type":"FeatureCollection","features":[{"type":"Feature","id":"w","properties":{"name":"Bille"},"geometry":{"type":"LineString","coordinates":[[10.46,53.64],[10.47,53.65]]}}]}
+    """
+    let transport = StubTransport(["/api/waters/shapes": (200, shapes)])
+    let found = try await SlipwaysAPI(baseURL: baseURL, transport: transport).waterShapes(in: area)
+    #expect(found.map(\.name) == ["Bille"])
+    #expect(found[0].geometry.lines[0].count == 2)
+    #expect(transport.requests.first?.url?.query == "bbox=9.8438,46.4063,14.0625,50.625&minExtent=0.1094")
+}
+
+@Test func tapHitsNearestShape() throws {
+    let json = """
+    [{"id":"river","properties":{"name":"Fluss"},"geometry":{"type":"LineString","coordinates":[[10.0,50.0],[11.0,50.0]]}},
+     {"id":"lake","properties":{"name":"See"},"geometry":{"type":"Polygon","coordinates":[[[10.0,51.0],[10.2,51.0],[10.2,51.2],[10.0,51.2],[10.0,51.0]]]}}]
+    """
+    let shapes = try SlipwaysAPI.makeDecoder().decode([WaterShape].self, from: Data(json.utf8))
+
+    #expect(WaterShape.hit(shapes, latitude: 50.01, longitude: 10.5, tolerance: 0.02)?.id == "river")
+    #expect(WaterShape.hit(shapes, latitude: 50.05, longitude: 10.5, tolerance: 0.02) == nil)
+    #expect(WaterShape.hit(shapes, latitude: 51.1, longitude: 10.1, tolerance: 0.001)?.id == "lake")
+    #expect(WaterShape.hit(shapes, latitude: 51.1, longitude: 10.3, tolerance: 0.001) == nil)
 }

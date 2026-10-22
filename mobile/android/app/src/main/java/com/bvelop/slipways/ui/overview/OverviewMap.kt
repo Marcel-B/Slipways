@@ -2,7 +2,6 @@ package com.bvelop.slipways.ui.overview
 
 import android.graphics.RectF
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -10,20 +9,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.bvelop.slipways.shared.Format
 import com.bvelop.slipways.shared.MapArea
+import com.bvelop.slipways.shared.Overview
 import com.bvelop.slipways.shared.Position
+import com.bvelop.slipways.ui.map.STYLE_URL
+import com.bvelop.slipways.ui.map.WEB_ZOOM_OFFSET
+import com.bvelop.slipways.ui.map.rememberMapView
+import com.bvelop.slipways.ui.map.toBounds
+import com.bvelop.slipways.ui.map.visibleArea
+import com.bvelop.slipways.ui.map.webZoom
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
-import org.maplibre.android.geometry.LatLngBounds
 import org.maplibre.android.maps.MapLibreMap
-import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
+import org.maplibre.android.style.expressions.Expression.concat
 import org.maplibre.android.style.expressions.Expression.get
 import org.maplibre.android.style.expressions.Expression.has
 import org.maplibre.android.style.expressions.Expression.literal
@@ -31,6 +33,7 @@ import org.maplibre.android.style.expressions.Expression.not
 import org.maplibre.android.style.expressions.Expression.step
 import org.maplibre.android.style.expressions.Expression.stop
 import org.maplibre.android.style.layers.CircleLayer
+import org.maplibre.android.style.layers.Layer
 import org.maplibre.android.style.layers.PropertyFactory.circleColor
 import org.maplibre.android.style.layers.PropertyFactory.circleRadius
 import org.maplibre.android.style.layers.PropertyFactory.circleStrokeColor
@@ -48,55 +51,46 @@ import org.maplibre.geojson.Feature
 import org.maplibre.geojson.FeatureCollection
 import org.maplibre.geojson.Point
 
-/** OpenFreeMap vector tiles (OpenStreetMap data); the style brings its own attribution. */
-private const val STYLE_URL = "https://tiles.openfreemap.org/styles/liberty"
 private const val PLACES = "places"
 private const val CLUSTERS = "clusters"
 private const val COUNTS = "counts"
 private const val PINS = "pins"
+private const val COUNTRIES = "countries"
+private const val COUNTRY_CIRCLES = "country-circles"
+private const val COUNTRY_LABELS = "country-labels"
+
+/** Zoomed out further than this (in MapLibre's levels), the map shows countries instead of clusters. */
+private val COUNTRY_LAYERS_MAX_ZOOM = (Overview.COUNTRY_MAX_ZOOM + 1 - WEB_ZOOM_OFFSET).toFloat()
 
 /** A dot on the overview map. */
 data class MapPin(val id: String, val position: Position)
 
+/** One bubble per country while the map shows a continent; a tap zooms to [area]. */
+data class CountryBubble(val code: String, val count: Int, val center: Position, val area: MapArea)
+
 /**
  * MapLibre map with a dot per pin; MapLibre groups nearby dots into bubbles with a count, so thousands of pins stay
- * fast. [fitTo] moves the camera when it changes; every finished camera move reports the visible area.
+ * fast. Zoomed out, [countries] (two or more) take the place of those bubbles, as on the website. [fitTo] moves the
+ * camera when it changes; every finished camera move reports the visible area and the zoom as the website counts it.
  */
 @Composable
 fun OverviewMap(
     pins: List<MapPin>,
+    countries: List<CountryBubble>,
     color: String,
     fitTo: MapArea?,
-    onAreaChange: (MapArea) -> Unit,
+    onAreaChange: (MapArea, Double) -> Unit,
     onPinClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
-    val lifecycle = LocalLifecycleOwner.current.lifecycle
     // Fingers are less precise than the dots, so taps hit anything within this many pixels.
     val touchSlop = with(LocalDensity.current) { 16f * density }
-    val mapView = remember { MapView(context).apply { onCreate(null) } }
+    val mapView = rememberMapView()
     var map by remember { mutableStateOf<MapLibreMap?>(null) }
     var style by remember { mutableStateOf<Style?>(null) }
     val currentOnAreaChange by rememberUpdatedState(onAreaChange)
     val currentOnPinClick by rememberUpdatedState(onPinClick)
-
-    DisposableEffect(lifecycle, mapView) {
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_START -> mapView.onStart()
-                Lifecycle.Event.ON_RESUME -> mapView.onResume()
-                Lifecycle.Event.ON_PAUSE -> mapView.onPause()
-                Lifecycle.Event.ON_STOP -> mapView.onStop()
-                else -> Unit
-            }
-        }
-        lifecycle.addObserver(observer)
-        onDispose {
-            lifecycle.removeObserver(observer)
-            mapView.onDestroy()
-        }
-    }
+    val currentCountries by rememberUpdatedState(countries)
 
     LaunchedEffect(mapView) {
         mapView.getMapAsync { loaded ->
@@ -133,20 +127,42 @@ fun OverviewMap(
                         circleStrokeWidth(1.5f),
                     ),
                 )
+                ready.addSource(GeoJsonSource(COUNTRIES, FeatureCollection.fromFeatures(emptyList())))
+                ready.addLayer(
+                    CircleLayer(COUNTRY_CIRCLES, COUNTRIES).withProperties(
+                        circleColor(color),
+                        circleRadius(26f),
+                        circleStrokeColor("#FFFFFF"),
+                        circleStrokeWidth(2f),
+                    ).apply { maxZoom = COUNTRY_LAYERS_MAX_ZOOM },
+                )
+                ready.addLayer(
+                    SymbolLayer(COUNTRY_LABELS, COUNTRIES).withProperties(
+                        textField(concat(get("code"), literal("\n"), get("count"))),
+                        textFont(arrayOf("Noto Sans Bold")),
+                        textSize(12f),
+                        textColor("#FFFFFF"),
+                        textAllowOverlap(true),
+                        textIgnorePlacement(true),
+                    ).apply { maxZoom = COUNTRY_LAYERS_MAX_ZOOM },
+                )
                 loadedStyle = ready
                 style = ready
             }
-            loaded.addOnCameraIdleListener {
-                val bounds = loaded.projection.visibleRegion.latLngBounds
-                currentOnAreaChange(MapArea(bounds.latitudeSouth, bounds.longitudeWest, bounds.latitudeNorth, bounds.longitudeEast))
-            }
+            loaded.addOnCameraIdleListener { currentOnAreaChange(loaded.visibleArea(), loaded.webZoom) }
             loaded.addOnMapClickListener { point ->
                 val screen = loaded.projection.toScreenLocation(point)
                 val touched = RectF(screen.x - touchSlop, screen.y - touchSlop, screen.x + touchSlop, screen.y + touchSlop)
+                val country = loaded.queryRenderedFeatures(touched, COUNTRY_CIRCLES).firstOrNull()?.getStringProperty("code")
+                    ?.let { code -> currentCountries.firstOrNull { it.code == code } }
                 val cluster = loaded.queryRenderedFeatures(touched, CLUSTERS).firstOrNull()
                 val pin = loaded.queryRenderedFeatures(touched, PINS).firstOrNull()?.getStringProperty("id")
                 val center = cluster?.geometry() as? Point
                 when {
+                    country != null -> {
+                        loaded.animateCamera(CameraUpdateFactory.newLatLngBounds(country.area.toBounds(), 48))
+                        true
+                    }
                     cluster != null && center != null -> {
                         val zoom = loadedStyle?.getSourceAs<GeoJsonSource>(PLACES)?.getClusterExpansionZoom(cluster)
                             ?: (loaded.cameraPosition.zoom + 2).toInt()
@@ -164,7 +180,7 @@ fun OverviewMap(
         }
     }
 
-    // Only a new search or a reload changes the data; panning only changes what the list shows.
+    // Only a new search, a chosen country or a reload changes the data; panning only changes what the list shows.
     LaunchedEffect(style, pins) {
         style?.getSourceAs<GeoJsonSource>(PLACES)?.setGeoJson(
             FeatureCollection.fromFeatures(
@@ -176,6 +192,28 @@ fun OverviewMap(
             ),
         )
     }
+    LaunchedEffect(style, countries) {
+        val ready = style ?: return@LaunchedEffect
+        // With a single country its bubble would say nothing; the clusters show then at every zoom.
+        val byCountry = countries.size > 1
+        ready.getSourceAs<GeoJsonSource>(COUNTRIES)?.setGeoJson(
+            FeatureCollection.fromFeatures(
+                if (!byCountry) {
+                    emptyList()
+                } else {
+                    countries.map { country ->
+                        Feature.fromGeometry(Point.fromLngLat(country.center.longitude, country.center.latitude)).apply {
+                            addStringProperty("code", country.code)
+                            addStringProperty("count", Format.number(country.count))
+                        }
+                    }
+                },
+            ),
+        )
+        listOf(CLUSTERS, COUNTS, PINS).mapNotNull { ready.getLayer(it) }.forEach { layer: Layer ->
+            layer.minZoom = if (byCountry) COUNTRY_LAYERS_MAX_ZOOM else 0f
+        }
+    }
     LaunchedEffect(map, fitTo) {
         val target = fitTo ?: return@LaunchedEffect
         map?.animateCamera(CameraUpdateFactory.newLatLngBounds(target.toBounds(), 48))
@@ -183,6 +221,3 @@ fun OverviewMap(
 
     AndroidView(factory = { mapView }, modifier = modifier)
 }
-
-private fun MapArea.toBounds(): LatLngBounds =
-    LatLngBounds.Builder().include(LatLng(south, west)).include(LatLng(north, east)).build()

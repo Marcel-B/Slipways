@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bvelop.slipways.shared.Position
 import com.bvelop.slipways.shared.SlipwaySummary
+import com.bvelop.slipways.ui.map.PinColors
 
 @Composable
 fun SlipwayOverviewScreen(
@@ -18,10 +19,11 @@ fun SlipwayOverviewScreen(
         title = "Slipanlagen",
         singular = "Slipanlage",
         plural = "Slipanlagen",
-        color = "#0B5394",
+        color = PinColors.SLIPWAY,
         viewModel = viewModel,
         id = { it.id },
         position = { Position(it.latitude, it.longitude) },
+        country = { it.country },
         onSelect = { onSlipwayClick(it.id) },
     ) { slipway ->
         ListItem(

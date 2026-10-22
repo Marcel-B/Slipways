@@ -23,8 +23,8 @@ public struct MapArea: Hashable, Sendable {
         )
     }
 
-    /// Germany and its neighbours as the map shows them at start.
-    public static let start = MapArea(south: 46.0, west: 4.5, north: 55.5, east: 16.5)
+    /// Europe as the map shows it at start, one bubble per country like on the website.
+    public static let start = MapArea(south: 36.0, west: -10.0, north: 64.0, east: 25.0)
 
     public var centerLatitude: Double { (south + north) / 2 }
     public var centerLongitude: Double { (west + east) / 2 }
@@ -33,6 +33,13 @@ public struct MapArea: Hashable, Sendable {
 
     public func contains(latitude: Double, longitude: Double) -> Bool {
         (south...north).contains(latitude) && (west...east).contains(longitude)
+    }
+
+    /// The zoom level of a map `width` points wide showing this area, counted like the website's map (tiles of 256
+    /// points, zoom 0 shows the whole world), so the apps switch at the same levels.
+    public func zoom(width: Double) -> Double {
+        guard longitudeDelta > 0, width > 0 else { return 0 }
+        return log2(360 * width / (256 * longitudeDelta))
     }
 
     /// The smallest area around the points with a margin, at least about 2 km wide; nil without points.
@@ -60,6 +67,14 @@ public struct MapArea: Hashable, Sendable {
 public enum Overview {
     /// More entries than this in the visible area ask the user to zoom in or search.
     public static let limit = 250
+
+    /// Up to this zoom the map shows one bubble per country instead of clusters (`COUNTRY_MAX_ZOOM` on the website).
+    public static let countryMaxZoom = 5
+
+    /// True when the map shows a continent rather than a region, so countries are the bubbles to show.
+    public static func showsCountries(zoom: Double) -> Bool {
+        Int(zoom.rounded(.down)) <= countryMaxZoom
+    }
 
     /// The entries inside the area, or nil when there are more than `limit`.
     public static func visible<T>(
@@ -119,6 +134,42 @@ public enum Overview {
     }
 }
 
+/// Which water shapes to load for a map view (`shapeArea` on the website): those reaching into it, widened to a grid so
+/// small moves reuse what was loaded, and further out only those large enough to see, about 20 points.
+public struct ShapeArea: Hashable, Sendable {
+    /// "west,south,east,north"
+    public let bbox: String
+    /// In degrees; smaller waters would be a dot.
+    public let minExtent: Double
+
+    /// From this zoom on every water is drawn, however small.
+    public static let allZoom = 12
+
+    public init(_ area: MapArea, zoom: Double) {
+        let level = max(0, Int(zoom.rounded(.down)))
+        // About one tile of 256 points at this zoom.
+        let step = 360 / pow(2, Double(level))
+        func snap(_ value: Double, _ rule: FloatingPointRoundingRule, _ low: Double, _ high: Double) -> Double {
+            min(high, max(low, (value / step).rounded(rule) * step))
+        }
+        bbox = [
+            snap(area.west - step, .down, -180, 180),
+            snap(area.south - step, .down, -90, 90),
+            snap(area.east + step, .up, -180, 180),
+            snap(area.north + step, .up, -90, 90),
+        ]
+        .map { Self.text($0) }
+        .joined(separator: ",")
+        minExtent = level >= Self.allZoom ? 0 : (28 / pow(2, Double(level)) * 10_000).rounded() / 10_000
+    }
+
+    /// Up to four decimals and no trailing zeros, like the website, so both ask for the same, cacheable URLs.
+    static func text(_ value: Double) -> String {
+        let rounded = (value * 10_000).rounded() / 10_000
+        return rounded == rounded.rounded() ? String(Int(rounded)) : String(rounded)
+    }
+}
+
 /// Entries close together on the map, drawn as one bubble with their count.
 public struct Cluster<T>: Identifiable {
     public let id: String
@@ -132,7 +183,57 @@ public protocol Place: Identifiable, Hashable, Sendable where ID == String {
     var name: String { get }
     var latitude: Double { get }
     var longitude: Double { get }
+    /// ISO code such as "DE", for the country bubbles and the choice of country.
+    var country: String? { get }
 }
 
 extension SlipwaySummary: Place {}
 extension Marina: Place {}
+
+extension WaterShape {
+    /// The shape a tap at the point hits: inside a lake, or within `tolerance` degrees (of latitude) of a line or shore;
+    /// the closest one when several do.
+    public static func hit(_ shapes: [WaterShape], latitude: Double, longitude: Double, tolerance: Double) -> WaterShape? {
+        // Longitude degrees shrink towards the poles; scaling them keeps distances true on the map.
+        let scale = cos(latitude * .pi / 180)
+        func point(_ p: Position) -> (x: Double, y: Double) { (p.longitude * scale, p.latitude) }
+        let tap = (x: longitude * scale, y: latitude)
+
+        func distance(to line: [Position]) -> Double {
+            guard let first = line.first else { return .infinity }
+            if line.count == 1 { return hypot(point(first).x - tap.x, point(first).y - tap.y) }
+            var best = Double.infinity
+            for (a, b) in zip(line, line.dropFirst()).map({ (point($0), point($1)) }) {
+                let dx = b.x - a.x, dy = b.y - a.y
+                let length = dx * dx + dy * dy
+                let t = length == 0 ? 0 : max(0, min(1, ((tap.x - a.x) * dx + (tap.y - a.y) * dy) / length))
+                best = min(best, hypot(a.x + t * dx - tap.x, a.y + t * dy - tap.y))
+            }
+            return best
+        }
+
+        func inside(_ ring: [Position]) -> Bool {
+            var result = false
+            for (a, b) in zip(ring, ring.dropFirst() + ring.prefix(1)) {
+                if (a.latitude > latitude) != (b.latitude > latitude),
+                   longitude < (b.longitude - a.longitude) * (latitude - a.latitude) / (b.latitude - a.latitude) + a.longitude {
+                    result.toggle()
+                }
+            }
+            return result
+        }
+
+        func distance(to shape: WaterShape) -> Double {
+            let geometry = shape.geometry
+            if geometry.polygons.contains(where: { $0.first.map(inside) == true }) { return 0 }
+            let lines = geometry.lines + geometry.polygons.flatMap { $0 }
+            return lines.map(distance(to:)).min() ?? .infinity
+        }
+
+        return shapes
+            .map { ($0, distance(to: $0)) }
+            .filter { $0.1 <= tolerance }
+            .min { $0.1 < $1.1 }?
+            .0
+    }
+}

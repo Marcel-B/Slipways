@@ -25,9 +25,27 @@ public enum Format {
         value.formatted(.number.precision(.fractionLength(0...1)).locale(german)) + " km"
     }
 
-    /// "4 Slipanlagen", "1 Slipanlage"
+    /// "4 Slipanlagen", "1 Slipanlage", "1.234 Slipanlagen"
     public static func count(_ n: Int, _ singular: String, _ plural: String) -> String {
-        "\(n) \(n == 1 ? singular : plural)"
+        "\(number(n)) \(n == 1 ? singular : plural)"
+    }
+
+    /// "1.234"
+    public static func number(_ n: Int) -> String {
+        n.formatted(.number.locale(german))
+    }
+
+    /// "20.10.2026"
+    public static func date(_ date: Date, timeZone: TimeZone = .current) -> String {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = timeZone
+        let parts = calendar.dateComponents([.day, .month, .year], from: date)
+        return String(format: "%02d.%02d.%04d", parts.day!, parts.month!, parts.year!)
+    }
+
+    /// "10.2026", for values from users: the day would suggest more precision than a moderated value has.
+    public static func monthYear(_ date: Date, timeZone: TimeZone = .current) -> String {
+        String(Format.date(date, timeZone: timeZone).dropFirst(3))
     }
 }
 

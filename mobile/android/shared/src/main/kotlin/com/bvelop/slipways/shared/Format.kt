@@ -11,6 +11,8 @@ import java.util.Locale
 object Format {
     private val german = Locale.GERMANY
     private val timestamp = DateTimeFormatter.ofPattern("dd.MM.yy, HH:mm", german)
+    private val day = DateTimeFormatter.ofPattern("dd.MM.yyyy", german)
+    private val month = DateTimeFormatter.ofPattern("MM.yyyy", german)
 
     /** "93309 Kelheim", or null when both are missing. */
     fun place(postalCode: String?, city: String?): String? =
@@ -29,8 +31,19 @@ object Format {
     fun measuredAt(level: WaterLevel, zone: ZoneId = ZoneId.systemDefault()): String =
         runCatching { timestamp.format(Instant.parse(level.measuredAt).atZone(zone)) }.getOrDefault(level.measuredAt)
 
-    /** "4 Slipanlagen", "1 Slipanlage" */
-    fun count(n: Int, singular: String, plural: String): String = "$n ${if (n == 1) singular else plural}"
+    /** "4 Slipanlagen", "1 Slipanlage", "1.234 Slipanlagen" */
+    fun count(n: Int, singular: String, plural: String): String = "${number(n)} ${if (n == 1) singular else plural}"
+
+    /** "1.234" */
+    fun number(n: Int): String = NumberFormat.getIntegerInstance(german).format(n)
+
+    /** "20.10.2026" in the device's time zone; the text as it is when it is no ISO 8601 instant. */
+    fun date(iso: String, zone: ZoneId = ZoneId.systemDefault()): String =
+        runCatching { day.format(Instant.parse(iso).atZone(zone)) }.getOrDefault(iso)
+
+    /** "10.2026", for values from users: the day would suggest more precision than a moderated value has. */
+    fun monthYear(iso: String, zone: ZoneId = ZoneId.systemDefault()): String =
+        runCatching { month.format(Instant.parse(iso).atZone(zone)) }.getOrDefault(iso)
 
     private fun decimal(value: Double): String =
         NumberFormat.getNumberInstance(german).apply { maximumFractionDigits = 1 }.format(value)

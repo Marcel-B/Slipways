@@ -9,6 +9,7 @@ struct SlipwayDetailView: View {
     @State private var details: SlipwayDetails?
     @State private var water: WaterDetails?
     @State private var failed = false
+    @State private var marina: MarinaRef?
 
     private var coordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: slipway.latitude, longitude: slipway.longitude)
@@ -17,7 +18,7 @@ struct SlipwayDetailView: View {
     var body: some View {
         List {
             Section {
-                Map(initialPosition: .region(MKCoordinateRegion(center: coordinate, latitudinalMeters: 1500, longitudinalMeters: 1500))) {
+                DetailMap(region: MKCoordinateRegion(center: coordinate, latitudinalMeters: 1500, longitudinalMeters: 1500)) {
                     Marker(slipway.name, systemImage: "sailboat", coordinate: coordinate)
                 }
                 .frame(height: 240)
@@ -36,19 +37,22 @@ struct SlipwayDetailView: View {
                         if let contra = details.contra { Label(contra, systemImage: "hand.thumbsdown") }
                     }
                 }
+                ticked(details)
+                TipsSection(tips: details.tips)
             } else if failed {
                 Section { Text("Details konnten nicht geladen werden.").foregroundStyle(.secondary) }
             } else {
                 Section { ProgressView() }
             }
 
-            nearestGauge
+            NearestGaugeSection(water: water, latitude: slipway.latitude, longitude: slipway.longitude)
 
             Section {
+                Button("Route planen", systemImage: "car") {
+                    MapsApp.open(name: slipway.name, latitude: slipway.latitude, longitude: slipway.longitude, route: true)
+                }
                 Button("In Karten öffnen", systemImage: "map") {
-                    let item = MKMapItem(placemark: MKPlacemark(coordinate: coordinate))
-                    item.name = slipway.name
-                    item.openInMaps()
+                    MapsApp.open(name: slipway.name, latitude: slipway.latitude, longitude: slipway.longitude)
                 }
                 if let element = details?.osmElement, let url = Links.osm(element) {
                     Link(destination: url) { Label("In OpenStreetMap ansehen", systemImage: "globe") }
@@ -58,6 +62,7 @@ struct SlipwayDetailView: View {
         .navigationTitle(slipway.name)
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
+        .marinaSheet($marina)
     }
 
     @ViewBuilder
@@ -68,21 +73,33 @@ struct SlipwayDetailView: View {
                     Label { Text(water.name) } icon: { Image(systemName: "water.waves") }
                 }
             }
-            Fact(label: "Kosten", systemImage: "eurosign.circle", value: details.costsLabel)
+            LabeledContent {
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(details.costsLabel)
+                    if let note = (details.value("costs") ?? details.value("fee"))?.note {
+                        Text(note).font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+            } label: {
+                Label("Kosten", systemImage: "eurosign.circle")
+            }
             Fact(label: "Adresse", systemImage: "mappin.and.ellipse", value: details.address)
-            Fact(label: "Betreiber", systemImage: "building.2", value: details.operator)
-            Fact(label: "Zugang", systemImage: "door.left.hand.open", value: details.access.map(Labels.access))
-            Fact(label: "Öffnungszeiten", systemImage: "clock", value: details.openingHours)
-            Fact(label: "Untergrund", systemImage: "square.3.layers.3d", value: details.surface.map(Labels.surface))
+            SourcedFact(label: "Betreiber", systemImage: "building.2", value: details.value("operator"))
+            SourcedFact(label: "Zugang", systemImage: "door.left.hand.open", value: details.value("access"), display: Labels.access)
+            SourcedFact(label: "Öffnungszeiten", systemImage: "clock", value: details.value("opening_hours"))
+            SourcedFact(label: "Untergrund", systemImage: "square.3.layers.3d", value: details.value("surface"), display: Labels.surface)
             if let text = details.url, let url = Links.web(text) {
                 Link(destination: url) { Label(text, systemImage: "link") }
             }
-            if let marina = details.marina {
-                if let text = marina.url, let url = Links.web(text) {
-                    Link(destination: url) { Label(marina.name, systemImage: "ferry") }
-                } else {
-                    Fact(label: "Marina", systemImage: "ferry", value: marina.name)
+            if let summary = details.marina {
+                Button { marina = MarinaRef(id: summary.id, name: summary.name) } label: {
+                    LabeledContent {
+                        Text(summary.name)
+                    } label: {
+                        Label("Marina", systemImage: "ferry")
+                    }
                 }
+                .foregroundStyle(.primary)
             }
             Fact(label: "Extras", systemImage: "sparkles", value: details.extras.joined(separator: ", "))
             Fact(
@@ -95,20 +112,20 @@ struct SlipwayDetailView: View {
         }
     }
 
-    /// The gauge with a current reading closest to the slipway, from the water the slipway is on.
+    /// What users ticked, such as a jetty or a crane.
     @ViewBuilder
-    private var nearestGauge: some View {
-        if let water, let nearest = water.nearestGauge(latitude: slipway.latitude, longitude: slipway.longitude) {
-            Section("Nächster Pegel") {
-                NavigationLink(value: Water(id: water.id, name: water.name)) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(nearest.station.name)
-                        WaterLevelText(level: nearest.level).font(.headline)
-                        Text("\(Format.kilometres(nearest.km)) entfernt · gemessen \(nearest.level.measuredAt.formatted(date: .numeric, time: .shortened))")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
+    private func ticked(_ details: SlipwayDetails) -> some View {
+        let facts = details.ticked
+        if let first = facts.first {
+            Section {
+                ForEach(facts, id: \.field) { fact in
+                    Label(fact.label, systemImage: fact.present ? "checkmark" : "xmark")
+                        .foregroundStyle(fact.present ? Color.primary : Color.secondary)
                 }
+            } header: {
+                Text("Was gibt es dort?")
+            } footer: {
+                Text("von Nutzern ergänzt, Stand \(Format.monthYear(first.retrieved))")
             }
         }
     }

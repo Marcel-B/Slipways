@@ -57,8 +57,11 @@ public struct WaterSummary: Codable, Hashable, Identifiable, Sendable {
     public let shortname: String?
     public let slipwayCount: Int
     public let stationCount: Int
+    /// A slipway, gauge or marina near the middle of the water; nil when nothing on it has coordinates.
     public let position: Position?
     public let gauge: GaugeReading?
+    /// ISO codes of the countries its slipways, marinas and gauges lie in, the one with the most first.
+    public let countries: [String]
 
     public var water: Water { Water(id: id, name: name) }
 }
@@ -115,18 +118,47 @@ public struct SlipwayDetails: Codable, Hashable, Identifiable, Sendable {
     public let source: Source
     /// Such as "node/123"; also set for our own slipways that were matched to OpenStreetMap.
     public let osmElement: String?
+    public let updated: Date?
+    /// Values from users, such as facts and tips; they win over the slipway's own.
+    public let infos: [PlaceInfo]
 
     public var address: String {
         [street, Format.place(postalCode, city), country].compactMap { $0 }.joined(separator: ", ")
     }
 
-    /// Our own costs win; imported slipways only have the OpenStreetMap fee tag.
+    /// The value users sent in for a field, else the slipway's own (for imports from OpenStreetMap).
+    public func value(_ field: String) -> SourcedValue? {
+        if let info = Contributions.fromUsers(infos, field) { return SourcedValue(value: info.value, info: info) }
+        let own: String? = switch field {
+        case "fee": fee
+        case "costs": costs.map { "\($0)" }
+        case "operator": `operator`
+        case "access": access
+        case "opening_hours": openingHours
+        case "surface": surface
+        default: nil
+        }
+        return own.map { SourcedValue(value: $0, info: nil) }
+    }
+
+    /// Costs win over the fee; values from users over our own and those from OpenStreetMap.
     public var costsLabel: String {
+        let costs = value("costs").flatMap { Decimal(string: $0.value, locale: Locale(identifier: "en_US_POSIX")) }
+        let fee = value("fee")?.value
         if costs == 0 || (costs == nil && fee == "no") { return "kostenlos" }
         if let costs { return Format.euros(costs) }
         if let fee { return Labels.fee(fee) }
         return "Kosten unbekannt"
     }
+
+    /// Facts users ticked, such as a jetty or a crane.
+    public var ticked: [TickedFact] {
+        Contributions.facts.compactMap { field in
+            Contributions.fromUsers(infos, field).map { TickedFact(field: field, present: $0.value == "yes", retrieved: $0.retrieved) }
+        }
+    }
+
+    public var tips: [PlaceInfo] { Contributions.tips(infos) }
 }
 
 public struct Marina: Codable, Hashable, Identifiable, Sendable {
@@ -147,10 +179,100 @@ public struct Marina: Codable, Hashable, Identifiable, Sendable {
     public let water: Water?
     public let source: Source
     public let osmElement: String?
+    /// ISO code of the country the import found it in, for our own marinas that of their slipways.
+    public let country: String?
 
     /// "Hafenstraße 1, 93309 Kelheim"
     public var address: String {
         [street, Format.place(postalCode, city)].compactMap { $0 }.joined(separator: ", ")
+    }
+}
+
+/// A marina with its slipways and details from other sources, such as its website or users.
+public struct MarinaDetails: Codable, Hashable, Identifiable, Sendable {
+    public let id: String
+    public let name: String
+    public let latitude: Double
+    public let longitude: Double
+    public let url: String?
+    public let street: String?
+    public let postalCode: String?
+    public let city: String?
+    public let phone: String?
+    public let email: String?
+    public let `operator`: String?
+    public let fee: String?
+    public let access: String?
+    public let openingHours: String?
+    public let water: Water?
+    public let source: Source
+    public let osmElement: String?
+    public let slipways: [SlipwaySummary]
+    public let infos: [PlaceInfo]
+
+    /// "Hafenstraße 1, 93309 Kelheim"
+    public var address: String {
+        [street, Format.place(postalCode, city)].compactMap { $0 }.joined(separator: ", ")
+    }
+
+    /// Values from users win; details from the marina's website only fill gaps after its own.
+    public func value(_ field: String) -> SourcedValue? {
+        if let info = Contributions.fromUsers(infos, field) { return SourcedValue(value: info.value, info: info) }
+        let own: String? = switch field {
+        case "phone": phone
+        case "email": email
+        case "operator": `operator`
+        case "fee": fee
+        case "access": access
+        case "opening_hours": openingHours
+        default: nil
+        }
+        if let own { return SourcedValue(value: own, info: nil) }
+        return infos.first { $0.field == field && $0.source == "website" }.map { SourcedValue(value: $0.value, info: $0) }
+    }
+
+    public var tips: [PlaceInfo] { Contributions.tips(infos) }
+
+    /// True when the page shows anything from OpenStreetMap and so needs the attribution.
+    public var usesOpenStreetMap: Bool {
+        source == .osm || slipways.contains { $0.source == .osm }
+    }
+}
+
+/// A detail such as a phone number from `source` ("website": read from `sourceUrl`, "user": an accepted suggestion),
+/// as it was on `retrieved`. `field` is e.g. "phone", "opening_hours", "jetty" or "tip".
+public struct PlaceInfo: Codable, Hashable, Sendable {
+    public let field: String
+    public let value: String
+    public let source: String
+    public let sourceUrl: String?
+    public let retrieved: Date
+}
+
+/// A value a place shows, with where it comes from when it is not the place's own.
+public struct SourcedValue: Hashable, Sendable {
+    public let value: String
+    /// Nil for the place's own value.
+    public let info: PlaceInfo?
+
+    /// "von Nutzern ergänzt, Stand 10.2026" or "laut Webseite, Stand 20.10.2026"; nil for the place's own value.
+    public var note: String? {
+        guard let info else { return nil }
+        if info.source == "website" { return "laut Webseite, Stand \(Format.date(info.retrieved))" }
+        return "von Nutzern ergänzt, Stand \(Format.monthYear(info.retrieved))"
+    }
+}
+
+/// A fact users ticked for a slipway; `present` is false for an explicit "no".
+public struct TickedFact: Hashable, Sendable {
+    public let field: String
+    public let present: Bool
+    public let retrieved: Date
+
+    /// "Steg" or "Steg: nein"
+    public var label: String {
+        let name = Contributions.label(field)
+        return present ? name : "\(name): nein"
     }
 }
 
@@ -246,6 +368,27 @@ public struct Geometry: Codable, Hashable, Sendable {
     private static func ring(_ positions: [[Double]]) -> [Position] {
         positions.compactMap { $0.count >= 2 ? Position(latitude: $0[1], longitude: $0[0]) : nil }
     }
+}
+
+/// Water shapes for an overview map (OpenStreetMap, ODbL), from a GeoJSON FeatureCollection whose feature ids are water ids.
+public struct WaterShape: Decodable, Hashable, Identifiable, Sendable {
+    public let id: String
+    public let name: String
+    public let geometry: Geometry
+
+    private enum CodingKeys: String, CodingKey { case id, properties, geometry }
+    private struct Properties: Decodable { let name: String }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        name = try container.decode(Properties.self, forKey: .properties).name
+        geometry = try container.decode(Geometry.self, forKey: .geometry)
+    }
+}
+
+struct WaterShapeCollection: Decodable {
+    let features: [WaterShape]
 }
 
 enum Distance {

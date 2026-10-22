@@ -34,6 +34,19 @@ class SlipwaysApi(baseUrl: String, httpClient: HttpClient) {
 
     suspend fun water(id: String): WaterDetails = client.get("api/waters/$id").bodyOrThrow()
 
+    suspend fun marina(id: String): MarinaDetails = client.get("api/marinas/$id").bodyOrThrow()
+
+    /** Shapes of the waters a search finds. */
+    suspend fun waterShapes(search: String): WaterShapes =
+        client.get("api/waters/shapes") { parameter("search", search.trim()) }.bodyOrThrow()
+
+    /** Shapes of the waters reaching into an area that are at least [ShapeArea.minExtent] large. */
+    suspend fun waterShapes(area: ShapeArea): WaterShapes =
+        client.get("api/waters/shapes") {
+            parameter("bbox", area.bbox)
+            parameter("minExtent", ShapeArea.text(area.minExtent))
+        }.bodyOrThrow()
+
     private suspend inline fun <reified T> HttpResponse.bodyOrThrow(): T {
         if (!status.isSuccess()) throw ApiException(status.value, status.description)
         return body()
