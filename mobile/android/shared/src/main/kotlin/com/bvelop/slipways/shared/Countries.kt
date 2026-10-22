@@ -29,7 +29,9 @@ object Countries {
 
     /** The German name of a country, e.g. "Niederlande" for NL. */
     fun name(code: String): String =
-        names[code] ?: Locale.Builder().setRegion(code).build().getDisplayCountry(Locale.GERMAN).ifBlank { code }
+        names[code]
+            ?: runCatching { Locale.Builder().setRegion(code).build().getDisplayCountry(Locale.GERMAN) }.getOrNull()?.ifBlank { null }
+            ?: code
 
     /** Groups places by their ISO country code, largest first; places without one are left out. */
     fun <T> group(items: List<T>, country: (T) -> String?, position: (T) -> Position): List<CountryGroup<T>> =
