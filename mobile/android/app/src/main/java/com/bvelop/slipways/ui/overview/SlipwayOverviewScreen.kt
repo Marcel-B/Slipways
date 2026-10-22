@@ -6,6 +6,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.bvelop.slipways.shared.MapArea
 import com.bvelop.slipways.shared.Position
 import com.bvelop.slipways.shared.SlipwaySummary
 import com.bvelop.slipways.ui.map.PinColors
@@ -13,6 +14,7 @@ import com.bvelop.slipways.ui.map.PinColors
 @Composable
 fun SlipwayOverviewScreen(
     onSlipwayClick: (String) -> Unit,
+    onAdd: (MapArea) -> Unit,
     viewModel: PlaceOverviewViewModel<SlipwaySummary> = viewModel(factory = PlaceOverviewViewModel.Slipways),
 ) {
     PlaceOverviewScreen(
@@ -25,6 +27,7 @@ fun SlipwayOverviewScreen(
         position = { Position(it.latitude, it.longitude) },
         country = { it.country },
         onSelect = { onSlipwayClick(it.id) },
+        onAdd = onAdd,
     ) { slipway ->
         ListItem(
             headlineContent = { Text(slipway.name) },

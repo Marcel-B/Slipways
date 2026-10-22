@@ -42,7 +42,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -56,6 +58,7 @@ import com.bvelop.slipways.shared.Labels
 import com.bvelop.slipways.shared.Links
 import com.bvelop.slipways.shared.MapArea
 import com.bvelop.slipways.shared.NearestGauge
+import com.bvelop.slipways.shared.PlaceType
 import com.bvelop.slipways.shared.Position
 import com.bvelop.slipways.shared.SlipwayDetails
 import com.bvelop.slipways.shared.Source
@@ -66,9 +69,13 @@ import com.bvelop.slipways.ui.MapsApp
 import com.bvelop.slipways.ui.NearestGaugeCard
 import com.bvelop.slipways.ui.OsmAttribution
 import com.bvelop.slipways.ui.SourcedFact
-import com.bvelop.slipways.ui.TickedFacts
 import com.bvelop.slipways.ui.Tips
 import com.bvelop.slipways.ui.UiState
+import com.bvelop.slipways.ui.contribute.ContributeSection
+import com.bvelop.slipways.ui.contribute.SuggestMode
+import com.bvelop.slipways.ui.contribute.SuggestPlace
+import com.bvelop.slipways.ui.contribute.SuggestSheet
+import com.bvelop.slipways.ui.contribute.appContainer
 import com.bvelop.slipways.ui.map.DetailMap
 import com.bvelop.slipways.ui.map.DetailPin
 import com.bvelop.slipways.ui.map.PinColors
@@ -86,6 +93,10 @@ fun SlipwayDetailsScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val nearestGauge by viewModel.nearestGauge.collectAsStateWithLifecycle()
     var marinaId by rememberSaveable { mutableStateOf<String?>(null) }
+    var suggest by remember { mutableStateOf<SuggestMode?>(null) }
+    // Read again after each form, so a value just sent shows as waiting.
+    var sentRound by remember { mutableIntStateOf(0) }
+    val store = appContainer().suggestions
 
     Scaffold(
         topBar = {
@@ -103,9 +114,23 @@ fun SlipwayDetailsScreen(
             when (val s = state) {
                 UiState.Loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
                 is UiState.Error -> LoadFailed(s.message, viewModel::load)
-                is UiState.Success -> Details(s.data, nearestGauge, onWaterClick, onMarinaClick = { marinaId = it })
+                is UiState.Success -> {
+                    val pending = remember(s.data, sentRound) {
+                        store.pendingFields(PlaceType.SLIPWAY, s.data.id, s.data.lastChanged)
+                    }
+                    Details(s.data, nearestGauge, pending, onWaterClick, onMarinaClick = { marinaId = it }, onSuggest = { suggest = it })
+                }
             }
         }
+    }
+
+    val details = (state as? UiState.Success)?.data
+    val mode = suggest
+    if (details != null && mode != null) {
+        SuggestSheet(details.place, mode, details.values, onDismiss = {
+            suggest = null
+            sentRound++
+        })
     }
 
     marinaId?.let { id ->
@@ -117,8 +142,10 @@ fun SlipwayDetailsScreen(
 private fun Details(
     slipway: SlipwayDetails,
     nearestGauge: NearestGauge?,
+    pending: Set<String>,
     onWaterClick: (String) -> Unit,
     onMarinaClick: (String) -> Unit,
+    onSuggest: (SuggestMode) -> Unit,
 ) {
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
@@ -136,13 +163,18 @@ private fun Details(
                     Fact("Gewässer", Icons.Filled.Water, water.name)
                 }
             }
-            SourcedFact("Kosten", Icons.Filled.Euro, (slipway.value("costs") ?: slipway.value("fee"))?.copy(value = slipway.costsLabel)
-                ?: SourcedValue(slipway.costsLabel, null))
+            SourcedFact(
+                "Kosten",
+                Icons.Filled.Euro,
+                (slipway.value("costs") ?: slipway.value("fee"))?.copy(value = slipway.costsLabel) ?: SourcedValue(slipway.costsLabel, null),
+                pending = "fee" in pending || "costs" in pending,
+                onEdit = { onSuggest(SuggestMode.Edit(listOf("fee", "costs"), "Kosten korrigieren")) },
+            )
             Fact("Adresse", Icons.Filled.Place, slipway.address)
-            SourcedFact("Betreiber", Icons.Filled.Business, slipway.value("operator"))
-            SourcedFact("Zugang", Icons.Filled.Lock, slipway.value("access"), Labels::access)
-            SourcedFact("Öffnungszeiten", Icons.Filled.AccessTime, slipway.value("opening_hours"))
-            SourcedFact("Untergrund", Icons.Filled.Layers, slipway.value("surface"), Labels::surface)
+            SourcedFact("Betreiber", Icons.Filled.Business, slipway.value("operator"), pending = "operator" in pending, onEdit = { onSuggest(SuggestMode.field("operator")) })
+            SourcedFact("Zugang", Icons.Filled.Lock, slipway.value("access"), Labels::access, pending = "access" in pending, onEdit = { onSuggest(SuggestMode.field("access")) })
+            SourcedFact("Öffnungszeiten", Icons.Filled.AccessTime, slipway.value("opening_hours"), pending = "opening_hours" in pending, onEdit = { onSuggest(SuggestMode.field("opening_hours")) })
+            SourcedFact("Untergrund", Icons.Filled.Layers, slipway.value("surface"), Labels::surface, pending = "surface" in pending, onEdit = { onSuggest(SuggestMode.field("surface")) })
             slipway.url?.let { Fact("Webseite", Icons.Filled.Language, it, Links.web(it)) }
             slipway.marina?.let { marina ->
                 Box(Modifier.clickable { onMarinaClick(marina.id) }) {
@@ -161,8 +193,8 @@ private fun Details(
             slipway.pro?.let { Fact("Pro", Icons.Filled.ThumbUp, it) }
             slipway.contra?.let { Fact("Contra", Icons.Filled.ThumbDown, it) }
 
-            TickedFacts(slipway.ticked)
             Tips(slipway.tips)
+            ContributeSection(slipway.place, slipway.values, slipway.ticked, slipway.osmElement, pending, onSuggest)
 
             nearestGauge?.let { gauge -> NearestGaugeCard(gauge) { slipway.water?.let { onWaterClick(it.id) } } }
 
@@ -189,3 +221,12 @@ private fun Details(
         }
     }
 }
+
+private val SlipwayDetails.place: SuggestPlace
+    get() = SuggestPlace(PlaceType.SLIPWAY, id, name, source)
+
+/** What the page shows now, from any source, to fill in the form; facts only as users ticked them. */
+private val SlipwayDetails.values: Map<String, String>
+    get() = listOf("fee", "costs", "operator", "access", "opening_hours", "surface")
+        .mapNotNull { field -> value(field)?.let { field to it.value } }
+        .toMap() + ticked.associate { it.field to if (it.present) "yes" else "no" }

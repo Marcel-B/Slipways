@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -19,7 +20,7 @@ import com.bvelop.slipways.ui.LinkText
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun InfoScreen() {
+fun InfoScreen(onMySuggestions: () -> Unit) {
     Scaffold(topBar = { TopAppBar(title = { Text("Info") }) }) { padding ->
         Column(
             Modifier.padding(padding).verticalScroll(rememberScrollState()).padding(16.dp),
@@ -27,6 +28,14 @@ fun InfoScreen() {
         ) {
             Text("Slipways zeigt Slipanlagen, Marinas und aktuelle Pegelstände an Gewässern in Deutschland und weiteren Ländern Europas.")
             LinkText("slipways.de", Links.WEBSITE)
+
+            Heading("Mitmachen")
+            Text(
+                "Fehlt eine Slipanlage oder stimmt etwas nicht? Vorschläge gehen ohne Konto: auf der Seite einer Slipanlage " +
+                    "oder Marina unter „Mitmachen“, neue Slipanlagen mit dem Plus auf der Karte. Alles wird vor der " +
+                    "Veröffentlichung geprüft.",
+            )
+            OutlinedButton(onClick = onMySuggestions) { Text("Meine Vorschläge") }
 
             Heading("Datenquellen")
             Text(

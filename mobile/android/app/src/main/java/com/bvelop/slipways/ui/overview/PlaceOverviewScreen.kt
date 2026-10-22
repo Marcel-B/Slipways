@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
@@ -61,6 +62,8 @@ fun <T : Any> PlaceOverviewScreen(
     position: (T) -> Position,
     country: (T) -> String?,
     onSelect: (T) -> Unit,
+    /** Shows a plus button that suggests a new entry in the visible area. */
+    onAdd: ((MapArea) -> Unit)? = null,
     row: @Composable (T) -> Unit,
 ) {
     val items by viewModel.items.collectAsStateWithLifecycle()
@@ -114,7 +117,18 @@ fun <T : Any> PlaceOverviewScreen(
         if (target != null) fitTo = target
     }
 
-    Scaffold(topBar = { TopAppBar(title = { Text(title) }) }) { padding ->
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(title) },
+                actions = {
+                    if (onAdd != null) {
+                        IconButton(onClick = { onAdd(area) }) { Icon(Icons.Filled.Add, contentDescription = "$singular fehlt?") }
+                    }
+                },
+            )
+        },
+    ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
             Row(
                 Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),

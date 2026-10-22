@@ -103,6 +103,8 @@ object Links {
     const val IMPRESSUM = "https://slipways.de/impressum"
     const val DATENSCHUTZ = "https://slipways.de/datenschutz"
     const val SUPPORT = "https://slipways.de/support"
+    /** How contributing works and what happens to suggestions. */
+    const val CONTRIBUTE = "https://slipways.de/support#mitmachen"
     const val OSM_COPYRIGHT = "https://www.openstreetmap.org/copyright"
     const val PEGELONLINE = "https://www.pegelonline.wsv.de/"
     const val LICENCE = "https://github.com/Marcel-B/Slipways/blob/master/LICENSE"

@@ -27,6 +27,9 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.bvelop.slipways.shared.MapArea
+import com.bvelop.slipways.ui.contribute.MySuggestionsScreen
+import com.bvelop.slipways.ui.contribute.NewSlipwayScreen
 import com.bvelop.slipways.ui.details.SlipwayDetailsScreen
 import com.bvelop.slipways.ui.info.InfoScreen
 import com.bvelop.slipways.ui.overview.MarinaOverviewScreen
@@ -44,6 +47,12 @@ private object Routes {
     fun list(tab: String) = "$tab/list"
     fun slipway(tab: String) = "$tab/slipway/{id}"
     fun water(tab: String) = "$tab/water/{id}"
+
+    /** The map area to start from, as "south,west,north,east". */
+    const val NEW_SLIPWAY = "$SLIPWAYS_TAB/new/{area}"
+    const val MY_SUGGESTIONS = "$INFO_TAB/suggestions"
+
+    fun newSlipway(area: MapArea) = "$SLIPWAYS_TAB/new/${area.south},${area.west},${area.north},${area.east}"
 }
 
 private enum class Tab(val route: String, val label: String, val icon: ImageVector) {
@@ -94,6 +103,13 @@ fun SlipwaysApp() {
                 val openWater = { id: String -> navController.navigate("$tab/water/$id") }
                 navigation(startDestination = Routes.list(tab), route = tab) {
                     composable(Routes.list(tab)) { list(openSlipway, openWater) }
+                    if (tab == Routes.SLIPWAYS_TAB) {
+                        composable(Routes.NEW_SLIPWAY, arguments = listOf(navArgument("area") { type = NavType.StringType })) { entry ->
+                            val parts = entry.arguments?.getString("area")?.split(",")?.mapNotNull { it.toDoubleOrNull() }
+                            val start = if (parts?.size == 4) MapArea(parts[0], parts[1], parts[2], parts[3]) else MapArea.START
+                            NewSlipwayScreen(start, onBack = back)
+                        }
+                    }
                     composable(Routes.slipway(tab), arguments = idArgument) {
                         SlipwayDetailsScreen(onBack = back, onWaterClick = openWater, onSlipwayClick = openSlipway)
                     }
@@ -103,11 +119,14 @@ fun SlipwaysApp() {
                 }
             }
 
-            tab(Routes.SLIPWAYS_TAB) { openSlipway, _ -> SlipwayOverviewScreen(onSlipwayClick = openSlipway) }
+            tab(Routes.SLIPWAYS_TAB) { openSlipway, _ ->
+                SlipwayOverviewScreen(onSlipwayClick = openSlipway, onAdd = { navController.navigate(Routes.newSlipway(it)) })
+            }
             tab(Routes.MARINAS_TAB) { openSlipway, openWater -> MarinaOverviewScreen(onWaterClick = openWater, onSlipwayClick = openSlipway) }
             tab(Routes.WATERS_TAB) { _, openWater -> WaterOverviewScreen(onWaterClick = openWater) }
             navigation(startDestination = Routes.list(Routes.INFO_TAB), route = Routes.INFO_TAB) {
-                composable(Routes.list(Routes.INFO_TAB)) { InfoScreen() }
+                composable(Routes.list(Routes.INFO_TAB)) { InfoScreen(onMySuggestions = { navController.navigate(Routes.MY_SUGGESTIONS) }) }
+                composable(Routes.MY_SUGGESTIONS) { MySuggestionsScreen(onBack = back) }
             }
         }
     }

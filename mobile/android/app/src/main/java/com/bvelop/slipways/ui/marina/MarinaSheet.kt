@@ -36,6 +36,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -51,6 +52,7 @@ import com.bvelop.slipways.shared.Links
 import com.bvelop.slipways.shared.MapArea
 import com.bvelop.slipways.shared.MarinaDetails
 import com.bvelop.slipways.shared.NearestGauge
+import com.bvelop.slipways.shared.PlaceType
 import com.bvelop.slipways.shared.Position
 import com.bvelop.slipways.ui.Centered
 import com.bvelop.slipways.ui.Fact
@@ -62,6 +64,10 @@ import com.bvelop.slipways.ui.SectionTitle
 import com.bvelop.slipways.ui.SourcedFact
 import com.bvelop.slipways.ui.Tips
 import com.bvelop.slipways.ui.UiState
+import com.bvelop.slipways.ui.contribute.ContributeSection
+import com.bvelop.slipways.ui.contribute.SuggestMode
+import com.bvelop.slipways.ui.contribute.SuggestPlace
+import com.bvelop.slipways.ui.contribute.SuggestSheet
 import com.bvelop.slipways.ui.map.DetailMap
 import com.bvelop.slipways.ui.map.DetailPin
 import com.bvelop.slipways.ui.map.PinColors
@@ -80,7 +86,11 @@ fun MarinaSheet(
     onWaterClick: (String) -> Unit,
     onSlipwayClick: (String) -> Unit,
 ) {
-    val api = (LocalContext.current.applicationContext as SlipwaysApplication).container.api
+    val container = (LocalContext.current.applicationContext as SlipwaysApplication).container
+    val api = container.api
+    var suggest by remember { mutableStateOf<SuggestMode?>(null) }
+    // Read again after each form, so a value just sent shows as waiting.
+    var sentRound by remember { mutableIntStateOf(0) }
     var attempt by remember { mutableIntStateOf(0) }
     val state by produceState<UiState<MarinaDetails>>(UiState.Loading, marinaId, attempt) {
         value = UiState.Loading
@@ -113,6 +123,10 @@ fun MarinaSheet(
             is UiState.Success -> Details(
                 s.data,
                 gauge,
+                pending = remember(s.data, sentRound) {
+                    container.suggestions.pendingFields(PlaceType.MARINA, s.data.id, s.data.lastChanged)
+                },
+                onSuggest = { suggest = it },
                 onWaterClick = { water ->
                     onDismiss()
                     onWaterClick(water)
@@ -124,12 +138,22 @@ fun MarinaSheet(
             )
         }
     }
+
+    val mode = suggest
+    if (marina != null && mode != null) {
+        SuggestSheet(marina.place, mode, marina.values, onDismiss = {
+            suggest = null
+            sentRound++
+        })
+    }
 }
 
 @Composable
 private fun Details(
     marina: MarinaDetails,
     gauge: NearestGauge?,
+    pending: Set<String>,
+    onSuggest: (SuggestMode) -> Unit,
     onWaterClick: (String) -> Unit,
     onSlipwayClick: (String) -> Unit,
 ) {
@@ -154,12 +178,12 @@ private fun Details(
             }
         }
         Fact("Adresse", Icons.Filled.Place, marina.address)
-        SourcedFact("Gebühr", Icons.Filled.Euro, marina.value("fee"), Labels::fee)
-        SourcedFact("Betreiber", Icons.Filled.Business, marina.value("operator"))
-        SourcedFact("Zugang", Icons.Filled.Lock, marina.value("access"), Labels::access)
-        SourcedFact("Öffnungszeiten", Icons.Filled.AccessTime, marina.value("opening_hours"))
-        SourcedFact("Telefon", Icons.Filled.Phone, marina.value("phone"), link = Links::phone)
-        SourcedFact("E-Mail", Icons.Filled.Email, marina.value("email"), link = Links::mail)
+        SourcedFact("Gebühr", Icons.Filled.Euro, marina.value("fee"), Labels::fee, pending = "fee" in pending, onEdit = { onSuggest(SuggestMode.field("fee")) })
+        SourcedFact("Betreiber", Icons.Filled.Business, marina.value("operator"), pending = "operator" in pending, onEdit = { onSuggest(SuggestMode.field("operator")) })
+        SourcedFact("Zugang", Icons.Filled.Lock, marina.value("access"), Labels::access, pending = "access" in pending, onEdit = { onSuggest(SuggestMode.field("access")) })
+        SourcedFact("Öffnungszeiten", Icons.Filled.AccessTime, marina.value("opening_hours"), pending = "opening_hours" in pending, onEdit = { onSuggest(SuggestMode.field("opening_hours")) })
+        SourcedFact("Telefon", Icons.Filled.Phone, marina.value("phone"), link = Links::phone, pending = "phone" in pending, onEdit = { onSuggest(SuggestMode.field("phone")) })
+        SourcedFact("E-Mail", Icons.Filled.Email, marina.value("email"), link = Links::mail, pending = "email" in pending, onEdit = { onSuggest(SuggestMode.field("email")) })
         marina.url?.let { Fact("Webseite", Icons.Filled.Language, it, Links.web(it)) }
         Fact("Koordinaten", Icons.Filled.MyLocation, String.format(Locale.ROOT, "%.5f, %.5f", marina.latitude, marina.longitude))
 
@@ -176,6 +200,7 @@ private fun Details(
             }
         }
         Tips(marina.tips)
+        ContributeSection(marina.place, marina.values, emptyList(), marina.osmElement, pending, onSuggest)
         gauge?.let { NearestGaugeCard(it) { marina.water?.let { water -> onWaterClick(water.id) } } }
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -200,3 +225,11 @@ private fun Details(
         if (marina.usesOpenStreetMap) OsmAttribution() else Text("Quelle: eigene Erfassung", style = MaterialTheme.typography.labelSmall)
     }
 }
+
+private val MarinaDetails.place: SuggestPlace
+    get() = SuggestPlace(PlaceType.MARINA, id, name, source)
+
+private val MarinaDetails.values: Map<String, String>
+    get() = listOf("fee", "operator", "access", "opening_hours", "phone", "email")
+        .mapNotNull { field -> value(field)?.let { field to it.value } }
+        .toMap()

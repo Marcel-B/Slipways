@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -46,8 +44,9 @@ import com.bvelop.slipways.shared.Links
 import com.bvelop.slipways.shared.NearestGauge
 import com.bvelop.slipways.shared.PlaceInfo
 import com.bvelop.slipways.shared.SourcedValue
-import com.bvelop.slipways.shared.TickedFact
 import com.bvelop.slipways.shared.WaterLevel
+import com.bvelop.slipways.ui.contribute.EditButton
+import com.bvelop.slipways.ui.contribute.Pending
 
 /** The ODbL attribution for entries from OpenStreetMap, linked to the copyright page. */
 @Composable
@@ -140,7 +139,10 @@ fun CountryMenu(options: List<CountryCount>, selected: String?, onSelect: (Strin
     }
 }
 
-/** Like [Fact], with where the value comes from when users or the place's website sent it. */
+/**
+ * Like [Fact], with where the value comes from when users or the place's website sent it, a note when this device sent
+ * a value that waits ([pending]), and a pencil to suggest another one ([onEdit]).
+ */
 @Composable
 fun SourcedFact(
     label: String,
@@ -148,16 +150,20 @@ fun SourcedFact(
     value: SourcedValue?,
     display: (String) -> String = { it },
     link: ((String) -> String?)? = null,
+    pending: Boolean = false,
+    onEdit: (() -> Unit)? = null,
 ) {
     if (value == null || value.value.isBlank()) return
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Icon(icon, contentDescription = null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
-        Column {
+        Column(Modifier.weight(1f)) {
             Text(label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
             val url = link?.invoke(value.value)
             if (url != null) LinkText(display(value.value), url) else Text(display(value.value), style = MaterialTheme.typography.bodyLarge)
             value.note?.let { Note(it) }
+            if (pending) Pending()
         }
+        onEdit?.let { EditButton(label, it) }
     }
 }
 
@@ -169,27 +175,6 @@ fun Note(text: String) {
 @Composable
 fun SectionTitle(text: String) {
     Text(text, style = MaterialTheme.typography.titleMedium)
-}
-
-/** Facts users ticked for a slipway, such as a jetty or a crane. */
-@Composable
-fun TickedFacts(facts: List<TickedFact>) {
-    val first = facts.firstOrNull() ?: return
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        SectionTitle("Was gibt es dort?")
-        facts.forEach { fact ->
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    if (fact.present) Icons.Filled.Check else Icons.Filled.Close,
-                    contentDescription = null,
-                    Modifier.size(18.dp),
-                    tint = if (fact.present) Color(0xFF2E8B57) else MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(fact.label)
-            }
-        }
-        Note("von Nutzern ergänzt, Stand ${Format.monthYear(first.retrieved)}")
-    }
 }
 
 /** Tips from users below a slipway or marina. */
