@@ -255,8 +255,7 @@ data class SourcedValue(val value: String, val info: PlaceInfo?) {
 /** A fact users ticked for a slipway; [present] is false for an explicit "no". */
 data class TickedFact(val field: String, val present: Boolean, val retrieved: String) {
     /** "Steg" or "Steg: nein" */
-    val label: String
-        get() = Contributions.label(field).let { if (present) it else "$it: nein" }
+    val label: String = if (present) Contributions.label(field) else "${Contributions.label(field)}: nein"
 }
 
 @Serializable
