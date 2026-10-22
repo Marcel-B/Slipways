@@ -434,3 +434,37 @@ private func hex(_ bytes: [UInt8]) -> String { bytes.map { String(format: "%02x"
     #expect(Contributions.fields["access"]?.label(of: "customers") == "nur für Kunden")
     #expect(Contributions.osmEditURL("way/7")?.absoluteString == "https://www.openstreetmap.org/edit?way=7")
 }
+
+// MARK: - Clipping
+
+private func p(_ latitude: Double, _ longitude: Double) -> Position { Position(latitude: latitude, longitude: longitude) }
+
+@Test func clipsLinesToTheArea() {
+    let area = MapArea(south: 0, west: 0, north: 10, east: 10)
+    // In, out over the top, back in, then a segment that only crosses a corner region outside.
+    let river = Geometry(lines: [[p(5, -5), p(5, 5), p(15, 5), p(5, 8), p(-5, 20)]], polygons: [])
+
+    let clipped = river.clipped(to: area)
+
+    #expect(clipped.lines == [[p(5, 0), p(5, 5), p(10, 5)], [p(10, 6.5), p(5, 8), p(3.3333333333333335, 10)]])
+    #expect(Geometry(lines: [[p(20, 20), p(30, 30)]], polygons: []).clipped(to: area).isEmpty)
+}
+
+@Test func clipsAreasToTheArea() {
+    let area = MapArea(south: 0, west: 0, north: 10, east: 10)
+    let lake = Geometry(lines: [], polygons: [[[p(-5, -5), p(-5, 5), p(5, 5), p(5, -5), p(-5, -5)]]])
+
+    let clipped = lake.clipped(to: area)
+
+    #expect(Set(clipped.polygons.first?.first ?? []) == [p(0, 0), p(0, 5), p(5, 5), p(5, 0)])
+    #expect(Geometry(lines: [], polygons: [[[p(20, 20), p(20, 30), p(30, 30)]]]).clipped(to: area).isEmpty)
+}
+
+@Test func thinsPointsBelowResolution() {
+    let line = Geometry(lines: [[p(0, 0), p(0, 0.001), p(0, 0.002), p(0, 1), p(0, 1.0001)]], polygons: [])
+
+    let thinned = line.clipped(to: MapArea(south: -1, west: -1, north: 1, east: 2), resolution: 0.01)
+
+    #expect(thinned.lines == [[p(0, 0), p(0, 1), p(0, 1.0001)]])
+    #expect(MapArea(south: 0, west: 0, north: 2, east: 4).expanded(by: 0.5) == MapArea(south: -1, west: -2, north: 3, east: 6))
+}

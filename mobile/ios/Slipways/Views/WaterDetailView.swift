@@ -110,9 +110,18 @@ private struct WaterMap: View {
     let details: WaterDetails
     let region: MKCoordinateRegion
 
+    @State private var area: MapArea?
+
+    /// The course in and around the view only; see `Geometry.clipped(to:resolution:)`.
+    private var shape: Geometry? {
+        guard let shape = details.shape else { return nil }
+        guard let area else { return shape }
+        return shape.clipped(to: area.expanded(by: 0.5), resolution: area.longitudeDelta / 1000)
+    }
+
     var body: some View {
-        DetailMap(region: region) {
-            if let shape = details.shape {
+        DetailMap(region: region, onAreaChange: { area = $0 }) {
+            if let shape {
                 ForEach(shape.polygons.indices, id: \.self) { index in
                     if let outer = shape.polygons[index].first {
                         MapPolygon(coordinates: outer.map { CLLocationCoordinate2D($0) })

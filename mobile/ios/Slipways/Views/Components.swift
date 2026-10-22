@@ -175,13 +175,15 @@ struct NearestGaugeSection: View {
 /// A map on a details page that zooms in when the page opens, like the website's.
 struct DetailMap<Content: MapContent>: View {
     let region: MKCoordinateRegion
+    var onAreaChange: ((MapArea) -> Void)? = nil
     @MapContentBuilder let content: () -> Content
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var position: MapCameraPosition
 
-    init(region: MKCoordinateRegion, @MapContentBuilder content: @escaping () -> Content) {
+    init(region: MKCoordinateRegion, onAreaChange: ((MapArea) -> Void)? = nil, @MapContentBuilder content: @escaping () -> Content) {
         self.region = region
+        self.onAreaChange = onAreaChange
         self.content = content
         // Starts further out; the task below flies in.
         let wide = MKCoordinateSpan(latitudeDelta: min(region.span.latitudeDelta * 8, 80), longitudeDelta: min(region.span.longitudeDelta * 8, 160))
@@ -190,6 +192,7 @@ struct DetailMap<Content: MapContent>: View {
 
     var body: some View {
         Map(position: $position) { content() }
+            .onMapCameraChange(frequency: .onEnd) { context in onAreaChange?(MapArea(context.region)) }
             .task {
                 if reduceMotion {
                     position = .region(region)
