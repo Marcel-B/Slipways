@@ -93,3 +93,125 @@ extension Error {
         self is CancellationError || (self as? URLError)?.code == .cancelled
     }
 }
+
+/// Like `Fact`, with where the value comes from when users or the place's website sent it, a note when this device
+/// sent a value that waits, and a pencil to suggest another one.
+struct SourcedFact: View {
+    let label: String
+    let systemImage: String
+    let value: SourcedValue?
+    var display: (String) -> String = { $0 }
+    var link: ((String) -> URL?)? = nil
+    var pending = false
+    var onEdit: (() -> Void)? = nil
+
+    var body: some View {
+        if let value, !value.value.isEmpty {
+            LabeledContent {
+                HStack(spacing: 8) {
+                    VStack(alignment: .trailing, spacing: 2) {
+                        if let url = link?(value.value) {
+                            Link(display(value.value), destination: url)
+                        } else {
+                            Text(display(value.value)).multilineTextAlignment(.trailing)
+                        }
+                        if let note = value.note {
+                            Text(note).font(.caption).foregroundStyle(.secondary)
+                        }
+                        if pending {
+                            Text("Dein Vorschlag wird geprüft").font(.caption).foregroundStyle(.orange)
+                        }
+                    }
+                    if let onEdit { EditButton(label: label, action: onEdit) }
+                }
+            } label: {
+                Label(label, systemImage: systemImage)
+            }
+        }
+    }
+}
+
+/// Tips from users below a slipway or marina.
+struct TipsSection: View {
+    let tips: [PlaceInfo]
+
+    var body: some View {
+        if !tips.isEmpty {
+            Section("Tipps") {
+                ForEach(tips, id: \.self) { tip in
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(tip.value)
+                        Text(Format.monthYear(tip.retrieved)).font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// The gauge with a current reading closest to a place, from the water the place is on.
+struct NearestGaugeSection: View {
+    let water: WaterDetails?
+    let latitude: Double
+    let longitude: Double
+
+    var body: some View {
+        if let water, let nearest = water.nearestGauge(latitude: latitude, longitude: longitude) {
+            Section("Nächster Pegel") {
+                NavigationLink(value: Water(id: water.id, name: water.name)) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(nearest.station.name)
+                        WaterLevelText(level: nearest.level).font(.headline)
+                        Text("\(Format.kilometres(nearest.km)) entfernt · gemessen \(nearest.level.measuredAt.formatted(date: .numeric, time: .shortened))")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// A map on a details page that zooms in when the page opens, like the website's.
+struct DetailMap<Content: MapContent>: View {
+    let region: MKCoordinateRegion
+    @MapContentBuilder let content: () -> Content
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var position: MapCameraPosition
+
+    init(region: MKCoordinateRegion, @MapContentBuilder content: @escaping () -> Content) {
+        self.region = region
+        self.content = content
+        // Starts further out; the task below flies in.
+        let wide = MKCoordinateSpan(latitudeDelta: min(region.span.latitudeDelta * 8, 80), longitudeDelta: min(region.span.longitudeDelta * 8, 160))
+        _position = State(initialValue: .region(MKCoordinateRegion(center: region.center, span: wide)))
+    }
+
+    var body: some View {
+        Map(position: $position) { content() }
+            .task {
+                if reduceMotion {
+                    position = .region(region)
+                    return
+                }
+                try? await Task.sleep(for: .milliseconds(150))
+                withAnimation(.easeInOut(duration: 1)) { position = .region(region) }
+            }
+    }
+}
+
+/// Opens a place in Apple Maps, with a route there when asked.
+enum MapsApp {
+    static func open(name: String, latitude: Double, longitude: Double, route: Bool = false) {
+        let item = MKMapItem(placemark: MKPlacemark(coordinate: CLLocationCoordinate2D(latitude: latitude, longitude: longitude)))
+        item.name = name
+        item.openInMaps(launchOptions: route ? [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving] : nil)
+    }
+}
+
+/// A marina to open in the sheet, from a list, a slipway or a water.
+struct MarinaRef: Identifiable, Hashable {
+    let id: String
+    let name: String
+}

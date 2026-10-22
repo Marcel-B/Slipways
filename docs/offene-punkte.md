@@ -37,7 +37,7 @@ Vorschläge, Proof of Work, Moderation und Abgleich nach dem OSM-Import sind im 
 
 1. **Moderation einrichten.** Auf slipways-1 einmal `tailscale serve --bg --https=9465 http://127.0.0.1:9465` ausführen (siehe `deploy/README.md`, „Moderation“); `setup-ntfy.sh` (Punkt 2) erledigt das mit. Bis dahin sammeln sich Vorschläge ungesehen. Für die Test-Stage nach Bedarf ebenso.
 2. **Benachrichtigungen einrichten** (seit 21.10.2026). Auf slipways-1 `bash /opt/slipways/deploy/lxc/setup-ntfy.sh` ausführen (siehe `deploy/README.md`, „Benachrichtigungen“) und in der ntfy-App das Topic abonnieren. Ob Push auf dem iPhone über den Upstream ntfy.sh ankommt, ist ungetestet (aus der Cloud nicht prüfbar).
-3. **Apps (Stufe 3).** iOS und Android zeigen `infos` noch nicht und können keine Vorschläge senden. Dieselben Endpunkte nutzen, den Proof of Work nativ lösen (SHA-256 mit CryptoKit bzw. `MessageDigest`). `SlipwayDetailsDto` hat `infos` neu; die Apps ignorieren unbekannte Felder, deshalb ist das noch nicht nachgezogen.
+3. **Apps auf dem Gerät prüfen** (seit 22.10.2026). Beide Apps senden Vorschläge wie das Web (siehe `docs/mobile-apps.md`). Gebaut und getestet ist das nur in der CI; Formular, Pin-Karte für neue Slipanlagen und „Meine Vorschläge“ einmal im Simulator bzw. Emulator gegen die Test-Stage durchspielen. Im App Store bei „App-Datenschutz“ „Andere Inhalte von Nutzern“ (nicht verknüpft, kein Tracking) angeben, wie im Privacy-Manifest; bei Google Play im Formular „Datensicherheit“ entsprechend.
 4. **Fotos (Stufe 4).** Von Marcel gewünscht: Upload über die Moderation, serverseitig neu kodieren (WebP, lange Kante 1600 px, Vorschau 400 px), EXIF entfernen, keine Originale, höchstens etwa 5 je Eintrag. Speicher im Volume neben der Datenbank, ins Nextcloud-Backup aufnehmen.
 5. **Bestätigungen zählen.** Fakten zeigen nur den neuesten Wert der Nutzer. Das Konzept sah „3× bestätigt“ vor; dafür bräuchte `PlaceInfos` einen Zähler, oder die Freigabe zählt gleiche Vorschläge mit.
 6. **Werte vor der Freigabe ändern.** Die Moderation kann nur annehmen oder ablehnen. Ist ein Vorschlag fast richtig, muss er abgelehnt und der Eintrag von Hand korrigiert werden.
@@ -53,8 +53,7 @@ Vorschläge, Proof of Work, Moderation und Abgleich nach dem OSM-Import sind im 
 Die Karten für Slipanlagen und Marinas zeigen bis Zoom 5 eine Blase je Land, darunter Cluster mit einem Radius, der beim Herauszoomen wächst (`clusterRadius` in `web/src/components/mapView.ts`). Über der Karte wählt ein Auswahlfeld das Land (`?land=FR`), auch bei den Gewässern. `MarinaDto.country` ist `OsmCountry`, bei eigenen Marinas das Land ihrer Slipanlagen; `WaterSummaryDto.countries` kommt aus dem, was am Gewässer liegt (Pegel mit Rijkswaterstaat-Code zählen als NL, alle anderen als DE).
 
 1. **Gewässer ohne Länderblasen.** Gewässer, an denen nichts liegt, haben kein Land; solange es solche mit Verlauf (und damit mit Pin) gibt, zeigt die Gewässer-Karte nur Cluster.
-2. **Apps.** Android clustert mit festem Radius 50 (`OverviewMap.kt`), iOS im Raster (`MapArea.clusters`). Länderblasen und Länderwahl fehlen dort noch; bei Android eine zweite Quelle mit den Länderblasen bis Zoom 5. Die Modelle kennen `Marina.country` und `WaterSummary.countries` noch nicht (die Apps ignorieren unbekannte Felder).
-3. **Eng liegende Länder.** NL und BE, AT und HR überlappen sich bei Zoom 4 leicht. Bei weiteren Ländern ggf. Blasen, die sich berühren, beiseiteschieben.
+2. **Eng liegende Länder.** NL und BE, AT und HR überlappen sich bei Zoom 4 leicht. Bei weiteren Ländern ggf. Blasen, die sich berühren, beiseiteschieben.
 
 ## Suchmaschinen (20.10.2026)
 
@@ -68,6 +67,6 @@ Beschrieben im README („Suchmaschinen“).
 
 Beide Apps laden wieder, haben Gewässer, Pegel, OSM-Hinweis und Info-Seite. Aufbau in [`docs/mobile-apps.md`](mobile-apps.md).
 
-1. **App Store.** Es fehlen App-Icon (`Assets.xcassets`), Signing-Team (`DEVELOPMENT_TEAM`) und Screenshots. `ITSAppUsesNonExemptEncryption = NO` ist eingetragen. Ein Privacy-Manifest braucht die App erst, wenn sie z. B. `UserDefaults` nutzt.
+1. **App Store.** Es fehlen App-Icon (`Assets.xcassets`), Signing-Team (`DEVELOPMENT_TEAM`) und Screenshots. `ITSAppUsesNonExemptEncryption = NO` ist eingetragen, ein Privacy-Manifest (`Slipways/PrivacyInfo.xcprivacy`) liegt bei.
 2. **Google Play.** Es fehlen ein Release-Signing, ein adaptives Icon (bisher nur ein Vektor-Platzhalter) und Screenshots.
 3. **AGP von Hand anheben.** Dependabot hebt das Android Gradle Plugin nur noch um Patch-Versionen an, weil eine neue Minor-Version (z. B. 9.4) erst mit einer passenden stabilen Android-Studio-Version öffnet. Stand: AGP 9.3.1. Sobald Android Studio die nächste Minor-Version unterstützt, in `mobile/android/gradle/libs.versions.toml` anheben.

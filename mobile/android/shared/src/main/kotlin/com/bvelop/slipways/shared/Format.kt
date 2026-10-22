@@ -11,6 +11,8 @@ import java.util.Locale
 object Format {
     private val german = Locale.GERMANY
     private val timestamp = DateTimeFormatter.ofPattern("dd.MM.yy, HH:mm", german)
+    private val day = DateTimeFormatter.ofPattern("dd.MM.yyyy", german)
+    private val month = DateTimeFormatter.ofPattern("MM.yyyy", german)
 
     /** "93309 Kelheim", or null when both are missing. */
     fun place(postalCode: String?, city: String?): String? =
@@ -29,8 +31,23 @@ object Format {
     fun measuredAt(level: WaterLevel, zone: ZoneId = ZoneId.systemDefault()): String =
         runCatching { timestamp.format(Instant.parse(level.measuredAt).atZone(zone)) }.getOrDefault(level.measuredAt)
 
-    /** "4 Slipanlagen", "1 Slipanlage" */
-    fun count(n: Int, singular: String, plural: String): String = "$n ${if (n == 1) singular else plural}"
+    /** "4 Slipanlagen", "1 Slipanlage", "1.234 Slipanlagen" */
+    fun count(n: Int, singular: String, plural: String): String = "${number(n)} ${if (n == 1) singular else plural}"
+
+    /** "1.234" */
+    fun number(n: Int): String = NumberFormat.getIntegerInstance(german).format(n)
+
+    /** "20.10.2026" in the device's time zone; the text as it is when it is no ISO 8601 instant. */
+    /** The latest of some ISO 8601 timestamps; .NET writes up to seven fractional digits, so text order is not enough. */
+    fun latest(isos: List<String>): String? =
+        isos.maxByOrNull { runCatching { Instant.parse(it) }.getOrDefault(Instant.MIN) }
+
+    fun date(iso: String, zone: ZoneId = ZoneId.systemDefault()): String =
+        runCatching { day.format(Instant.parse(iso).atZone(zone)) }.getOrDefault(iso)
+
+    /** "10.2026", for values from users: the day would suggest more precision than a moderated value has. */
+    fun monthYear(iso: String, zone: ZoneId = ZoneId.systemDefault()): String =
+        runCatching { month.format(Instant.parse(iso).atZone(zone)) }.getOrDefault(iso)
 
     private fun decimal(value: Double): String =
         NumberFormat.getNumberInstance(german).apply { maximumFractionDigits = 1 }.format(value)
@@ -86,6 +103,8 @@ object Links {
     const val IMPRESSUM = "https://slipways.de/impressum"
     const val DATENSCHUTZ = "https://slipways.de/datenschutz"
     const val SUPPORT = "https://slipways.de/support"
+    /** How contributing works and what happens to suggestions. */
+    const val CONTRIBUTE = "https://slipways.de/support#mitmachen"
     const val OSM_COPYRIGHT = "https://www.openstreetmap.org/copyright"
     const val PEGELONLINE = "https://www.pegelonline.wsv.de/"
     const val LICENCE = "https://github.com/Marcel-B/Slipways/blob/master/LICENSE"

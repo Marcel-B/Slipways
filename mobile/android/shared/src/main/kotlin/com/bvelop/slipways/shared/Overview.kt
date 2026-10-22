@@ -10,8 +10,8 @@ data class MapArea(val south: Double, val west: Double, val north: Double, val e
     fun contains(latitude: Double, longitude: Double) = latitude in south..north && longitude in west..east
 
     companion object {
-        /** Germany and its neighbours as the map shows them at start. */
-        val START = MapArea(south = 46.0, west = 4.5, north = 55.5, east = 16.5)
+        /** Europe as the map shows it at start, one bubble per country like on the website. */
+        val START = MapArea(south = 36.0, west = -10.0, north = 64.0, east = 25.0)
 
         /** The smallest area around the points with a margin, at least about 2 km wide; null without points. */
         fun fitting(points: List<Position>): MapArea? {
@@ -34,6 +34,12 @@ object Overview {
     /** More entries than this in the visible area ask the user to zoom in or search. */
     const val LIMIT = 250
 
+    /**
+     * Up to this zoom the map shows one bubble per country instead of clusters (`COUNTRY_MAX_ZOOM` on the website).
+     * Zoom levels here count tiles of 256 points like the website; MapLibre's are one less (tiles of 512).
+     */
+    const val COUNTRY_MAX_ZOOM = 5
+
     /** The entries inside the area, or null when there are more than [limit]. */
     fun <T> visible(items: List<T>, area: MapArea, limit: Int = LIMIT, position: (T) -> Position): List<T>? {
         val result = mutableListOf<T>()
@@ -55,4 +61,37 @@ object Overview {
 
     private fun fold(text: String) =
         Normalizer.normalize(text, Normalizer.Form.NFD).replace(Regex("\\p{Mn}+"), "").lowercase()
+}
+
+/**
+ * Which water shapes to load for a map view (`shapeArea` on the website): those reaching into it, widened to a grid so
+ * small moves reuse what was loaded, and further out only those large enough to see, about 20 points. [zoom] counts
+ * tiles of 256 points like the website.
+ */
+data class ShapeArea(val bbox: String, val minExtent: Double) {
+    companion object {
+        /** From this zoom on every water is drawn, however small. */
+        const val ALL_ZOOM = 12
+
+        fun of(area: MapArea, zoom: Double): ShapeArea {
+            val level = maxOf(0, Math.floor(zoom).toInt())
+            // About one tile of 256 points at this zoom.
+            val step = 360 / Math.pow(2.0, level.toDouble())
+            fun snap(value: Double, round: (Double) -> Double, low: Double, high: Double) =
+                minOf(high, maxOf(low, round(value / step) * step))
+            val bbox = listOf(
+                snap(area.west - step, Math::floor, -180.0, 180.0),
+                snap(area.south - step, Math::floor, -90.0, 90.0),
+                snap(area.east + step, Math::ceil, -180.0, 180.0),
+                snap(area.north + step, Math::ceil, -90.0, 90.0),
+            ).joinToString(",") { text(it) }
+            val minExtent = if (level >= ALL_ZOOM) 0.0 else Math.round(28 / Math.pow(2.0, level.toDouble()) * 10_000) / 10_000.0
+            return ShapeArea(bbox, minExtent)
+        }
+
+        /** Up to four decimals and no trailing zeros, like the website, so both ask for the same, cacheable URLs. */
+        fun text(value: Double): String =
+            java.math.BigDecimal(Math.round(value * 10_000) / 10_000.0).setScale(4, java.math.RoundingMode.HALF_UP)
+                .stripTrailingZeros().toPlainString()
+    }
 }

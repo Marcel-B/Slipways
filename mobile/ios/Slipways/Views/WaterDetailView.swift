@@ -8,6 +8,7 @@ struct WaterDetailView: View {
     @Environment(\.api) private var api
     @State private var details: WaterDetails?
     @State private var failed = false
+    @State private var marina: MarinaRef?
 
     var body: some View {
         content
@@ -15,6 +16,7 @@ struct WaterDetailView: View {
             .navigationBarTitleDisplayMode(.inline)
             .task { await load() }
             .refreshable { await load() }
+            .marinaSheet($marina)
     }
 
     @ViewBuilder
@@ -66,11 +68,8 @@ struct WaterDetailView: View {
                 if !details.marinas.isEmpty {
                     Section(Format.count(details.marinas.count, "Marina", "Marinas")) {
                         ForEach(details.marinas) { marina in
-                            if let text = marina.url, let url = Links.web(text) {
-                                Link(destination: url) { MarinaRow(marina: marina) }
-                            } else {
-                                MarinaRow(marina: marina)
-                            }
+                            Button { self.marina = MarinaRef(id: marina.id, name: marina.name) } label: { MarinaRow(marina: marina) }
+                                .foregroundStyle(.primary)
                         }
                     }
                 }
@@ -112,7 +111,7 @@ private struct WaterMap: View {
     let region: MKCoordinateRegion
 
     var body: some View {
-        Map(initialPosition: .region(region)) {
+        DetailMap(region: region) {
             if let shape = details.shape {
                 ForEach(shape.polygons.indices, id: \.self) { index in
                     if let outer = shape.polygons[index].first {
@@ -128,6 +127,7 @@ private struct WaterMap: View {
             }
             ForEach(details.slipways) { slipway in
                 Marker(slipway.name, systemImage: "sailboat", coordinate: CLLocationCoordinate2D(latitude: slipway.latitude, longitude: slipway.longitude))
+                    .tint(.red)
             }
             ForEach(details.stations) { station in
                 Marker(station.name, systemImage: "ruler", coordinate: CLLocationCoordinate2D(latitude: station.latitude, longitude: station.longitude))

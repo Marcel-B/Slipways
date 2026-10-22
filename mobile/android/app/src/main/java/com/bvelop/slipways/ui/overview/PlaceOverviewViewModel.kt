@@ -49,6 +49,10 @@ class PlaceOverviewViewModel<T : Any>(
     private val _area = MutableStateFlow(MapArea.START)
     val area: StateFlow<MapArea> = _area.asStateFlow()
 
+    /** The chosen country as ISO code, null for all. */
+    private val _country = MutableStateFlow<String?>(null)
+    val country: StateFlow<String?> = _country.asStateFlow()
+
     /** Hits for [query]; null without a search term. Old hits stay until new ones arrive, so nothing flickers. */
     val results: StateFlow<List<T>?> =
         combine(query, _items) { term, state -> term to (state as? UiState.Success)?.data }
@@ -91,6 +95,10 @@ class PlaceOverviewViewModel<T : Any>(
 
     fun onAreaChange(value: MapArea) {
         _area.value = value
+    }
+
+    fun onCountryChange(value: String?) {
+        _country.value = value
     }
 
     companion object {

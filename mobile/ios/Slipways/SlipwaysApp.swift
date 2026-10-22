@@ -12,7 +12,7 @@ struct SlipwaysApp: App {
                     .tabItem { Label("Slipanlagen", systemImage: "sailboat") }
                 NavigationStack { MarinaOverviewView().slipwaysDestinations() }
                     .tabItem { Label("Marinas", systemImage: "ferry") }
-                NavigationStack { WaterListView().slipwaysDestinations() }
+                NavigationStack { WaterOverviewView().slipwaysDestinations() }
                     .tabItem { Label("Gewässer", systemImage: "water.waves") }
                 NavigationStack { InfoView() }
                     .tabItem { Label("Info", systemImage: "info.circle") }
