@@ -71,8 +71,8 @@ export function DatenschutzPage() {
 
       <h2>Berechtigungen der Apps</h2>
       <p>
-        Die Apps benötigen nur den Internetzugang, um Slipanlagen und Pegelstände zu laden. Sie fragen weder Ihren Standort noch
-        Kontakte, Fotos oder andere Daten auf Ihrem Gerät ab.
+        Die Apps benötigen nur den Internetzugang, um Slipanlagen und Pegelstände zu laden und Vorschläge zu senden. Sie fragen
+        weder Ihren Standort noch Kontakte, Fotos oder andere Daten auf Ihrem Gerät ab.
       </p>
 
       <h2>App Store und Google Play</h2>
@@ -115,14 +115,14 @@ export function DatenschutzPage() {
 
       <h2>Vorschläge, Tipps und neue Slipanlagen</h2>
       <p>
-        Auf der Website können Sie ohne Konto Angaben ergänzen oder korrigieren, Tipps geben, Probleme melden und fehlende
+        Auf der Website und in den Apps können Sie ohne Konto Angaben ergänzen oder korrigieren, Tipps geben, Probleme melden und fehlende
         Slipanlagen vorschlagen. Wir speichern dafür nur, was Sie in das Formular schreiben bzw. auswählen, den Zeitpunkt und einen
         Prüfwert zu dem Link, unter dem Sie den Stand Ihres Vorschlags sehen. Wir fragen weder Namen noch E-Mail-Adresse ab und
         speichern zu einem Vorschlag keine IP-Adresse und keine Angaben zu Browser oder Gerät. Bitte schreiben Sie keine
         personenbezogenen Daten in Ihre Texte.
       </p>
       <p>
-        Gegen massenhafte Einsendungen rechnet Ihr Browser vor dem Absenden eine kleine Rechenaufgabe (Proof of Work). Sie kommt von
+        Gegen massenhafte Einsendungen rechnet Ihr Browser bzw. Ihr Gerät vor dem Absenden eine kleine Rechenaufgabe (Proof of Work). Sie kommt von
         unserem eigenen Server, es ist kein fremder Dienst beteiligt, und sie setzt keine Cookies. Außerdem begrenzt der Server die
         Zahl der Vorschläge je IP-Adresse; dieser Zähler liegt wie oben beschrieben nur im Arbeitsspeicher.
       </p>
@@ -131,7 +131,10 @@ export function DatenschutzPage() {
         stammt. Abgelehnte Vorschläge löschen wir 30 Tage nach der Entscheidung, angenommene nach 90 Tagen (ihr Inhalt steht dann
         im Eintrag selbst). Solange ein Vorschlag noch nicht geprüft ist, können Sie ihn über den Link jederzeit zurückziehen; er
         wird dann sofort gelöscht. Ihr Browser merkt sich diesen Link im lokalen Speicher (localStorage), damit Sie ihn
-        wiederfinden; diese Angabe verlässt Ihr Gerät nicht und lässt sich über die Browser-Einstellungen löschen.
+        wiederfinden; diese Angabe verlässt Ihr Gerät nicht und lässt sich über die Browser-Einstellungen löschen. Die Apps
+        speichern ihn ebenso nur auf dem Gerät (iOS: UserDefaults, Android: SharedPreferences) und zeigen den Stand unter
+        „Info“ › „Meine Vorschläge“. Nach 90 Tagen vergessen sie ihn; vorher löschen Sie ihn, indem Sie den Vorschlag
+        zurückziehen oder die App löschen.
       </p>
       <p>
         Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO. Unser berechtigtes Interesse ist, das Verzeichnis mit Hilfe der Nutzer aktuell
