@@ -38,6 +38,10 @@ object Format {
     fun number(n: Int): String = NumberFormat.getIntegerInstance(german).format(n)
 
     /** "20.10.2026" in the device's time zone; the text as it is when it is no ISO 8601 instant. */
+    /** The latest of some ISO 8601 timestamps; .NET writes up to seven fractional digits, so text order is not enough. */
+    fun latest(isos: List<String>): String? =
+        isos.maxByOrNull { runCatching { Instant.parse(it) }.getOrDefault(Instant.MIN) }
+
     fun date(iso: String, zone: ZoneId = ZoneId.systemDefault()): String =
         runCatching { day.format(Instant.parse(iso).atZone(zone)) }.getOrDefault(iso)
 

@@ -148,6 +148,10 @@ data class SlipwayDetails(
 
     val tips: List<PlaceInfo>
         get() = Contributions.tips(infos)
+
+    /** When the slipway last changed (ISO 8601), for [SuggestionStore.pendingFields]. */
+    val lastChanged: String?
+        get() = Format.latest(listOfNotNull(updated) + infos.map { it.retrieved })
 }
 
 @Serializable
@@ -222,6 +226,10 @@ data class MarinaDetails(
 
     val tips: List<PlaceInfo>
         get() = Contributions.tips(infos)
+
+    /** When users last changed the marina (ISO 8601), for [SuggestionStore.pendingFields]. */
+    val lastChanged: String?
+        get() = Format.latest(infos.filter { it.source == "user" }.map { it.retrieved })
 
     /** True when the page shows anything from OpenStreetMap and so needs the attribution. */
     val usesOpenStreetMap: Boolean
