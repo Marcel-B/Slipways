@@ -1,5 +1,5 @@
 [versions]
-agp = "9.3.1"
+agp = "9.3.3"
 kotlin = "2.4.21"
 compileSdk = "37"
 minSdk = "26"
@@ -12,7 +12,7 @@ ktor = "3.6.0"
 lifecycle = "2.11.0"
 maplibre = "13.7.1"
 navigation = "2.10.2"
-serialization = "1.11.0"
+serialization = "1.12.0"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
