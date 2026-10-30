@@ -35,8 +35,8 @@ public enum Countries {
     private static let names = [
         "AT": "Österreich", "BE": "Belgien", "CH": "Schweiz", "CZ": "Tschechien", "DE": "Deutschland",
         "DK": "Dänemark", "ES": "Spanien", "FI": "Finnland", "FR": "Frankreich", "GB": "Vereinigtes Königreich",
-        "GR": "Griechenland", "HR": "Kroatien", "IT": "Italien", "LU": "Luxemburg", "NL": "Niederlande",
-        "NO": "Norwegen", "PL": "Polen", "PT": "Portugal", "SE": "Schweden", "SI": "Slowenien",
+        "GR": "Griechenland", "HR": "Kroatien", "IE": "Irland", "IT": "Italien", "LU": "Luxemburg",
+        "NL": "Niederlande", "NO": "Norwegen", "PL": "Polen", "PT": "Portugal", "SE": "Schweden", "SI": "Slowenien",
     ]
 
     /// The German name of a country, e.g. "Niederlande" for NL.
