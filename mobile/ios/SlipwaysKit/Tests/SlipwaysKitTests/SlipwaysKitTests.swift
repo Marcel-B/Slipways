@@ -205,6 +205,24 @@ private let marina = """
     #expect(MapArea.fitting([]) == nil)
 }
 
+@Test func focusesOnHitsCountryOrEurope() throws {
+    let points = [(latitude: 48.0, longitude: 11.0), (latitude: 49.0, longitude: 12.0)]
+
+    let hits = try #require(Overview.focus(points, searching: true, country: "DE"))
+    #expect(hits == MapArea.fitting(points))
+    #expect(Overview.focus([], searching: true, country: nil) == nil)
+    #expect(Overview.focus(points, searching: false, country: "DE") == Countries.coreArea(points))
+    #expect(Overview.focus(points, searching: false, country: nil) == MapArea.start)
+}
+
+@Test func findsPointsOutsideArea() {
+    let kelheim = MapArea(centerLatitude: 48.9, centerLongitude: 11.9, latitudeDelta: 0.2, longitudeDelta: 0.2)
+
+    #expect(!Overview.anyOutside([(latitude: 48.9, longitude: 11.9)], of: kelheim))
+    #expect(Overview.anyOutside([(latitude: 48.9, longitude: 11.9), (latitude: 52.4, longitude: 13.0)], of: kelheim))
+    #expect(!Overview.anyOutside([], of: kelheim))
+}
+
 @Test func clustersEntriesInGridCells() throws {
     let points = [(latitude: 48.90, longitude: 11.90), (latitude: 48.91, longitude: 11.91), (latitude: 52.4, longitude: 13.0), (latitude: 60.0, longitude: 11.9)]
 

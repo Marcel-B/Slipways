@@ -2,10 +2,14 @@ import MapKit
 import SlipwaysKit
 import SwiftUI
 
-/// Map with search and choice of country for one kind of place; the list below shows only what lies in the visible
-/// area or matches the search. Zoomed out, the map shows one bubble per country, further in bubbles with counts for
-/// crowded areas instead of pins, which keeps the map fast.
-struct PlaceOverview<Item: Place, Row: View>: View {
+/// A full-screen map of one kind of place, with a search field and a choice of country floating above it; there is
+/// no list. Zoomed out, the map shows one bubble per country, further in bubbles with counts for crowded areas instead
+/// of pins, which keeps the map fast. A tap on a pin opens the place.
+///
+/// The map moves by itself only when someone asks for something: when the search term settles it fits the hits, when
+/// a country is chosen it shows that country. Panning or zooming never moves it, and clearing the search leaves it
+/// where it is. When hits lie outside the view, the line at the bottom offers to show them all.
+struct PlaceOverview<Item: Place>: View {
     let title: String
     let singular: String
     let plural: String
@@ -17,7 +21,6 @@ struct PlaceOverview<Item: Place, Row: View>: View {
     let onSelect: (Item) -> Void
     /// Shows a plus button that suggests a new entry in the visible area.
     var onAdd: ((MapArea) -> Void)? = nil
-    @ViewBuilder let row: (Item) -> Row
 
     /// More pins than this in the visible area are grouped into bubbles.
     private static var pinLimit: Int { 100 }
@@ -35,6 +38,7 @@ struct PlaceOverview<Item: Place, Row: View>: View {
     @State private var mapWidth = 390.0
     @State private var position = MapCameraPosition.region(MKCoordinateRegion(MapArea.start))
     @State private var selection: String?
+    @FocusState private var searchFocused: Bool
 
     private var searching: Bool { !query.isEmpty }
 
@@ -45,40 +49,38 @@ struct PlaceOverview<Item: Place, Row: View>: View {
         return all.filter { $0.country == country }
     }
 
-    /// Nil when the area holds too many entries to list.
-    private var listed: [Item]? {
-        if searching { return candidates }
-        return Overview.visible(candidates, in: area) { ($0.latitude, $0.longitude) }
+    private var points: [(latitude: Double, longitude: Double)] {
+        candidates.map { (latitude: $0.latitude, longitude: $0.longitude) }
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            map
-            list
+        ZStack {
+            map.ignoresSafeArea(edges: [.top, .leading, .trailing])
         }
+        .osmAttribution(true)
+        .overlay(alignment: .top) {
+            MapSearchBar(
+                text: $text,
+                prompt: "Name, Ort oder Gewässer",
+                countries: countries,
+                country: $country,
+                focused: $searchFocused,
+                addLabel: onAdd == nil ? nil : "\(singular) fehlt?",
+                onAdd: onAdd == nil ? nil : { onAdd?(area) }
+            )
+        }
+        .overlay(alignment: .bottom) { notice }
         .navigationTitle(title)
-        .navigationBarTitleDisplayMode(.inline)
-        .searchable(text: $text, placement: .navigationBarDrawer(displayMode: .always), prompt: "Name, Ort oder Gewässer")
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) { CountryMenu(options: countries, selection: $country) }
-            if let onAdd {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("\(singular) fehlt?", systemImage: "plus") { onAdd(area) }
-                }
-            }
-        }
+        .toolbar(.hidden, for: .navigationBar)
         .task { await reload() }
         .task(id: text) { await find() }
         .onChange(of: selection) { _, id in
             guard let id else { return }
             selection = nil
+            searchFocused = false
             if let item = candidates.first(where: { $0.id == id }) { onSelect(item) }
         }
-        .onChange(of: country) { _, _ in
-            let points = candidates.map { (latitude: $0.latitude, longitude: $0.longitude) }
-            let target = searching ? MapArea.fitting(points) : (country == nil ? MapArea.start : Countries.coreArea(points))
-            if let target { withAnimation { position = .region(MKCoordinateRegion(target)) } }
-        }
+        .onChange(of: country) { _, _ in focus() }
     }
 
     private var map: some View {
@@ -89,7 +91,8 @@ struct PlaceOverview<Item: Place, Row: View>: View {
         let byCountry = groups.count > 1
         let pins = byCountry ? [] : Overview.visible(shown, in: area, limit: Self.pinLimit) { ($0.latitude, $0.longitude) }
         let clusters = byCountry || pins != nil ? [] : Overview.clusters(shown, in: area) { ($0.latitude, $0.longitude) }
-        return Map(position: $position, selection: $selection) {
+        // North stays up: a compass would sit under the search field.
+        return Map(position: $position, interactionModes: [.pan, .zoom], selection: $selection) {
             ForEach(pins ?? []) { item in
                 Marker(item.name, systemImage: systemImage, coordinate: CLLocationCoordinate2D(latitude: item.latitude, longitude: item.longitude))
                     .tint(tint)
@@ -120,45 +123,37 @@ struct PlaceOverview<Item: Place, Row: View>: View {
             area = MapArea(context.region)
         }
         .onGeometryChange(for: Double.self) { $0.size.width } action: { mapWidth = $0 }
-        .osmAttribution(true)
-        .frame(maxHeight: .infinity)
+        // Moving the map puts the keyboard away, so the whole screen is map again.
+        .simultaneousGesture(DragGesture(minimumDistance: 10).onChanged { _ in searchFocused = false })
     }
 
+    /// Loading, a failure, or how many hits the search found; nothing while the map simply shows everything.
     @ViewBuilder
-    private var list: some View {
-        if items == nil && error != nil {
-            LoadFailedView(title: "\(plural) konnten nicht geladen werden") { await reload() }
-                .frame(maxHeight: .infinity)
-        } else if items == nil || (searching && results == nil) {
-            ProgressView().frame(maxHeight: .infinity)
-        } else if let listed {
-            if listed.isEmpty {
-                Group {
-                    if searching {
-                        ContentUnavailableView.search(text: query)
-                    } else {
-                        ContentUnavailableView("Hier gibt es keine \(plural)", systemImage: "map", description: Text("Verschiebe die Karte oder suche."))
-                    }
-                }
-                .frame(maxHeight: .infinity)
-            } else {
-                List {
-                    Section(searching ? Format.count(listed.count, "Treffer", "Treffer") : "\(Format.count(listed.count, singular, plural)) im Kartenausschnitt") {
-                        ForEach(listed) { row($0) }
-                    }
-                    Section { } footer: { OSMAttribution() }
-                }
-                .listStyle(.plain)
-                .frame(maxHeight: .infinity)
+    private var notice: some View {
+        let term = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if items == nil, error != nil {
+            MapNotice(text: "\(plural) konnten nicht geladen werden", systemImage: "wifi.exclamationmark", actionTitle: "Erneut versuchen") {
+                Task { await reload() }
             }
-        } else {
-            ContentUnavailableView(
-                "Zoome hinein oder suche",
-                systemImage: "magnifyingglass",
-                description: Text("\(Format.count(candidates.count, singular, plural)), zu viele für eine Liste.")
-            )
-            .frame(maxHeight: .infinity)
+        } else if items == nil {
+            MapNotice(text: "\(plural) werden geladen", loading: true)
+        } else if !term.isEmpty && term != query {
+            MapNotice(text: "Suche „\(term)“", loading: true)
+        } else if searching {
+            if candidates.isEmpty {
+                MapNotice(text: country.map { "Keine Treffer in \(Countries.name($0))" } ?? "Keine Treffer", systemImage: "magnifyingglass")
+            } else if Overview.anyOutside(points, of: area) {
+                MapNotice(text: Format.count(candidates.count, "Treffer", "Treffer"), actionTitle: "Alle zeigen") { focus() }
+            } else {
+                MapNotice(text: Format.count(candidates.count, "Treffer", "Treffer"))
+            }
         }
+    }
+
+    /// Fits the map to the search hits or the chosen country (`Overview.focus`).
+    private func focus() {
+        guard let target = Overview.focus(points, searching: searching, country: country) else { return }
+        withAnimation { position = .region(MKCoordinateRegion(target)) }
     }
 
     private func zoom(to cluster: Cluster<Item>) {
@@ -194,10 +189,7 @@ struct PlaceOverview<Item: Place, Row: View>: View {
             if Task.isCancelled { return }
             query = term
             results = found
-            let points = candidates.map { (latitude: $0.latitude, longitude: $0.longitude) }
-            if let fitted = MapArea.fitting(points) {
-                withAnimation { position = .region(MKCoordinateRegion(fitted)) }
-            }
+            focus()
         } catch let error where error.isCancellation {
         } catch {
             query = term
@@ -239,28 +231,6 @@ struct CountryBubble: View {
         .background(tint, in: .circle)
         .overlay(Circle().stroke(.white, lineWidth: 2))
         .shadow(radius: 2)
-    }
-}
-
-/// Chooses one country or all; hidden while there is nothing to choose between.
-struct CountryMenu: View {
-    let options: [CountryCount]
-    @Binding var selection: String?
-
-    var body: some View {
-        if options.count >= 2 {
-            Menu {
-                Picker("Land", selection: $selection) {
-                    Text("Alle Länder").tag(String?.none)
-                    ForEach(options) { option in
-                        Text(option.label).tag(String?.some(option.code))
-                    }
-                }
-            } label: {
-                Label(selection.map(Countries.name) ?? "Alle Länder", systemImage: selection == nil ? "globe.europe.africa" : "globe.europe.africa.fill")
-            }
-            .accessibilityLabel("Land")
-        }
     }
 }
 
