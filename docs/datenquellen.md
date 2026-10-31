@@ -102,7 +102,7 @@ Seit dem 20.10.2026 importiert der OSM-Job auch DK, SE, NO, IT und HR. Pegel gib
 | HR | DHMZ | keine offene API gefunden, Preisliste | – | ja |
 | IT, ES | nur regional (ARPA bzw. SAIH je Flussgebiet) | je Region | je Region | nein |
 
-GB, IE und PT importiert der OSM-Job seit dem 30.10.2026 (Pegel dort ebenfalls noch keine).
+GB, IE und PT importiert der OSM-Job seit dem 30.10.2026, PL seit dem 31.10.2026 (Pegel dort ebenfalls noch keine).
 
 Für die Küsten wäre ein europaweiter Pegeldienst (EMODnet Physics / Copernicus Marine, Tide Gauges) einen Blick wert, nicht geprüft.
 
