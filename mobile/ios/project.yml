@@ -22,6 +22,9 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.bvelop.slipways
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # Signing team comes from the TestFlight workflow (secret APPLE_TEAM_ID); locally pick it in Xcode.
+        CODE_SIGN_STYLE: Automatic
         TARGETED_DEVICE_FAMILY: "1,2"
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Slipways

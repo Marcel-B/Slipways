@@ -18,7 +18,7 @@ Grober Plan für Slipways. Einzelheiten zu offenen Entscheidungen und Restarbeit
 ## Als Nächstes
 
 - **Abfrage nach Kartenausschnitt**, damit Web und Apps nicht mehr alle Einträge auf einmal laden; nötig, sobald die Listen nach den neuen Ländern zu groß werden.
-- **Apps in die Stores:** Test auf dem Gerät, Icons, Signierung, Screenshots, Datenschutzangaben.
+- **Apps in die Stores:** iOS lädt jeden Stand von `master` zu TestFlight hoch; offen sind Test auf dem Gerät, Screenshots, Datenschutzangaben und Android-Signierung.
 - **Pegel in weiteren Ländern**, zuerst dort, wo es offene Schnittstellen ohne Schlüssel gibt (z. B. Frankreich, England, Irland).
 - **Aussagekräftigere Namen** für Einträge, die in OpenStreetMap keinen Namen haben.
 - **Search Console** einrichten und Vorschaubild für Link-Vorschauen.

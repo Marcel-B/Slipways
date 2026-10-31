@@ -1,0 +1,79 @@
+name: TestFlight
+
+on:
+  push:
+    branches: [master]
+    paths: [mobile/ios/**, .github/workflows/testflight.yml]
+  workflow_dispatch:
+
+concurrency:
+  group: testflight
+  cancel-in-progress: false
+
+jobs:
+  upload:
+    runs-on: macos-26
+    defaults:
+      run:
+        working-directory: mobile/ios
+    env:
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      ASC_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+    steps:
+      - name: Check secrets
+        id: secrets
+        working-directory: .
+        run: |
+          if [ -z "$APPLE_TEAM_ID" ] || [ -z "$ASC_KEY_ID" ] || [ -z "$ASC_ISSUER_ID" ] || [ -z "$ASC_KEY" ]; then
+            echo "::warning::TestFlight secrets missing, skipping upload (see mobile/ios/scripts/testflight-secrets.sh)"
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v7
+        if: steps.secrets.outputs.ready == 'true'
+      - name: Write API key
+        if: steps.secrets.outputs.ready == 'true'
+        run: |
+          mkdir -p "$RUNNER_TEMP/keys"
+          printf '%s' "$ASC_KEY" | base64 --decode > "$RUNNER_TEMP/keys/AuthKey.p8"
+          echo "BUILD_NUMBER=$(date -u +%Y%m%d%H%M)" >> "$GITHUB_ENV"
+      - name: Generate Xcode project
+        if: steps.secrets.outputs.ready == 'true'
+        run: |
+          brew install xcodegen
+          xcodegen generate
+      - name: Archive
+        if: steps.secrets.outputs.ready == 'true'
+        run: |
+          xcodebuild archive \
+            -project Slipways.xcodeproj \
+            -scheme Slipways \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/Slipways.xcarchive" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/keys/AuthKey.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER"
+      - name: Upload to TestFlight
+        if: steps.secrets.outputs.ready == 'true'
+        run: |
+          cp ExportOptions.plist "$RUNNER_TEMP/ExportOptions.plist"
+          plutil -insert teamID -string "$APPLE_TEAM_ID" "$RUNNER_TEMP/ExportOptions.plist"
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/Slipways.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/keys/AuthKey.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+          echo "Build $BUILD_NUMBER uploaded, it shows up in TestFlight after Apple's processing." >> "$GITHUB_STEP_SUMMARY"
+      - name: Remove API key
+        if: always() && steps.secrets.outputs.ready == 'true'
+        run: rm -rf "$RUNNER_TEMP/keys"

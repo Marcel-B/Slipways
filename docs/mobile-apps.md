@@ -46,6 +46,15 @@ Die Info-Seite nennt außerdem die Lizenz des Codes (PolyForm Strict 1.0.0, sieh
 - XcodeGen: `brew install xcodegen`.
 - Die CI baut auf `macos-26` (`.github/workflows/ios.yml`) bzw. `ubuntu-latest` (`android.yml`).
 
+## TestFlight
+
+`.github/workflows/testflight.yml` archiviert die iOS-App bei jedem Push auf `master`, der `mobile/ios` ändert, und lädt sie zu TestFlight hoch. Von Hand: in GitHub unter Actions „TestFlight“ starten oder `gh workflow run testflight.yml`.
+
+- Signiert wird automatisch über einen App Store Connect API-Key (`-allowProvisioningUpdates`). Der Key braucht die Rolle „Admin“, damit Xcode das Verteilungszertifikat in der Cloud anlegen darf.
+- Die Secrets `APPLE_TEAM_ID`, `APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID` und `APP_STORE_CONNECT_KEY` (die .p8-Datei in Base64) trägt `mobile/ios/scripts/testflight-secrets.sh` ein; es fragt die Werte ab und braucht die GitHub CLI. Fehlen sie, überspringt der Workflow den Upload mit einer Warnung.
+- Die Build-Nummer ist der Zeitpunkt des Laufs (`yyyyMMddHHmm`, UTC), die Version (`MARKETING_VERSION`) steht in `project.yml`.
+- Die App muss in App Store Connect mit der Bundle-ID `com.bvelop.slipways` angelegt sein.
+
 ## Für die Stores offen
 
 Steht in [`offene-punkte.md`](offene-punkte.md) unter „Mobile-Apps“.

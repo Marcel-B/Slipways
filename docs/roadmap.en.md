@@ -18,7 +18,7 @@ Rough plan for Slipways. Open decisions and remaining work are tracked in more d
 ## Next
 
 - **Query by map area**, so the website and apps no longer load every entry at once; needed as soon as the lists grow too large with the new countries.
-- **Apps in the stores:** on-device testing, icons, signing, screenshots, privacy details.
+- **Apps in the stores:** iOS uploads every `master` build to TestFlight; still open are on-device testing, screenshots, privacy details and Android signing.
 - **Gauges in more countries**, starting where open APIs without a key exist (e.g. France, England, Ireland).
 - **Meaningful names** for entries without a name in OpenStreetMap.
 - **Search Console** setup and a preview image for link previews.
