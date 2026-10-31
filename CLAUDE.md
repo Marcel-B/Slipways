@@ -2,7 +2,7 @@
 
 Slipanlagen, Marinas, Gewässer und Pegel als Web-App. Backend in `backend/` (.NET 10, Minimal APIs, EF Core mit SQLite), Web in `web/` (React 19, Vite, TypeScript). Überblick, Betrieb und Datenquellen stehen im `README.md`.
 
-**Zuerst lesen:** [`docs/offene-punkte.md`](docs/offene-punkte.md). Dort stehen offene Entscheidungen und Restarbeiten früherer Sessions. Neue offene Punkte dort eintragen und erledigte im selben Commit löschen. Dafür keine GitHub-Issues anlegen.
+**Zuerst lesen:** [`docs/offene-punkte.md`](docs/offene-punkte.md). Dort stehen offene Entscheidungen und Restarbeiten früherer Sessions. Neue offene Punkte dort eintragen und erledigte im selben Commit löschen. Dafür keine GitHub-Issues anlegen. Ändert sich, was fertig ist oder als Nächstes kommt, die Roadmap in [`docs/roadmap.md`](docs/roadmap.md) und [`docs/roadmap.en.md`](docs/roadmap.en.md) mitziehen.
 
 ## Prüfen, bevor etwas fertig ist
 

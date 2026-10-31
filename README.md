@@ -2,6 +2,8 @@
 
 Slipways sammelt Slipanlagen (Bootsrampen) und Marinas in Deutschland und weiteren Ländern Europas.
 
+Was fertig ist und was als Nächstes kommt, steht in der [Roadmap](docs/roadmap.md) ([English](docs/roadmap.en.md)).
+
 | Teil | Ordner | Technik |
 | --- | --- | --- |
 | Backend | [`backend/`](backend) | .NET 10, ASP.NET Core Minimal APIs, EF Core mit SQLite, ASP.NET Identity |
