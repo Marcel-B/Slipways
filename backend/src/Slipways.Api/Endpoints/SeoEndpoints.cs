@@ -27,8 +27,8 @@ public static class SeoEndpoints
     private const string SiteName = "Slipways";
 
     private const string DefaultDescription =
-        "Slipanlagen, Marinas und Pegelstände in Deutschland, Österreich, der Schweiz und den Niederlanden auf einer " +
-        "Karte: Lage, Kosten, Zugang, Untergrund und aktueller Wasserstand.";
+        "Slipanlagen, Marinas und Pegelstände in Deutschland und weiteren Ländern Europas auf einer Karte: " +
+        "Lage, Kosten, Zugang, Untergrund und aktueller Wasserstand.";
 
     private static readonly Dictionary<string, SeoPage> StaticPages = new()
     {
