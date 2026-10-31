@@ -23,8 +23,9 @@ object Countries {
     private val names = mapOf(
         "AT" to "Österreich", "BE" to "Belgien", "CH" to "Schweiz", "CZ" to "Tschechien", "DE" to "Deutschland",
         "DK" to "Dänemark", "ES" to "Spanien", "FI" to "Finnland", "FR" to "Frankreich", "GB" to "Vereinigtes Königreich",
-        "GR" to "Griechenland", "HR" to "Kroatien", "IT" to "Italien", "LU" to "Luxemburg", "NL" to "Niederlande",
-        "NO" to "Norwegen", "PL" to "Polen", "PT" to "Portugal", "SE" to "Schweden", "SI" to "Slowenien",
+        "GR" to "Griechenland", "HR" to "Kroatien", "IE" to "Irland", "IT" to "Italien", "LU" to "Luxemburg",
+        "NL" to "Niederlande", "NO" to "Norwegen", "PL" to "Polen", "PT" to "Portugal", "SE" to "Schweden",
+        "SI" to "Slowenien",
     )
 
     /** The German name of a country, e.g. "Niederlande" for NL. */

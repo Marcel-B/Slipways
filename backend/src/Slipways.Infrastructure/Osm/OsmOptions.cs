@@ -4,7 +4,7 @@ public sealed class OsmOptions
 {
     public const string SectionName = "Osm";
 
-    private static readonly string[] DefaultCountries = ["DE", "AT", "CH", "NL", "BE", "FR", "ES", "IT", "HR", "DK", "SE", "NO"];
+    private static readonly string[] DefaultCountries = ["DE", "AT", "CH", "NL", "BE", "FR", "ES", "IT", "HR", "DK", "SE", "NO", "GB", "IE", "PT"];
 
     /// <summary>Turns the periodic import off, e.g. for tests or offline development.</summary>
     public bool Enabled { get; set; } = true;

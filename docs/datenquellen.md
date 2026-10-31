@@ -96,10 +96,14 @@ Seit dem 20.10.2026 importiert der OSM-Job auch DK, SE, NO, IT und HR. Pegel gib
 | PL | IMGW-PIB danepubliczne.imgw.pl | Dateien/API | Quellenangabe IMGW-PIB | nicht bestätigt |
 | SE | SMHI Hydrologi | REST | CC BY 4.0 | Lizenz ja, Wasserstand als Datensatz unklar |
 | NO | NVE HydAPI | REST, **API-Schlüssel** | NLOD (≈ CC BY) | ja |
-| GB (England) | Environment Agency Flood Monitoring | REST, ohne Schlüssel | OGL | nicht neu geprüft |
+| GB (England) | Environment Agency Flood Monitoring | REST, ohne Schlüssel | OGL | nicht neu geprüft; Schottland (SEPA), Wales (NRW) und Nordirland getrennt |
+| IE | OPW waterlevel.ie (Hydrometric Network, auch auf data.gov.ie) | GeoJSON/CSV, ohne Schlüssel | laut data.gov.ie offen, Lizenz nicht bestätigt | Katalog |
+| PT | SNIRH (APA) | keine einfache offene API gefunden, nur Webportal und WMS | – | Suche |
 | HR | DHMZ | keine offene API gefunden, Preisliste | – | ja |
 | IT, ES | nur regional (ARPA bzw. SAIH je Flussgebiet) | je Region | je Region | nein |
 
+GB, IE und PT importiert der OSM-Job seit dem 30.10.2026 (Pegel dort ebenfalls noch keine).
+
 Für die Küsten wäre ein europaweiter Pegeldienst (EMODnet Physics / Copernicus Marine, Tide Gauges) einen Blick wert, nicht geprüft.
 
-Quellen: [DMI oceanObs](https://opendatadocs.dmi.govcloud.dk/Data/Oceanographic_Observation_Data), [RWS Waterkwantiteit](https://data.overheid.nl/dataset/79093-rijkswaterstaat-waterkwantiteit-dataservice), [Hub'Eau Hydrométrie](https://www.data.gouv.fr/dataservices/hubeau-hydrometrie), [SMHI Villkor](https://www.smhi.se/data/om-smhis-data/villkor-for-anvandning), [NVE HydAPI](https://hydapi.nve.no/), [DHMZ](https://meteo.hr/podaci_e.php?param=mop), [Geofabrik Europa](https://download.geofabrik.de/europe.html).
+Quellen: [DMI oceanObs](https://opendatadocs.dmi.govcloud.dk/Data/Oceanographic_Observation_Data), [RWS Waterkwantiteit](https://data.overheid.nl/dataset/79093-rijkswaterstaat-waterkwantiteit-dataservice), [Hub'Eau Hydrométrie](https://www.data.gouv.fr/dataservices/hubeau-hydrometrie), [SMHI Villkor](https://www.smhi.se/data/om-smhis-data/villkor-for-anvandning), [NVE HydAPI](https://hydapi.nve.no/), [DHMZ](https://meteo.hr/podaci_e.php?param=mop), [Geofabrik Europa](https://download.geofabrik.de/europe.html), [OPW-Pegel auf data.gov.ie](https://data.gov.ie/dataset/opw-hydrometric-network-real-time-water-level-data), [SNIRH-Messnetz (INSPIRE)](https://inspire-geoportal.ec.europa.eu/srv/api/records/5A47AC4D-1512-4A55-97B9-90BB604C5206).
