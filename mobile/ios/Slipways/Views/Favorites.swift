@@ -11,9 +11,10 @@ final class Favorites {
     private var ids: Set<String>
 
     init(store: FavoriteStore = FavoriteStore()) {
+        let loaded = store.all()
         self.store = store
-        all = store.all()
-        ids = Set(all.map(\.id))
+        all = loaded
+        ids = Set(loaded.map(\.id))
     }
 
     func contains(_ type: PlaceType, _ id: String) -> Bool {
