@@ -1,6 +1,6 @@
 # Mobile-Apps
 
-Stand 22.10.2026. Beide Apps können alles, was die Website kann: lesen und ohne Konto Vorschläge senden. Auf dem Gerät speichern sie nur die gesendeten Vorschläge. Bauen und Testen steht im README unter „Mobile-Apps“.
+Stand 01.11.2026. Beide Apps können alles, was die Website kann: lesen und ohne Konto Vorschläge senden. Auf dem Gerät speichern sie nur die gesendeten Vorschläge, iOS außerdem die Favoriten. Bauen und Testen steht im README unter „Mobile-Apps“.
 
 ## Aufbau
 
@@ -26,6 +26,7 @@ Beide Apps haben die Tabs Slipanlagen, Marinas, Gewässer und Info und zeigen da
 - **Mitmachen** wie im Web (`docs/nutzerbeitraege.md`): Stifte neben den Werten, „Fehlt noch“, „Angaben ankreuzen“ unter „Was gibt es dort?“, „Tipp geben“, „Etwas stimmt nicht“ und „In OpenStreetMap bearbeiten“ auf Slipanlage und Marina (`ContributeSections` bzw. `ContributeSection`, Formular `SuggestSheet`). Felder, Auswahlwerte und Längen stehen in `Contributions` und entsprechen `web/src/contribute/fields.ts` und `SuggestionFields.cs`. Das Plus auf der Slipanlagen-Karte schlägt eine neue Slipanlage vor: Pin in der Kartenmitte, senden erst ab Zoom 13; meldet der Server Slipanlagen in der Nähe (409), zeigt das Formular sie mit „Nein, trotzdem neu eintragen“.
 - **Spam-Schutz**: Das Formular holt beim Öffnen `/api/suggestions/challenge` und löst den Proof of Work im Hintergrund (`Proof.solve`, iOS mit CryptoKit, unter Linux für die Tests mit eigenem SHA-256; Android mit `MessageDigest`). Das Honeypot-Feld des Webs fehlt, es zielt auf Bots in Browsern.
 - **Meine Vorschläge** im Info-Tab: Die Apps merken sich Kennung und Token gesendeter Vorschläge (`SuggestionStore`; iOS `UserDefaults`, Android `SharedPreferences`, 90 Tage wie `localStorage` im Web), zeigen den Stand und erlauben „Zurückziehen“, solange er offen ist. Daraus kommt auch „Dein Vorschlag wird geprüft“ an Werten. iOS meldet das im Privacy-Manifest (`PrivacyInfo.xcprivacy`, Grund CA92.1, dazu Nutzerinhalte ohne Tracking).
+- **Favoriten** (bisher nur iOS): Der Stern oben auf einer Slipanlage oder Marina merkt sie sich auf dem Gerät (`FavoriteStore` in `UserDefaults`, mit Name und Position, damit die Liste ohne Netz erscheint; ein Konto gibt es nicht). Auf der Karte sind Favoriten Pins mit Stern in der Farbe ihrer Art und bleiben auch dort Pins, wo der Rest zu Blasen zusammengefasst ist. Der Stern neben dem Suchfeld zeigt nur die Favoriten und passt die Karte wie eine Suche darauf an. Der Tab „Favoriten“ listet sie getrennt nach Slipanlagen und Marinas; Wischen entfernt einen. Öffnet sich die Seite, zieht sie Name und Position nach, falls sie sich geändert haben.
 - **Detailkarten** starten weiter draußen und zoomen beim Öffnen hinein wie im Web (`DetailMap`), außer die Bewegung ist in den Systemeinstellungen reduziert bzw. Animationen sind aus.
 
 ## Lizenzhinweis
