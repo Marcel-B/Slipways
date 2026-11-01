@@ -19,6 +19,7 @@ import com.bvelop.slipways.shared.Format
 import com.bvelop.slipways.shared.MapArea
 import com.bvelop.slipways.shared.Overview
 import com.bvelop.slipways.shared.Position
+import com.bvelop.slipways.ui.map.MapTarget
 import com.bvelop.slipways.ui.map.STYLE_URL
 import com.bvelop.slipways.ui.map.WEB_ZOOM_OFFSET
 import com.bvelop.slipways.ui.map.rememberMapView
@@ -89,7 +90,7 @@ fun OverviewMap(
     pins: List<MapPin>,
     countries: List<CountryBubble>,
     color: String,
-    fitTo: MapArea?,
+    fitTo: MapTarget?,
     onAreaChange: (MapArea, Double) -> Unit,
     onPinClick: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -239,7 +240,7 @@ fun OverviewMap(
     }
     LaunchedEffect(map, fitTo) {
         val target = fitTo ?: return@LaunchedEffect
-        map?.animateCamera(CameraUpdateFactory.newLatLngBounds(target.toBounds(), 48))
+        map?.animateCamera(CameraUpdateFactory.newLatLngBounds(target.area.toBounds(), target.padding))
     }
 
     AndroidView(factory = { mapView }, modifier = modifier)

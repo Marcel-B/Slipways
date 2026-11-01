@@ -9,9 +9,11 @@ import { CountrySelect } from '../components/CountrySelect'
 import { LazyMarkerMap } from '../components/LazyMarkerMap'
 import { ListSkeleton } from '../components/ListSkeleton'
 import type { MapShape } from '../components/mapMarkers'
-import { boundsOf, listedInView, shapeArea, type MapView } from '../components/mapView'
+import { boundsOf, listedInView, shapeArea } from '../components/mapView'
 import { Overview } from '../components/Overview'
+import { ResetButton } from '../components/ResetButton'
 import { SearchField } from '../components/SearchField'
+import { useMapHome } from '../components/useMapHome'
 import { WaterLevelText } from '../components/WaterLevelText'
 import { ZoomHint } from '../components/ZoomHint'
 import { count } from './count'
@@ -56,7 +58,7 @@ function waterShapes(shapes: WaterShapes | undefined, waters: WaterSummary[], se
 }
 
 export function WatersPage() {
-  const [params, setParam] = useQueryParams()
+  const [params, setParam, clearParams] = useQueryParams()
   const search = params.get('q') ?? ''
   const country = params.get('land')
   const deferredSearch = useDeferredValue(search.trim())
@@ -70,7 +72,7 @@ export function WatersPage() {
     queryFn: ({ signal }) => api.waters(deferredSearch, signal),
     placeholderData: keepPreviousData,
   })
-  const [view, setView] = useState<MapView | null>(null)
+  const { view, onViewChange, moved, home, goHome } = useMapHome()
   // The map shows waters as their shapes, not as bubbles. Thousands of shapes are too much to load at once, so a
   // search loads those of its hits and otherwise the map loads those in its view, further out only the large ones.
   const area = useMemo(() => (view ? shapeArea(view) : null), [view])
@@ -102,6 +104,12 @@ export function WatersPage() {
   }, [shown, searching, country])
   const mapShapes = useMemo(() => waterShapes(shapes, shown ?? [], selectedId), [shapes, shown, selectedId])
 
+  // Back to how the page opened: no search, all countries, Europe.
+  const reset = () => {
+    clearParams('q', 'land')
+    goHome()
+  }
+
   return (
     <>
       <title>Gewässer · Slipways</title>
@@ -114,6 +122,7 @@ export function WatersPage() {
           label="Gewässer durchsuchen"
         />
         <CountrySelect options={countries} value={country} onChange={(code) => setParam('land', code)} />
+        <ResetButton visible={search !== '' || country !== null || moved} onReset={reset} />
       </section>
       <Overview
         list={
@@ -148,7 +157,8 @@ export function WatersPage() {
             zoom={4}
             shapes={mapShapes}
             onSelect={setSelectedId}
-            onViewChange={setView}
+            onViewChange={onViewChange}
+            home={home}
             focus={focus}
           />
         }

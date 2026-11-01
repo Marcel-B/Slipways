@@ -395,13 +395,36 @@ svg {
   border-radius: 12px;
 }
 
+.toolbar-button {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+  align-self: stretch;
+  padding: 0 0.85rem;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+
+.toolbar-button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--buoy) 70%, transparent);
+  outline-offset: 2px;
+}
+
 .toolbar-link:hover {
   text-decoration: underline;
 }
 
 /* On phones the link shows only its icon, and the country choice gets a row of its own. */
 @media (max-width: 600px) {
-  .toolbar-link span {
+  .toolbar-link span,
+  .toolbar-button span {
     display: none;
   }
 
