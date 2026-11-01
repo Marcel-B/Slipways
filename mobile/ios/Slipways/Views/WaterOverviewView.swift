@@ -19,9 +19,12 @@ struct WaterOverviewView: View {
     @State private var country: String?
     @State private var shapes: [WaterShape] = []
     @State private var selectedId: String?
-    @State private var area = MapArea.start
+    @State private var area = LaunchState.area
     @State private var mapWidth = 390.0
-    @State private var position = MapCameraPosition.region(MKCoordinateRegion(MapArea.start))
+    @State private var position = MapCameraPosition.region(MKCoordinateRegion(LaunchState.area))
+    /// The water the screenshot test asked to open (`LaunchState.open`).
+    @State private var opened: Water?
+    @State private var launchOpened = false
     @FocusState private var searchFocused: Bool
 
     private var searching: Bool { !query.isEmpty }
@@ -67,6 +70,7 @@ struct WaterOverviewView: View {
         .task(id: text) { await find() }
         .task(id: shapeFilter) { await loadShapes(shapeFilter) }
         .onChange(of: country) { _, _ in focus() }
+        .navigationDestination(item: $opened) { WaterDetailView(water: $0) }
     }
 
     private var map: some View {
@@ -202,6 +206,11 @@ struct WaterOverviewView: View {
             waters = loaded
             countries = Countries.counts(loaded.map(\.countries))
             error = nil
+            if !launchOpened {
+                launchOpened = true
+                selectedId = LaunchState.select
+                opened = LaunchState.open.flatMap { id in loaded.first { $0.id == id } }?.water
+            }
         } catch let error where error.isCancellation {
         } catch {
             self.error = error

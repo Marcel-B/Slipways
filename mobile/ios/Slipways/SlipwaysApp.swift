@@ -4,18 +4,23 @@ import SwiftUI
 @main
 struct SlipwaysApp: App {
     private let api = SlipwaysAPI(baseURL: AppConfig.apiBaseURL)
+    @State private var tab = LaunchState.tab ?? .slipways
 
     var body: some Scene {
         WindowGroup {
-            TabView {
+            TabView(selection: $tab) {
                 NavigationStack { SlipwayOverviewView().slipwaysDestinations() }
                     .tabItem { Label("Slipanlagen", systemImage: "sailboat") }
+                    .tag(AppTab.slipways)
                 NavigationStack { MarinaOverviewView().slipwaysDestinations() }
                     .tabItem { Label("Marinas", systemImage: "ferry") }
+                    .tag(AppTab.marinas)
                 NavigationStack { WaterOverviewView().slipwaysDestinations() }
                     .tabItem { Label("Gewässer", systemImage: "water.waves") }
+                    .tag(AppTab.waters)
                 NavigationStack { InfoView() }
                     .tabItem { Label("Info", systemImage: "info.circle") }
+                    .tag(AppTab.info)
             }
             .environment(\.api, api)
         }
@@ -34,6 +39,29 @@ enum AppConfig {
             fatalError("SlipwaysAPIBaseURL is missing from Info.plist")
         }
         return url
+    }()
+}
+
+enum AppTab: String {
+    case slipways, marinas, waters, info
+}
+
+/// Where the app starts when the screenshot UI test (`SlipwaysScreenshots`) launches it; nothing is set otherwise. The
+/// test passes environment variables: `SLIPWAYS_TAB` (an `AppTab`), `SLIPWAYS_AREA` (the map area as
+/// `south,west,north,east`), `SLIPWAYS_OPEN` (the id of a place or water to open once loaded) and `SLIPWAYS_SELECT`
+/// (the id of a water to highlight on the map).
+enum LaunchState {
+    private static let environment = ProcessInfo.processInfo.environment
+
+    static let tab = environment["SLIPWAYS_TAB"].flatMap(AppTab.init(rawValue:))
+    static let open = environment["SLIPWAYS_OPEN"]
+    static let select = environment["SLIPWAYS_SELECT"]
+
+    /// The area the overview maps start with: Europe unless the test asks for another.
+    static let area: MapArea = {
+        let values = (environment["SLIPWAYS_AREA"] ?? "").split(separator: ",").compactMap { Double($0) }
+        guard values.count == 4 else { return .start }
+        return MapArea(south: values[0], west: values[1], north: values[2], east: values[3])
     }()
 }
 
