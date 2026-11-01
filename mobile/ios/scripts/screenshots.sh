@@ -14,14 +14,17 @@ mkdir -p "$out"
 out="$(cd "$out" && pwd)"
 derived="$PWD/build/DerivedData"
 
-# The newest device types of each kind; Apple's sizes stay the same within a kind.
+# The newest iOS runtime and the newest device types of each kind it supports; Apple's sizes stay the same within a
+# kind. Memory variants such as "iPad Pro 13-inch (M4) (16GB)" are left out, xcodebuild does not offer them.
+runtimes="$(xcrun simctl list runtimes -j)"
+runtime="$(jq -r '[.runtimes[] | select(.platform == "iOS" and .isAvailable)] | last | .identifier // empty' <<<"$runtimes")"
 devicetype() {
-  xcrun simctl list devicetypes -j | jq -r --arg pattern "$1" \
-    '[.devicetypes[] | select(.name | test($pattern))] | last | .identifier // empty'
+  jq -r --arg runtime "$runtime" --arg pattern "$1" \
+    '[.runtimes[] | select(.identifier == $runtime) | .supportedDeviceTypes[] | select(.name | test($pattern))] | last | .identifier // empty' \
+    <<<"$runtimes"
 }
-runtime="$(xcrun simctl list runtimes -j | jq -r '[.runtimes[] | select(.platform == "iOS" and .isAvailable)] | last | .identifier // empty')"
 iphone="$(devicetype '^iPhone [0-9]+ Pro Max$')"
-ipad="$(devicetype '^iPad Pro 13-inch')"
+ipad="$(devicetype '^iPad Pro 13-inch \(M[0-9]+\)$')"
 if [ -z "$runtime" ] || [ -z "$iphone" ] || [ -z "$ipad" ]; then
   echo "No iOS runtime or no simulator for iPhone Pro Max / iPad Pro 13-inch found" >&2
   exit 1
