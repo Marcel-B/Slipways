@@ -30,9 +30,14 @@ struct WaterOverviewView: View {
     @State private var area = MapArea.start
     @State private var mapWidth = 390.0
     @State private var position = MapCameraPosition.region(MKCoordinateRegion(MapArea.start))
+    /// False once the map left the start, by hand or by itself; then the reset button shows.
+    @State private var atStart = true
     @FocusState private var searchFocused: Bool
 
     private var searching: Bool { !query.isEmpty }
+
+    /// Anything to reset: a search term, a country, or a map away from the start.
+    private var canReset: Bool { !text.isEmpty || country != nil || !atStart }
 
     private var candidates: [WaterSummary] {
         let all = searching ? results ?? [] : waters ?? []
@@ -64,7 +69,8 @@ struct WaterOverviewView: View {
         }
         .osmAttribution(true)
         .overlay(alignment: .top) {
-            MapSearchBar(text: $text, prompt: "Gewässer suchen", countries: countries, country: $country, focused: $searchFocused)
+            MapSearchBar(text: $text, prompt: "Gewässer suchen", countries: countries, country: $country, focused: $searchFocused,
+                         onReset: canReset ? reset : nil)
         }
         .overlay(alignment: .bottom) {
             if selected != nil { selectedCard } else { notice }
@@ -133,6 +139,7 @@ struct WaterOverviewView: View {
         }
         .onMapCameraChange(frequency: .onEnd) { context in
             area = MapArea(context.region)
+            if position.positionedByUser { atStart = false }
             // A new clip rebuilds every overlay; small moves keep the one there is.
             if clip?.serves(area, width: mapWidth) != true {
                 clip = ShapeClip(around: area, width: mapWidth)
@@ -201,7 +208,20 @@ struct WaterOverviewView: View {
     /// Fits the map to the search hits or the chosen country (`Overview.focus`).
     private func focus() {
         guard let target = Overview.focus(points, searching: searching, country: country) else { return }
+        atStart = target == MapArea.start
         withAnimation { position = .region(MKCoordinateRegion(target)) }
+    }
+
+    /// Back to how the screen opened: no search, all countries, Europe.
+    private func reset() {
+        searchFocused = false
+        text = ""
+        query = ""
+        results = nil
+        country = nil
+        selectedId = nil
+        atStart = true
+        withAnimation { position = .region(MKCoordinateRegion(MapArea.start)) }
     }
 
     private func reload() async {

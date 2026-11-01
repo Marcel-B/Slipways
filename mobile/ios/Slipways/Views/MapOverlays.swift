@@ -1,13 +1,15 @@
 import SlipwaysKit
 import SwiftUI
 
-/// Search field, choice of country and an optional plus button floating above a full-screen map.
+/// Search field, choice of country, a reset button and an optional plus button floating above a full-screen map.
 struct MapSearchBar: View {
     @Binding var text: String
     let prompt: String
     let countries: [CountryCount]
     @Binding var country: String?
     var focused: FocusState<Bool>.Binding
+    /// Clears the search and the country and brings the map back to the start; nil hides the button.
+    var onReset: (() -> Void)? = nil
     var addLabel: String? = nil
     var onAdd: (() -> Void)? = nil
 
@@ -31,6 +33,15 @@ struct MapSearchBar: View {
             .padding(.horizontal, 12)
             .floating()
             CountryMenu(options: countries, selection: $country)
+            if let onReset {
+                Button { onReset() } label: {
+                    Image(systemName: "arrow.counterclockwise")
+                        .font(.body.bold())
+                        .floating()
+                }
+                .accessibilityLabel("Zurücksetzen")
+                .accessibilityHint("Leert Suche und Land und zeigt wieder ganz Europa")
+            }
             if let addLabel, let onAdd {
                 Button { onAdd() } label: {
                     Image(systemName: "plus")

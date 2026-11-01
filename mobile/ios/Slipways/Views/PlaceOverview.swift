@@ -37,10 +37,15 @@ struct PlaceOverview<Item: Place>: View {
     @State private var area = MapArea.start
     @State private var mapWidth = 390.0
     @State private var position = MapCameraPosition.region(MKCoordinateRegion(MapArea.start))
+    /// False once the map left the start, by hand or by itself; then the reset button shows.
+    @State private var atStart = true
     @State private var selection: String?
     @FocusState private var searchFocused: Bool
 
     private var searching: Bool { !query.isEmpty }
+
+    /// Anything to reset: a search term, a country, or a map away from the start.
+    private var canReset: Bool { !text.isEmpty || country != nil || !atStart }
 
     /// What the map may show: the search results or everything, in the chosen country.
     private var candidates: [Item] {
@@ -65,6 +70,7 @@ struct PlaceOverview<Item: Place>: View {
                 countries: countries,
                 country: $country,
                 focused: $searchFocused,
+                onReset: canReset ? reset : nil,
                 addLabel: onAdd == nil ? nil : "\(singular) fehlt?",
                 onAdd: onAdd == nil ? nil : { onAdd?(area) }
             )
@@ -109,7 +115,10 @@ struct PlaceOverview<Item: Place>: View {
             if byCountry {
                 ForEach(groups) { group in
                     Annotation("", coordinate: CLLocationCoordinate2D(latitude: group.latitude, longitude: group.longitude), anchor: .center) {
-                        Button { withAnimation { position = .region(MKCoordinateRegion(group.area)) } } label: {
+                        Button {
+                            atStart = false
+                            withAnimation { position = .region(MKCoordinateRegion(group.area)) }
+                        } label: {
                             CountryBubble(code: group.code, count: group.items.count, tint: tint)
                         }
                         .buttonStyle(.plain)
@@ -121,6 +130,7 @@ struct PlaceOverview<Item: Place>: View {
         }
         .onMapCameraChange(frequency: .onEnd) { context in
             area = MapArea(context.region)
+            if position.positionedByUser { atStart = false }
         }
         .onGeometryChange(for: Double.self) { $0.size.width } action: { mapWidth = $0 }
         // Moving the map puts the keyboard away, so the whole screen is map again.
@@ -155,11 +165,24 @@ struct PlaceOverview<Item: Place>: View {
     /// Fits the map to the search hits or the chosen country (`Overview.focus`).
     private func focus() {
         guard let target = Overview.focus(points, searching: searching, country: country) else { return }
+        atStart = target == MapArea.start
         withAnimation { position = .region(MKCoordinateRegion(target)) }
+    }
+
+    /// Back to how the screen opened: no search, all countries, Europe.
+    private func reset() {
+        searchFocused = false
+        text = ""
+        query = ""
+        results = nil
+        country = nil
+        atStart = true
+        withAnimation { position = .region(MKCoordinateRegion(MapArea.start)) }
     }
 
     private func zoom(to cluster: Cluster<Item>) {
         guard let fitted = MapArea.fitting(cluster.items.map { (latitude: $0.latitude, longitude: $0.longitude) }) else { return }
+        atStart = false
         withAnimation { position = .region(MKCoordinateRegion(fitted)) }
     }
 
