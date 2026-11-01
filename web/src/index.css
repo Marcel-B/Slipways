@@ -745,6 +745,11 @@ a.item:hover .item-chevron {
   letter-spacing: 0.04em;
 }
 
+.map-country-flag {
+  font-size: 1.15rem;
+  line-height: 1.05;
+}
+
 .map-cluster:hover,
 .map-country:hover {
   transform: scale(1.08);

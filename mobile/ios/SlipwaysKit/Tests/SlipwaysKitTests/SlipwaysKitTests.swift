@@ -468,3 +468,10 @@ private func p(_ latitude: Double, _ longitude: Double) -> Position { Position(l
     #expect(thinned.lines == [[p(0, 0), p(0, 1), p(0, 1.0001)]])
     #expect(MapArea(south: 0, west: 0, north: 2, east: 4).expanded(by: 0.5) == MapArea(south: -1, west: -2, north: 3, east: 6))
 }
+
+@Test func flagFromCountryCode() {
+    #expect(Countries.flag("DE") == "🇩🇪")
+    #expect(Countries.flag("nl") == "🇳🇱")
+    #expect(Countries.flag("DEU") == nil)
+    #expect(Countries.flag("1A") == nil)
+}

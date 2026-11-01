@@ -222,7 +222,7 @@ private struct ClusterBubble: View {
     }
 }
 
-/// One bubble per country with its code and count, as the website shows them zoomed out.
+/// One bubble per country with its flag and count, as the website shows them zoomed out.
 struct CountryBubble: View {
     let code: String
     let count: Int
@@ -230,7 +230,11 @@ struct CountryBubble: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Text(code).font(.caption.bold())
+            if let flag = Countries.flag(code) {
+                Text(flag).font(.title3)
+            } else {
+                Text(code).font(.caption.bold())
+            }
             Text(Format.number(count)).font(.caption2)
         }
         .foregroundStyle(.white)
