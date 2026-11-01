@@ -4,6 +4,7 @@ import SwiftUI
 @main
 struct SlipwaysApp: App {
     private let api = SlipwaysAPI(baseURL: AppConfig.apiBaseURL)
+    @State private var favorites = Favorites()
 
     var body: some Scene {
         WindowGroup {
@@ -14,10 +15,13 @@ struct SlipwaysApp: App {
                     .tabItem { Label("Marinas", systemImage: "ferry") }
                 NavigationStack { WaterOverviewView().slipwaysDestinations() }
                     .tabItem { Label("Gewässer", systemImage: "water.waves") }
+                NavigationStack { FavoritesView().slipwaysDestinations() }
+                    .tabItem { Label("Favoriten", systemImage: "star") }
                 NavigationStack { InfoView() }
                     .tabItem { Label("Info", systemImage: "info.circle") }
             }
             .environment(\.api, api)
+            .environment(favorites)
         }
     }
 }
