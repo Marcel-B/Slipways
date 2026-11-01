@@ -60,3 +60,16 @@ export function shapeArea(view: MapView): { bbox: string; minExtent: number } {
   const minExtent = view.zoom >= SHAPE_ALL_ZOOM ? 0 : +(28 / 2 ** view.zoom).toFixed(4)
   return { bbox, minExtent }
 }
+
+/**
+ * True when two views show about the same: the same zoom and centres less than a fiftieth of the view apart. A window
+ * that only changes size keeps its centre and so its view; a pan or zoom does not.
+ */
+export function sameView(a: MapView, b: MapView): boolean {
+  if (a.zoom !== b.zoom) return false
+  const width = Math.abs(b.bbox[2] - b.bbox[0])
+  const height = Math.abs(b.bbox[3] - b.bbox[1])
+  const dx = Math.abs((a.bbox[0] + a.bbox[2]) / 2 - (b.bbox[0] + b.bbox[2]) / 2)
+  const dy = Math.abs((a.bbox[1] + a.bbox[3]) / 2 - (b.bbox[1] + b.bbox[3]) / 2)
+  return dx <= width / 50 && dy <= height / 50
+}

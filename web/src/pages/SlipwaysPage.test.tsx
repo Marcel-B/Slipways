@@ -13,12 +13,14 @@ const map = vi.hoisted(() => ({
   onViewChange: undefined as ((view: MapView) => void) | undefined,
   markers: undefined as MapProps['markers'] | undefined,
   focus: undefined as MapProps['focus'],
+  home: undefined as MapProps['home'],
 }))
 vi.mock('../components/LazyMarkerMap', () => ({
   LazyMarkerMap: (props: MapProps) => {
     map.onViewChange = props.onViewChange
     map.markers = props.markers
     map.focus = props.focus
+    map.home = props.home
     return null
   },
 }))
@@ -111,6 +113,27 @@ describe('SlipwaysPage', () => {
     expect(screen.getByText('1 Slipanlage auf der Karte.')).toBeInTheDocument()
     expect(map.markers?.map((m) => m.title)).toEqual(['Sloepenhelling'])
     expect(map.focus).toEqual({ south: 52.37, west: 4.9, north: 52.37, east: 4.9 })
+  })
+
+  it('resets search, country and map with one button', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(slipways), { status: 200 })))
+    renderAt('/')
+    await screen.findByText('1 Slipanlage auf der Karte.')
+
+    const europe: MapView = { bbox: [-20, 35, 30, 62], zoom: 4 }
+    act(() => map.onViewChange?.(europe))
+    expect(screen.queryByRole('button', { name: /Zurücksetzen/ })).not.toBeInTheDocument()
+
+    act(() => map.onViewChange?.(aroundKelheim))
+    await userEvent.type(screen.getByRole('searchbox'), 'Kelheim')
+    const home = map.home
+    await userEvent.click(screen.getByRole('button', { name: /Zurücksetzen/ }))
+
+    expect(screen.getByRole('searchbox')).toHaveValue('')
+    expect(map.home).toBe((home ?? 0) + 1)
+    // The map reports its way back to the start, and the button goes away again.
+    act(() => map.onViewChange?.(europe))
+    expect(screen.queryByRole('button', { name: /Zurücksetzen/ })).not.toBeInTheDocument()
   })
 
   it('shows an error when the API fails', async () => {

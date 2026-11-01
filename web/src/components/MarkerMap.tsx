@@ -29,6 +29,8 @@ interface MarkerMapProps {
   onViewChange?: (view: MapView) => void
   /** Moves the map to these bounds whenever a new object is passed, e.g. to show search hits. */
   focus?: Bounds | null
+  /** Flies back to `center` and `zoom` whenever this number changes, e.g. for a reset button. */
+  home?: number
   /** Starts a little further out and glides in to the initial view, as a gentle entrance on detail pages. */
   introZoom?: boolean
 }
@@ -46,6 +48,7 @@ export function MarkerMap({
   highlightedId = null,
   onViewChange,
   focus = null,
+  home = 0,
   introZoom = false,
 }: MarkerMapProps) {
   const selectHandlers: SelectHandlers = (id) =>
@@ -81,6 +84,7 @@ export function MarkerMap({
       {introZoom && <IntroZoom />}
       {onViewChange && <ViewReporter onViewChange={onViewChange} />}
       {focus && <Focus bounds={focus} />}
+      <Home request={home} center={center} zoom={zoom} />
       <MarkerLayer markers={markers} cluster={cluster} highlightedId={highlightedId} selectHandlers={selectHandlers} />
     </MapContainer>
   )
@@ -123,6 +127,18 @@ function ViewReporter({ onViewChange }: { onViewChange: (view: MapView) => void 
   useEffect(() => {
     if (map.getSize().x > 0) onViewChange(viewOf(map))
   }, [map, onViewChange])
+  return null
+}
+
+function Home({ request, center, zoom }: { request: number; center: [number, number]; zoom: number }) {
+  const map = useMap()
+  // Only a new request moves the map, not the first render or a new center array.
+  const handled = useRef(request)
+  useEffect(() => {
+    if (request === handled.current) return
+    handled.current = request
+    map.flyTo(center, zoom, { duration: 0.8 })
+  }, [map, request, center, zoom])
   return null
 }
 
