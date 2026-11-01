@@ -1,7 +1,7 @@
 import SlipwaysKit
 import SwiftUI
 
-/// Search field, choice of country and an optional plus button floating above a full-screen map.
+/// Search field, choice of country, a reset button and an optional plus button floating above a full-screen map.
 struct MapSearchBar: View {
     @Binding var text: String
     let prompt: String
@@ -10,6 +10,8 @@ struct MapSearchBar: View {
     /// Shows a star that limits the map to favourites.
     var favoritesOnly: Binding<Bool>? = nil
     var focused: FocusState<Bool>.Binding
+    /// Clears the search and the filters and brings the map back to the start; nil hides the button.
+    var onReset: (() -> Void)? = nil
     var addLabel: String? = nil
     var onAdd: (() -> Void)? = nil
 
@@ -41,6 +43,15 @@ struct MapSearchBar: View {
                 }
                 .accessibilityLabel("Nur Favoriten")
                 .accessibilityAddTraits(favoritesOnly.wrappedValue ? .isSelected : [])
+            }
+            if let onReset {
+                Button { onReset() } label: {
+                    Image(systemName: "arrow.counterclockwise")
+                        .font(.body.bold())
+                        .floating()
+                }
+                .accessibilityLabel("Zurücksetzen")
+                .accessibilityHint("Hebt Suche und Filter auf und zeigt wieder ganz Europa")
             }
             if let addLabel, let onAdd {
                 Button { onAdd() } label: {
