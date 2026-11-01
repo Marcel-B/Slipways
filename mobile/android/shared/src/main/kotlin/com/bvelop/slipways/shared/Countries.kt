@@ -34,6 +34,13 @@ object Countries {
             ?: runCatching { Locale.Builder().setRegion(code).build().getDisplayCountry(Locale.GERMAN) }.getOrNull()?.ifBlank { null }
             ?: code
 
+    /** The flag emoji of a country, built from its ISO code ("DE" → 🇩🇪); null for anything that is not two letters. */
+    fun flag(code: String): String? {
+        val letters = code.uppercase(Locale.ROOT)
+        if (letters.length != 2 || !letters.all { it in 'A'..'Z' }) return null
+        return letters.map { 0x1F1E6 + (it - 'A') }.joinToString("") { String(Character.toChars(it)) }
+    }
+
     /** Groups places by their ISO country code, largest first; places without one are left out. */
     fun <T> group(items: List<T>, country: (T) -> String?, position: (T) -> Position): List<CountryGroup<T>> =
         items.groupBy(country)

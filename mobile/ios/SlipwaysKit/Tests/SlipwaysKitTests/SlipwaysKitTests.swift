@@ -543,3 +543,10 @@ private func p(_ latitude: Double, _ longitude: Double) -> Position { Position(l
     let summary = SlipwaySummary(try #require(store.all().first { $0.placeId == "2" }))
     #expect(summary.id == "2" && summary.source == .osm && summary.water == nil)
 }
+
+@Test func flagFromCountryCode() {
+    #expect(Countries.flag("DE") == "🇩🇪")
+    #expect(Countries.flag("nl") == "🇳🇱")
+    #expect(Countries.flag("DEU") == nil)
+    #expect(Countries.flag("1A") == nil)
+}

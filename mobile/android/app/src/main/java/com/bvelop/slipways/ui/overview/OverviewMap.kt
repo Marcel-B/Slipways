@@ -1,5 +1,8 @@
 package com.bvelop.slipways.ui.overview
 
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
 import android.graphics.RectF
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -11,6 +14,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.viewinterop.AndroidView
+import com.bvelop.slipways.shared.Countries
 import com.bvelop.slipways.shared.Format
 import com.bvelop.slipways.shared.MapArea
 import com.bvelop.slipways.shared.Overview
@@ -38,7 +42,13 @@ import org.maplibre.android.style.layers.PropertyFactory.circleColor
 import org.maplibre.android.style.layers.PropertyFactory.circleRadius
 import org.maplibre.android.style.layers.PropertyFactory.circleStrokeColor
 import org.maplibre.android.style.layers.PropertyFactory.circleStrokeWidth
+import org.maplibre.android.style.layers.PropertyFactory.iconAllowOverlap
+import org.maplibre.android.style.layers.PropertyFactory.iconAnchor
+import org.maplibre.android.style.layers.PropertyFactory.iconIgnorePlacement
+import org.maplibre.android.style.layers.PropertyFactory.iconImage
+import org.maplibre.android.style.layers.Property
 import org.maplibre.android.style.layers.PropertyFactory.textAllowOverlap
+import org.maplibre.android.style.layers.PropertyFactory.textAnchor
 import org.maplibre.android.style.layers.PropertyFactory.textColor
 import org.maplibre.android.style.layers.PropertyFactory.textField
 import org.maplibre.android.style.layers.PropertyFactory.textFont
@@ -58,6 +68,7 @@ private const val PINS = "pins"
 private const val COUNTRIES = "countries"
 private const val COUNTRY_CIRCLES = "country-circles"
 private const val COUNTRY_LABELS = "country-labels"
+private const val FLAG_PREFIX = "flag-"
 
 /** Zoomed out further than this (in MapLibre's levels), the map shows countries instead of clusters. */
 private val COUNTRY_LAYERS_MAX_ZOOM = (Overview.COUNTRY_MAX_ZOOM + 1 - WEB_ZOOM_OFFSET).toFloat()
@@ -85,6 +96,7 @@ fun OverviewMap(
 ) {
     // Fingers are less precise than the dots, so taps hit anything within this many pixels.
     val touchSlop = with(LocalDensity.current) { 16f * density }
+    val flagSize = with(LocalDensity.current) { 18f * density }
     val mapView = rememberMapView()
     var map by remember { mutableStateOf<MapLibreMap?>(null) }
     var style by remember { mutableStateOf<Style?>(null) }
@@ -136,9 +148,15 @@ fun OverviewMap(
                         circleStrokeWidth(2f),
                     ).apply { maxZoom = COUNTRY_LAYERS_MAX_ZOOM },
                 )
+                // The map's fonts have no emojis, so the flag is an image drawn by the system above the count.
                 ready.addLayer(
                     SymbolLayer(COUNTRY_LABELS, COUNTRIES).withProperties(
-                        textField(concat(get("code"), literal("\n"), get("count"))),
+                        iconImage(concat(literal(FLAG_PREFIX), get("code"))),
+                        iconAnchor(Property.ICON_ANCHOR_BOTTOM),
+                        iconAllowOverlap(true),
+                        iconIgnorePlacement(true),
+                        textField(get("count")),
+                        textAnchor(Property.TEXT_ANCHOR_TOP),
                         textFont(arrayOf("Noto Sans Bold")),
                         textSize(12f),
                         textColor("#FFFFFF"),
@@ -196,6 +214,11 @@ fun OverviewMap(
         val ready = style ?: return@LaunchedEffect
         // With a single country its bubble would say nothing; the clusters show then at every zoom.
         val byCountry = countries.size > 1
+        for (country in countries) {
+            if (ready.getImage(FLAG_PREFIX + country.code) != null) continue
+            val flag = Countries.flag(country.code) ?: country.code
+            ready.addImage(FLAG_PREFIX + country.code, flagBitmap(flag, flagSize))
+        }
         ready.getSourceAs<GeoJsonSource>(COUNTRIES)?.setGeoJson(
             FeatureCollection.fromFeatures(
                 if (!byCountry) {
@@ -220,4 +243,19 @@ fun OverviewMap(
     }
 
     AndroidView(factory = { mapView }, modifier = modifier)
+}
+
+/** The flag emoji (or, without one, the ISO code) as an image, since the map's own fonts have no emojis. */
+private fun flagBitmap(flag: String, size: Float): Bitmap {
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        textSize = size
+        color = android.graphics.Color.WHITE
+        isFakeBoldText = flag.length == 2
+    }
+    val metrics = paint.fontMetrics
+    val width = paint.measureText(flag).coerceAtLeast(1f)
+    val height = metrics.descent - metrics.ascent
+    val bitmap = Bitmap.createBitmap(kotlin.math.ceil(width).toInt(), kotlin.math.ceil(height).toInt(), Bitmap.Config.ARGB_8888)
+    Canvas(bitmap).drawText(flag, 0f, -metrics.ascent, paint)
+    return bitmap
 }

@@ -44,6 +44,19 @@ public enum Countries {
         names[code] ?? Locale(identifier: "de_DE").localizedString(forRegionCode: code) ?? code
     }
 
+    /// The flag emoji of a country, built from its ISO code ("DE" → 🇩🇪); nil for anything that is not two letters.
+    public static func flag(_ code: String) -> String? {
+        let letters = code.uppercased().unicodeScalars
+        let alphabet: ClosedRange<Unicode.Scalar> = "A"..."Z"
+        guard letters.count == 2, letters.allSatisfy({ alphabet.contains($0) }) else { return nil }
+        var flag = ""
+        for letter in letters {
+            guard let symbol = Unicode.Scalar(0x1F1E6 + letter.value - 65) else { return nil }
+            flag.unicodeScalars.append(symbol)
+        }
+        return flag
+    }
+
     /// Groups places by their ISO country code, largest first; places without one are left out.
     public static func group<T>(
         _ items: [T],
