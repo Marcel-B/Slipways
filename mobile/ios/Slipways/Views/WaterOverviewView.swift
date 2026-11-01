@@ -39,6 +39,12 @@ struct WaterOverviewView: View {
     /// Anything to reset: a search term, a country, or a map away from the start.
     private var canReset: Bool { !text.isEmpty || country != nil || !atStart }
 
+    /// The reset button's action, nil while there is nothing to reset. Typed out here so `body` stays quick to check.
+    private var resetAction: (() -> Void)? {
+        guard canReset else { return nil }
+        return { reset() }
+    }
+
     private var candidates: [WaterSummary] {
         let all = searching ? results ?? [] : waters ?? []
         guard let country else { return all }
@@ -70,7 +76,7 @@ struct WaterOverviewView: View {
         .osmAttribution(true)
         .overlay(alignment: .top) {
             MapSearchBar(text: $text, prompt: "Gewässer suchen", countries: countries, country: $country, focused: $searchFocused,
-                         onReset: canReset ? reset : nil)
+                         onReset: resetAction)
         }
         .overlay(alignment: .bottom) {
             if selected != nil { selectedCard } else { notice }

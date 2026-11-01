@@ -47,6 +47,12 @@ struct PlaceOverview<Item: Place>: View {
     /// Anything to reset: a search term, a country, or a map away from the start.
     private var canReset: Bool { !text.isEmpty || country != nil || !atStart }
 
+    /// The reset button's action, nil while there is nothing to reset. Typed out here so `body` stays quick to check.
+    private var resetAction: (() -> Void)? {
+        guard canReset else { return nil }
+        return { reset() }
+    }
+
     /// What the map may show: the search results or everything, in the chosen country.
     private var candidates: [Item] {
         let all = searching ? results ?? [] : items ?? []
@@ -70,7 +76,7 @@ struct PlaceOverview<Item: Place>: View {
                 countries: countries,
                 country: $country,
                 focused: $searchFocused,
-                onReset: canReset ? reset : nil,
+                onReset: resetAction,
                 addLabel: onAdd == nil ? nil : "\(singular) fehlt?",
                 onAdd: onAdd == nil ? nil : { onAdd?(area) }
             )
