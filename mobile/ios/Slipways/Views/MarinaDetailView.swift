@@ -14,6 +14,14 @@ struct MarinaDetailView: View {
     @State private var suggest: SuggestMode?
     @State private var pending: Set<String> = []
     @Environment(\.suggestions) private var store
+    @Environment(Favorites.self) private var favorites
+
+    /// Known once the marina has loaded; the sheet opens with only its name.
+    private var favorite: Favorite? {
+        details.map {
+            Favorite(type: .marina, placeId: $0.id, name: $0.name, latitude: $0.latitude, longitude: $0.longitude, source: $0.source)
+        }
+    }
 
     var body: some View {
         content
@@ -21,6 +29,7 @@ struct MarinaDetailView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) { Button("Fertig") { dismiss() } }
+                ToolbarItem(placement: .topBarLeading) { FavoriteButton(favorite: favorite) }
             }
             .task { await load() }
             .sheet(item: $suggest, onDismiss: refreshPending) { mode in
@@ -140,6 +149,7 @@ struct MarinaDetailView: View {
             details = loaded
             failed = false
             refreshPending()
+            if let favorite { favorites.refresh(favorite) }
             if let waterId = loaded.water?.id {
                 water = try? await api.water(id: waterId)
             }

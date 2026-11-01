@@ -2,7 +2,7 @@
 
 [English version](roadmap.en.md)
 
-Grober Plan für Slipways. Einzelheiten zu offenen Entscheidungen und Restarbeiten stehen in [`offene-punkte.md`](offene-punkte.md), Datenquellen in [`datenquellen.md`](datenquellen.md). Stand: 31.10.2026.
+Grober Plan für Slipways. Einzelheiten zu offenen Entscheidungen und Restarbeiten stehen in [`offene-punkte.md`](offene-punkte.md), Datenquellen in [`datenquellen.md`](datenquellen.md). Stand: 01.11.2026.
 
 ## Erledigt
 
@@ -13,6 +13,7 @@ Grober Plan für Slipways. Einzelheiten zu offenen Entscheidungen und Restarbeit
 - **Web:** Karte mit Länderblasen und Clustern, Länderauswahl, Suche, Hell/Dunkel, Seiten für Slipanlagen, Marinas und Gewässer.
 - **Nutzerbeiträge ohne Anmeldung:** Korrekturen, Fakten, Tipps und neue Slipanlagen vorschlagen; Moderation mit Push-Benachrichtigung.
 - **Apps für iOS und Android** mit denselben Funktionen wie das Web.
+- **Favoriten in der iOS-App**, nur auf dem Gerät gespeichert, als Stern auf der Karte und eigener Tab.
 - **Suchmaschinen:** Kopfdaten je Seite, Sitemap, robots.txt.
 
 ## Als Nächstes
@@ -28,6 +29,7 @@ Grober Plan für Slipways. Einzelheiten zu offenen Entscheidungen und Restarbeit
 - **Fotos** zu Slipanlagen und Marinas, über die Moderation.
 - **Bestätigungen zählen** („3× bestätigt“) und Vorschläge vor der Freigabe bearbeiten.
 - **Ruhigerer Kartenstil** (Vektorkacheln).
+- **Favoriten auch im Web und unter Android.**
 - **Weitere Länder**, z. B. Finnland und Griechenland.
 
 ## Ideen
