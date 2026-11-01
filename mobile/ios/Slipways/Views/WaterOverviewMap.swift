@@ -23,7 +23,7 @@ struct WaterPin: Equatable {
 /// level they needed so much memory that they had to be cut to the view (which rebuilt all of them after every move).
 /// `MKMapView` draws its own multi-polyline and multi-polygon renderers as vectors, so the shapes are added once, whole,
 /// and the map only adds or removes the waters that come or go.
-struct WaterMap: UIViewRepresentable {
+struct WaterOverviewMap: UIViewRepresentable {
     /// The shapes to draw. Changes only take effect with a new `shapesRevision`, so the view does not compare all shapes.
     let shapes: [WaterShape]
     let shapesRevision: Int
@@ -68,7 +68,7 @@ struct WaterMap: UIViewRepresentable {
     final class Coordinator: NSObject, @preconcurrency MKMapViewDelegate, UIGestureRecognizerDelegate {
         static let pinReuseId = "water"
 
-        var parent: WaterMap?
+        var parent: WaterOverviewMap?
         var cameraId: Int?
         private var shapesRevision: Int?
         private var selectedId: String?

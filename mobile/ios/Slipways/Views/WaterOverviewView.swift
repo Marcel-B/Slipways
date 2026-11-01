@@ -93,7 +93,7 @@ struct WaterOverviewView: View {
     }
 
     private var map: some View {
-        WaterMap(
+        WaterOverviewMap(
             shapes: visibleShapes,
             shapesRevision: visibleRevision,
             // Without a list, search hits need something to tap even where their course is small or missing.
