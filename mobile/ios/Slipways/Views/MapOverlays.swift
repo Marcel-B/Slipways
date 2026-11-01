@@ -7,8 +7,10 @@ struct MapSearchBar: View {
     let prompt: String
     let countries: [CountryCount]
     @Binding var country: String?
+    /// Shows a star that limits the map to favourites.
+    var favoritesOnly: Binding<Bool>? = nil
     var focused: FocusState<Bool>.Binding
-    /// Clears the search and the country and brings the map back to the start; nil hides the button.
+    /// Clears the search and the filters and brings the map back to the start; nil hides the button.
     var onReset: (() -> Void)? = nil
     var addLabel: String? = nil
     var onAdd: (() -> Void)? = nil
@@ -33,6 +35,15 @@ struct MapSearchBar: View {
             .padding(.horizontal, 12)
             .floating()
             CountryMenu(options: countries, selection: $country)
+            if let favoritesOnly {
+                Button { favoritesOnly.wrappedValue.toggle() } label: {
+                    Image(systemName: favoritesOnly.wrappedValue ? "star.fill" : "star")
+                        .foregroundStyle(favoritesOnly.wrappedValue ? Color.yellow : Color.accentColor)
+                        .floating()
+                }
+                .accessibilityLabel("Nur Favoriten")
+                .accessibilityAddTraits(favoritesOnly.wrappedValue ? .isSelected : [])
+            }
             if let onReset {
                 Button { onReset() } label: {
                     Image(systemName: "arrow.counterclockwise")
@@ -40,7 +51,7 @@ struct MapSearchBar: View {
                         .floating()
                 }
                 .accessibilityLabel("Zurücksetzen")
-                .accessibilityHint("Leert Suche und Land und zeigt wieder ganz Europa")
+                .accessibilityHint("Hebt Suche und Filter auf und zeigt wieder ganz Europa")
             }
             if let addLabel, let onAdd {
                 Button { onAdd() } label: {

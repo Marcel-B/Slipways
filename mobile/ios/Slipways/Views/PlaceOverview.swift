@@ -9,12 +9,17 @@ import SwiftUI
 /// The map moves by itself only when someone asks for something: when the search term settles it fits the hits, when
 /// a country is chosen it shows that country. Panning or zooming never moves it, and clearing the search leaves it
 /// where it is. When hits lie outside the view, the line at the bottom offers to show them all.
+///
+/// Favourites always show as pins with a star, even where the rest is grouped into bubbles; the star next to the search
+/// field shows only them.
 struct PlaceOverview<Item: Place>: View {
     let title: String
     let singular: String
     let plural: String
     let systemImage: String
     let tint: Color
+    /// For the favourites of this kind.
+    let type: PlaceType
     let load: @MainActor () async throws -> [Item]
     /// Gets the search term and everything loaded, for places that are searched locally.
     let search: @MainActor (String, [Item]) async throws -> [Item]
@@ -40,12 +45,14 @@ struct PlaceOverview<Item: Place>: View {
     /// False once the map left the start, by hand or by itself; then the reset button shows.
     @State private var atStart = true
     @State private var selection: String?
+    @State private var favoritesOnly = false
+    @Environment(Favorites.self) private var favorites
     @FocusState private var searchFocused: Bool
 
     private var searching: Bool { !query.isEmpty }
 
-    /// Anything to reset: a search term, a country, or a map away from the start.
-    private var canReset: Bool { !text.isEmpty || country != nil || !atStart }
+    /// Anything to reset: a search term, a country, the favourites filter, or a map away from the start.
+    private var canReset: Bool { !text.isEmpty || country != nil || favoritesOnly || !atStart }
 
     /// The reset button's action, nil while there is nothing to reset. Typed out here so `body` stays quick to check.
     private var resetAction: (() -> Void)? {
@@ -53,11 +60,12 @@ struct PlaceOverview<Item: Place>: View {
         return { reset() }
     }
 
-    /// What the map may show: the search results or everything, in the chosen country.
+    /// What the map may show: the search results or everything, in the chosen country, perhaps only favourites.
     private var candidates: [Item] {
         let all = searching ? results ?? [] : items ?? []
-        guard let country else { return all }
-        return all.filter { $0.country == country }
+        return all.filter { item in
+            (country == nil || item.country == country) && (!favoritesOnly || favorites.contains(type, item.id))
+        }
     }
 
     private var points: [(latitude: Double, longitude: Double)] {
@@ -75,6 +83,7 @@ struct PlaceOverview<Item: Place>: View {
                 prompt: "Name, Ort oder Gewässer",
                 countries: countries,
                 country: $country,
+                favoritesOnly: $favoritesOnly,
                 focused: $searchFocused,
                 onReset: resetAction,
                 addLabel: onAdd == nil ? nil : "\(singular) fehlt?",
@@ -93,16 +102,21 @@ struct PlaceOverview<Item: Place>: View {
             if let item = candidates.first(where: { $0.id == id }) { onSelect(item) }
         }
         .onChange(of: country) { _, _ in focus() }
+        // Like a search: turning it on shows all favourites, turning it off leaves the map where it is.
+        .onChange(of: favoritesOnly) { _, only in if only { focus() } }
     }
 
     private var map: some View {
         let shown = candidates
-        let groups = Overview.showsCountries(zoom: area.zoom(width: mapWidth)) && shown.allSatisfy { $0.country != nil }
+        let starred = shown.filter { favorites.contains(type, $0.id) }
+        // Favourites are drawn on their own; with only them there is nothing to group.
+        let rest = favoritesOnly ? [] : shown.filter { !favorites.contains(type, $0.id) }
+        let groups = !rest.isEmpty && Overview.showsCountries(zoom: area.zoom(width: mapWidth)) && shown.allSatisfy { $0.country != nil }
             ? Countries.group(shown, country: \.country) { ($0.latitude, $0.longitude) }
             : []
         let byCountry = groups.count > 1
-        let pins = byCountry ? [] : Overview.visible(shown, in: area, limit: Self.pinLimit) { ($0.latitude, $0.longitude) }
-        let clusters = byCountry || pins != nil ? [] : Overview.clusters(shown, in: area) { ($0.latitude, $0.longitude) }
+        let pins = byCountry ? [] : Overview.visible(rest, in: area, limit: Self.pinLimit) { ($0.latitude, $0.longitude) }
+        let clusters = byCountry || pins != nil ? [] : Overview.clusters(rest, in: area) { ($0.latitude, $0.longitude) }
         // North stays up: a compass would sit under the search field.
         return Map(position: $position, interactionModes: [.pan, .zoom], selection: $selection) {
             ForEach(pins ?? []) { item in
@@ -117,6 +131,11 @@ struct PlaceOverview<Item: Place>: View {
                         .accessibilityLabel(Format.count(cluster.items.count, singular, plural))
                 }
                 .annotationTitles(.hidden)
+            }
+            ForEach(starred) { item in
+                Marker(item.name, systemImage: "star.fill", coordinate: CLLocationCoordinate2D(latitude: item.latitude, longitude: item.longitude))
+                    .tint(tint)
+                    .tag(item.id)
             }
             if byCountry {
                 ForEach(groups) { group in
@@ -165,12 +184,20 @@ struct PlaceOverview<Item: Place>: View {
             } else {
                 MapNotice(text: Format.count(candidates.count, "Treffer", "Treffer"))
             }
+        } else if favoritesOnly {
+            if candidates.isEmpty {
+                MapNotice(
+                    text: country.map { "Keine Favoriten in \(Countries.name($0))" } ?? "Noch keine Favoriten: Stern auf der Seite antippen",
+                    systemImage: "star")
+            } else if Overview.anyOutside(points, of: area) {
+                MapNotice(text: Format.count(candidates.count, "Favorit", "Favoriten"), actionTitle: "Alle zeigen") { focus() }
+            }
         }
     }
 
-    /// Fits the map to the search hits or the chosen country (`Overview.focus`).
+    /// Fits the map to the search hits or favourites, else the chosen country (`Overview.focus`).
     private func focus() {
-        guard let target = Overview.focus(points, searching: searching, country: country) else { return }
+        guard let target = Overview.focus(points, searching: searching || favoritesOnly, country: country) else { return }
         atStart = target == MapArea.start
         withAnimation { position = .region(MKCoordinateRegion(target)) }
     }
@@ -182,6 +209,7 @@ struct PlaceOverview<Item: Place>: View {
         query = ""
         results = nil
         country = nil
+        favoritesOnly = false
         atStart = true
         withAnimation { position = .region(MKCoordinateRegion(MapArea.start)) }
     }

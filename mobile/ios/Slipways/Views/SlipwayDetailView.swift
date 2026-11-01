@@ -13,6 +13,15 @@ struct SlipwayDetailView: View {
     @State private var suggest: SuggestMode?
     @State private var pending: Set<String> = []
     @Environment(\.suggestions) private var store
+    @Environment(Favorites.self) private var favorites
+
+    /// With the loaded name and position, which may be newer than the ones the map or the list of favourites had.
+    private var favorite: Favorite {
+        Favorite(
+            type: .slipway, placeId: slipway.id, name: details?.name ?? slipway.name,
+            latitude: details?.latitude ?? slipway.latitude, longitude: details?.longitude ?? slipway.longitude,
+            source: details?.source ?? slipway.source)
+    }
 
     private var coordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: slipway.latitude, longitude: slipway.longitude)
@@ -66,6 +75,9 @@ struct SlipwayDetailView: View {
         }
         .navigationTitle(slipway.name)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) { FavoriteButton(favorite: favorite) }
+        }
         .task { await load() }
         .marinaSheet($marina)
         .sheet(item: $suggest, onDismiss: refreshPending) { mode in
@@ -147,6 +159,7 @@ struct SlipwayDetailView: View {
             let loaded = try await api.slipway(id: slipway.id)
             details = loaded
             refreshPending()
+            favorites.refresh(favorite)
             if let waterId = loaded.water?.id {
                 water = try? await api.water(id: waterId)
             }
