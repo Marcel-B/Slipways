@@ -205,6 +205,24 @@ private let marina = """
     #expect(MapArea.fitting([]) == nil)
 }
 
+@Test func focusesOnHitsCountryOrEurope() throws {
+    let points = [(latitude: 48.0, longitude: 11.0), (latitude: 49.0, longitude: 12.0)]
+
+    let hits = try #require(Overview.focus(points, searching: true, country: "DE"))
+    #expect(hits == MapArea.fitting(points))
+    #expect(Overview.focus([], searching: true, country: nil) == nil)
+    #expect(Overview.focus(points, searching: false, country: "DE") == Countries.coreArea(points))
+    #expect(Overview.focus(points, searching: false, country: nil) == MapArea.start)
+}
+
+@Test func findsPointsOutsideArea() {
+    let kelheim = MapArea(centerLatitude: 48.9, centerLongitude: 11.9, latitudeDelta: 0.2, longitudeDelta: 0.2)
+
+    #expect(!Overview.anyOutside([(latitude: 48.9, longitude: 11.9)], of: kelheim))
+    #expect(Overview.anyOutside([(latitude: 48.9, longitude: 11.9), (latitude: 52.4, longitude: 13.0)], of: kelheim))
+    #expect(!Overview.anyOutside([], of: kelheim))
+}
+
 @Test func clustersEntriesInGridCells() throws {
     let points = [(latitude: 48.90, longitude: 11.90), (latitude: 48.91, longitude: 11.91), (latitude: 52.4, longitude: 13.0), (latitude: 60.0, longitude: 11.9)]
 
@@ -467,6 +485,35 @@ private func p(_ latitude: Double, _ longitude: Double) -> Position { Position(l
 
     #expect(thinned.lines == [[p(0, 0), p(0, 1), p(0, 1.0001)]])
     #expect(MapArea(south: 0, west: 0, north: 2, east: 4).expanded(by: 0.5) == MapArea(south: -1, west: -2, north: 3, east: 6))
+}
+
+@Test func clipIsKeptForSmallMoves() {
+    let view = MapArea(south: 50, west: 10, north: 51, east: 11)
+    let clip = ShapeClip(around: view, width: 100)
+    #expect(clip.area == MapArea(south: 49, west: 9, north: 52, east: 12))
+    #expect(clip.resolution == 0.01)
+
+    // Panned half a view, zoomed in a little or out a little: same clip.
+    #expect(clip.serves(MapArea(south: 50.5, west: 10.5, north: 51.5, east: 11.5), width: 100))
+    #expect(clip.serves(MapArea(south: 50.2, west: 10.2, north: 50.8, east: 10.8), width: 100))
+    #expect(clip.serves(MapArea(south: 49.5, west: 9.5, north: 51.5, east: 11.5), width: 100))
+    // Panned out of it, zoomed in too far or out too far: a new one.
+    #expect(!clip.serves(MapArea(south: 50, west: 11.5, north: 51, east: 12.5), width: 100))
+    #expect(!clip.serves(MapArea(south: 50.4, west: 10.4, north: 50.6, east: 10.6), width: 100))
+    #expect(!clip.serves(MapArea(south: 48, west: 8, north: 53, east: 13), width: 100))
+}
+
+@Test func shapePartsHaveStableIds() {
+    let shape = WaterShape(
+        id: "w",
+        name: "See",
+        geometry: Geometry(lines: [[p(0, 0), p(0, 1)]], polygons: [[[p(0, 0), p(0, 1), p(1, 1), p(0, 0)]]])
+    )
+    let parts = shape.parts(in: ShapeClip(area: MapArea(south: -5, west: -5, north: 5, east: 5), resolution: 0))
+
+    #expect(parts.map(\.id) == ["w/a0", "w/l0"])
+    #expect(parts.map(\.isArea) == [true, false])
+    #expect(parts.allSatisfy { $0.shapeId == "w" })
 }
 
 @Test func flagFromCountryCode() {

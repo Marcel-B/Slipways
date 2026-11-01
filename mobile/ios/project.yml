@@ -1,6 +1,6 @@
 name: Slipways
 options:
-  bundleIdPrefix: com.bvelop
+  bundleIdPrefix: com.b-velop
   deploymentTarget:
     iOS: "17.0"
   createIntermediateGroups: true
@@ -10,7 +10,7 @@ packages:
 settings:
   base:
     SWIFT_VERSION: "6.0"
-    MARKETING_VERSION: "1.0"
+    MARKETING_VERSION: "2.0.0"
     CURRENT_PROJECT_VERSION: "1"
 targets:
   Slipways:
@@ -21,13 +21,18 @@ targets:
       - package: SlipwaysKit
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.bvelop.slipways
+        PRODUCT_BUNDLE_IDENTIFIER: com.b-velop.slipways
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # Signing team comes from the TestFlight workflow (secret APPLE_TEAM_ID); locally pick it in Xcode.
+        CODE_SIGN_STYLE: Automatic
         TARGETED_DEVICE_FAMILY: "1,2"
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Slipways
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
-        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
+        # iPad multitasking requires all four orientations, otherwise App Store Connect rejects the upload.
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
         INFOPLIST_FILE: Slipways/Info.plist
         # Debug builds use production too; for the local docker compose API set the environment variable
         # SLIPWAYS_API_BASE_URL=http://localhost:5080 in the scheme (Product > Scheme > Edit Scheme > Run).

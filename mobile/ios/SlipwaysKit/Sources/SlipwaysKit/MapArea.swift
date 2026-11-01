@@ -124,6 +124,23 @@ public enum Overview {
         .sorted { $0.id < $1.id }
     }
 
+    /// Where the map moves when the search term settles or a country is chosen: to all hits, else to the chosen
+    /// country without far-off outliers, else back to Europe. Nil leaves the map where it is. Panning never calls this,
+    /// so the map does not jump while someone looks around.
+    public static func focus(
+        _ points: [(latitude: Double, longitude: Double)],
+        searching: Bool,
+        country: String?
+    ) -> MapArea? {
+        if searching { return MapArea.fitting(points) }
+        return country == nil ? MapArea.start : Countries.coreArea(points)
+    }
+
+    /// True when some of the points lie outside the area, so the map can offer to show them all.
+    public static func anyOutside(_ points: [(latitude: Double, longitude: Double)], of area: MapArea) -> Bool {
+        points.contains { !area.contains(latitude: $0.latitude, longitude: $0.longitude) }
+    }
+
     /// Case- and accent-insensitive match on name, city or postal code, as the API search does for slipways.
     public static func matches(_ marina: Marina, search: String) -> Bool {
         let term = search.trimmingCharacters(in: .whitespacesAndNewlines)

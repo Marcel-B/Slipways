@@ -2,9 +2,10 @@ import MapKit
 import SlipwaysKit
 import SwiftUI
 
-/// Waters on a map as their courses and areas, with search and choice of country; the list below shows the waters in
-/// the visible area or the search hits. Thousands of shapes are too much to load at once, so the map loads those in
-/// its view, further out only the large ones, or those of the search hits.
+/// Waters on a full-screen map as their courses and areas, with a search field and a choice of country floating above
+/// it; there is no list. Thousands of shapes are too much to load at once, so the map loads those in its view, further
+/// out only the large ones, or those of the search hits, which also get a pin each. A tap on a course or pin shows the
+/// water. The map moves by itself only for a settled search term or a chosen country, as `PlaceOverview` does.
 struct WaterOverviewView: View {
     @Environment(\.api) private var api
 
@@ -17,10 +18,19 @@ struct WaterOverviewView: View {
     @State private var countries: [CountryCount] = []
     @State private var country: String?
     @State private var shapes: [WaterShape] = []
+    /// Counts up whenever `shapes` changes, so the drawing follows without comparing all shapes.
+    @State private var shapesRevision = 0
+    /// The shapes searched for or in the chosen country, as loaded, for taps.
+    @State private var visibleShapes: [WaterShape] = []
+    /// What the map draws of them: cut to `clip`, worked out off the main thread.
+    @State private var drawn: [DrawnPart] = []
+    @State private var clip: ShapeClip?
+    @State private var cache = PartCache()
     @State private var selectedId: String?
     @State private var area = MapArea.start
     @State private var mapWidth = 390.0
     @State private var position = MapCameraPosition.region(MKCoordinateRegion(MapArea.start))
+    @FocusState private var searchFocused: Bool
 
     private var searching: Bool { !query.isEmpty }
 
@@ -30,10 +40,18 @@ struct WaterOverviewView: View {
         return all.filter { $0.countries.contains(country) }
     }
 
-    /// Nil when the area holds too many waters to list.
-    private var listed: [WaterSummary]? {
-        if searching { return candidates }
-        return Overview.visible(candidates.filter { $0.position != nil }, in: area) { ($0.position!.latitude, $0.position!.longitude) }
+    /// Where the hits lie; waters with nothing on them that has coordinates have no point.
+    private var points: [(latitude: Double, longitude: Double)] {
+        candidates.compactMap(\.position).map { (latitude: $0.latitude, longitude: $0.longitude) }
+    }
+
+    /// Search hits with a point get a pin.
+    private var pinned: [WaterSummary] {
+        searching ? candidates.filter { $0.position != nil } : []
+    }
+
+    private var selected: WaterSummary? {
+        selectedId.flatMap { id in candidates.first { $0.id == id } }
     }
 
     private var shapeFilter: ShapeFilter {
@@ -41,69 +59,96 @@ struct WaterOverviewView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            map
-            list
+        ZStack {
+            map.ignoresSafeArea(edges: [.top, .leading, .trailing])
+        }
+        .osmAttribution(true)
+        .overlay(alignment: .top) {
+            MapSearchBar(text: $text, prompt: "Gewässer suchen", countries: countries, country: $country, focused: $searchFocused)
+        }
+        .overlay(alignment: .bottom) {
+            if selected != nil { selectedCard } else { notice }
         }
         .navigationTitle("Gewässer")
-        .navigationBarTitleDisplayMode(.inline)
-        .searchable(text: $text, placement: .navigationBarDrawer(displayMode: .always), prompt: "Gewässer suchen")
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) { CountryMenu(options: countries, selection: $country) }
-        }
+        .toolbar(.hidden, for: .navigationBar)
         .task { await reload() }
         .task(id: text) { await find() }
         .task(id: shapeFilter) { await loadShapes(shapeFilter) }
+        .task(id: drawKey) { await redraw() }
         .onChange(of: country) { _, _ in focus() }
     }
 
+    private var drawKey: DrawKey {
+        DrawKey(clip: clip, shapes: shapesRevision, query: query, country: country, waters: waters?.count ?? -1)
+    }
+
     private var map: some View {
-        let shown = Set(candidates.map(\.id))
-        // Shapes and list are fetched separately; draw only what the list shows, too. Only the parts in and around the
-        // view, at about a point's precision: MapKit would otherwise draw whole rivers at street level and run out of memory.
-        let clip = area.expanded(by: 0.5)
-        let resolution = area.longitudeDelta / max(mapWidth, 1)
-        let drawn = shapes
-            .filter { shown.contains($0.id) }
-            .map { $0.clipped(to: clip, resolution: resolution) }
-            .filter { !$0.geometry.isEmpty }
-        return MapReader { proxy in
-            Map(position: $position) {
-                ForEach(drawn) { shape in
-                    let color: Color = shape.id == selectedId ? .orange : .blue
-                    ForEach(shape.geometry.polygons.indices, id: \.self) { index in
-                        if let outer = shape.geometry.polygons[index].first {
-                            MapPolygon(coordinates: outer.map { CLLocationCoordinate2D($0) })
-                                .foregroundStyle(color.opacity(0.2))
-                                .stroke(color, lineWidth: 1.5)
-                        }
+        MapReader { proxy in
+            // North stays up: a compass would sit under the search field.
+            Map(position: $position, interactionModes: [.pan, .zoom]) {
+                // One flat list with ids per piece: when only the selection changes, MapKit keeps every other overlay.
+                ForEach(drawn) { part in
+                    let isSelected = part.shapeId == selectedId
+                    let color: Color = isSelected ? .orange : .blue
+                    if part.isArea {
+                        MapPolygon(coordinates: part.coordinates)
+                            .foregroundStyle(color.opacity(0.2))
+                            .stroke(color, lineWidth: 1.5)
+                    } else {
+                        MapPolyline(coordinates: part.coordinates)
+                            .stroke(color, lineWidth: isSelected ? 4 : 2.5)
                     }
-                    ForEach(shape.geometry.lines.indices, id: \.self) { index in
-                        MapPolyline(coordinates: shape.geometry.lines[index].map { CLLocationCoordinate2D($0) })
-                            .stroke(color, lineWidth: shape.id == selectedId ? 4 : 2.5)
+                }
+                // Without a list, search hits need something to tap even where their course is small or missing.
+                // The pins only show; the tap below finds them, so it cannot compete with buttons on the map.
+                ForEach(pinned) { water in
+                    Annotation("", coordinate: CLLocationCoordinate2D(water.position!), anchor: .center) {
+                        Image(systemName: "drop.circle.fill")
+                            .font(.title2)
+                            .foregroundStyle(.white, water.id == selectedId ? Color.orange : Color.blue)
+                            .shadow(radius: 2)
+                            .allowsHitTesting(false)
+                            .accessibilityLabel(water.name)
                     }
+                    .annotationTitles(.hidden)
                 }
             }
             .onTapGesture { location in
                 guard let coordinate = proxy.convert(location, from: .local) else { return }
                 // About a fingertip around the tap.
                 let tolerance = area.latitudeDelta / max(mapWidth, 1) * 22
-                selectedId = WaterShape.hit(drawn, latitude: coordinate.latitude, longitude: coordinate.longitude, tolerance: tolerance)?.id
+                searchFocused = false
+                // A pin is a fingertip wide; in degrees of longitude that follows the map width, in latitude the
+                // Mercator scale at the tap.
+                let pinWidth = area.longitudeDelta / max(mapWidth, 1) * 22
+                let pinHeight = pinWidth * cos(coordinate.latitude * .pi / 180)
+                let pin = pinned.first { water in
+                    guard let position = water.position else { return false }
+                    return abs(position.longitude - coordinate.longitude) < pinWidth
+                        && abs(position.latitude - coordinate.latitude) < pinHeight
+                }
+                selectedId = pin?.id
+                    ?? WaterShape.hit(visibleShapes, latitude: coordinate.latitude, longitude: coordinate.longitude, tolerance: tolerance)?.id
             }
         }
         .onMapCameraChange(frequency: .onEnd) { context in
             area = MapArea(context.region)
+            // A new clip rebuilds every overlay; small moves keep the one there is.
+            if clip?.serves(area, width: mapWidth) != true {
+                clip = ShapeClip(around: area, width: mapWidth)
+            }
         }
         .onGeometryChange(for: Double.self) { $0.size.width } action: { mapWidth = $0 }
-        .overlay(alignment: .bottom) { selectedCard }
-        .osmAttribution(true)
-        .frame(maxHeight: .infinity)
+        // Moving the map puts the keyboard away, so the whole screen is map again.
+        .simultaneousGesture(DragGesture(minimumDistance: 10).onChanged { _ in
+            if searchFocused { searchFocused = false }
+        })
     }
 
     /// The water whose shape was tapped, as the website's popup.
     @ViewBuilder
     private var selectedCard: some View {
-        if let id = selectedId, let water = candidates.first(where: { $0.id == id }) {
+        if let water = selected {
             NavigationLink(value: water.water) {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
@@ -122,42 +167,26 @@ struct WaterOverviewView: View {
         }
     }
 
+    /// Loading, a failure, or how many waters the search found; nothing while the map simply shows everything.
     @ViewBuilder
-    private var list: some View {
-        if waters == nil && error != nil {
-            LoadFailedView(title: "Gewässer konnten nicht geladen werden") { await reload() }
-                .frame(maxHeight: .infinity)
-        } else if waters == nil || (searching && results == nil) {
-            ProgressView().frame(maxHeight: .infinity)
-        } else if let listed {
-            if listed.isEmpty {
-                Group {
-                    if searching {
-                        ContentUnavailableView.search(text: query)
-                    } else {
-                        ContentUnavailableView("Hier liegt kein Gewässer", systemImage: "map", description: Text("Verschiebe die Karte oder suche."))
-                    }
-                }
-                .frame(maxHeight: .infinity)
-            } else {
-                List {
-                    Section(searching ? Format.count(listed.count, "Treffer", "Treffer") : "\(Format.count(listed.count, "Gewässer", "Gewässer")) im Kartenausschnitt") {
-                        ForEach(listed) { water in
-                            NavigationLink(value: water.water) { WaterRow(water: water, contents: contents(water)) }
-                        }
-                    }
-                    Section { } footer: { OSMAttribution() }
-                }
-                .listStyle(.plain)
-                .frame(maxHeight: .infinity)
+    private var notice: some View {
+        let term = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if waters == nil, error != nil {
+            MapNotice(text: "Gewässer konnten nicht geladen werden", systemImage: "wifi.exclamationmark", actionTitle: "Erneut versuchen") {
+                Task { await reload() }
             }
-        } else {
-            ContentUnavailableView(
-                "Zoome hinein oder suche",
-                systemImage: "magnifyingglass",
-                description: Text("\(Format.count(candidates.count, "Gewässer", "Gewässer")), zu viele für eine Liste.")
-            )
-            .frame(maxHeight: .infinity)
+        } else if waters == nil {
+            MapNotice(text: "Gewässer werden geladen", loading: true)
+        } else if !term.isEmpty && term != query {
+            MapNotice(text: "Suche „\(term)“", loading: true)
+        } else if searching {
+            if candidates.isEmpty {
+                MapNotice(text: country.map { "Keine Treffer in \(Countries.name($0))" } ?? "Keine Treffer", systemImage: "magnifyingglass")
+            } else if Overview.anyOutside(points, of: area) {
+                MapNotice(text: Format.count(candidates.count, "Treffer", "Treffer"), actionTitle: "Alle zeigen") { focus() }
+            } else {
+                MapNotice(text: Format.count(candidates.count, "Treffer", "Treffer"))
+            }
         }
     }
 
@@ -169,11 +198,10 @@ struct WaterOverviewView: View {
         return parts.isEmpty ? "Keine Slipanlagen oder Pegel" : parts.joined(separator: " · ")
     }
 
-    /// A search moves the map to its hits, a chosen country to that country.
+    /// Fits the map to the search hits or the chosen country (`Overview.focus`).
     private func focus() {
-        let points = candidates.compactMap(\.position).map { (latitude: $0.latitude, longitude: $0.longitude) }
-        let target = searching ? MapArea.fitting(points) : (country == nil ? MapArea.start : Countries.coreArea(points))
-        if let target { withAnimation { position = .region(MKCoordinateRegion(target)) } }
+        guard let target = Overview.focus(points, searching: searching, country: country) else { return }
+        withAnimation { position = .region(MKCoordinateRegion(target)) }
     }
 
     private func reload() async {
@@ -213,37 +241,73 @@ struct WaterOverviewView: View {
     private func loadShapes(_ filter: ShapeFilter) async {
         do {
             // Old shapes stay until the new ones arrive, so nothing flickers.
-            shapes = switch filter {
+            let loaded = switch filter {
             case .search(let term): try await api.waterShapes(search: term)
             case .area(let area): try await api.waterShapes(in: area)
             }
+            // The same waters again (the grid around the view often asks for them) need no new drawing.
+            if loaded.map(\.id) == shapes.map(\.id) { return }
+            shapes = loaded
+            shapesRevision += 1
         } catch {
             // Without shapes the list still works.
         }
     }
+
+    /// Cuts the shapes to show to the clip, on a background thread, reusing pieces already cut for the same clip. Clipping
+    /// hundreds of rivers on the main thread after every pan or zoom made the map stutter.
+    private func redraw() async {
+        let clip = clip ?? ShapeClip(around: area, width: mapWidth)
+        let shown = Set(candidates.map(\.id))
+        let visible = shapes.filter { shown.contains($0.id) }
+        let reusable = cache.clip == clip ? cache.parts : [:]
+        let parts = await Task.detached(priority: .userInitiated) {
+            var parts: [String: [ShapePart]] = [:]
+            for shape in visible {
+                parts[shape.id] = reusable[shape.id] ?? shape.parts(in: clip)
+            }
+            return parts
+        }.value
+        if Task.isCancelled { return }
+        cache = PartCache(clip: clip, parts: parts)
+        visibleShapes = visible
+        drawn = visible.flatMap { shape in
+            (parts[shape.id] ?? []).map { part in
+                DrawnPart(
+                    id: part.id,
+                    shapeId: part.shapeId,
+                    coordinates: part.points.map { CLLocationCoordinate2D($0) },
+                    isArea: part.isArea
+                )
+            }
+        }
+    }
+}
+
+/// A piece of a water shape ready for the map, with its coordinates converted once instead of on every redraw of the view.
+private struct DrawnPart: Identifiable {
+    let id: String
+    let shapeId: String
+    let coordinates: [CLLocationCoordinate2D]
+    let isArea: Bool
+}
+
+/// The pieces cut for one clip, by shape.
+private struct PartCache {
+    var clip: ShapeClip?
+    var parts: [String: [ShapePart]] = [:]
+}
+
+/// Everything the drawing depends on.
+private struct DrawKey: Hashable {
+    let clip: ShapeClip?
+    let shapes: Int
+    let query: String
+    let country: String?
+    let waters: Int
 }
 
 private enum ShapeFilter: Hashable {
     case search(String)
     case area(ShapeArea)
-}
-
-private struct WaterRow: View {
-    let water: WaterSummary
-    let contents: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(water.name)
-            Text(contents).font(.subheadline).foregroundStyle(.secondary)
-            if let gauge = water.gauge {
-                HStack(spacing: 4) {
-                    Image(systemName: "ruler")
-                    Text("Pegel \(gauge.stationName):")
-                    WaterLevelText(level: gauge.waterLevel)
-                }
-                .font(.subheadline)
-            }
-        }
-    }
 }

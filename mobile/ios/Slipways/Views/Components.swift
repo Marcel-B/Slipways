@@ -17,7 +17,7 @@ extension View {
         if shown {
             overlay(alignment: .bottomTrailing) {
                 // Plain text: a link here sits where people touch the map and opened the browser by mistake.
-                // The lists and the info tab link to the licence.
+                // Detail pages and the info tab link to the licence.
                 Text(Links.osmAttribution)
                     .font(.caption2)
                     .foregroundStyle(.secondary)

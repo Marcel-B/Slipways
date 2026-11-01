@@ -16,8 +16,9 @@ Die Modelle spiegeln `backend/src/Slipways.Api/Endpoints/Contracts.cs`. Ändert 
 
 Beide Apps haben die Tabs Slipanlagen, Marinas, Gewässer und Info und zeigen dasselbe wie die Website:
 
-- **Slipanlagen und Marinas** sind je eine Karte mit Suchfeld und Länderwahl (`PlaceOverview` bzw. `PlaceOverviewScreen`). Die Karte startet mit Europa und zeigt bis Zoom 5 eine Blase je Land (`Countries.group`, Schwelle `Overview.countryMaxZoom` bzw. `COUNTRY_MAX_ZOOM` wie `COUNTRY_MAX_ZOOM` im Web), darunter Blasen mit der Anzahl (iOS: Raster in `Overview.clusters`, Android: `GeoJsonSource` mit `cluster`); ein Tipp darauf zoomt hinein. Die Liste darunter zeigt nur, was im Kartenausschnitt liegt (höchstens 250, sonst „Zoome hinein oder suche“), oder die Suchtreffer. Die Suche startet erst, wenn das Tippen kurz pausiert. Slipanlagen werden über die API gesucht, Marinas im Gerät.
-- **Gewässer** sind eine Karte mit Verläufen und Seen aus OpenStreetMap: im Kartenausschnitt geladen über `/api/waters/shapes?bbox=…&minExtent=…` (`ShapeArea`, gleiche Rasterung wie `shapeArea` im Web), bei einer Suche die der Treffer. Ein Tipp auf einen Verlauf zeigt das Gewässer mit „Öffnen“. iOS zeichnet nur die Teile der Verläufe in und um den Kartenausschnitt (`Geometry.clipped`), sonst legt MapKit für jeden Fluss eine Zeichenfläche in voller Länge an und die App läuft beim Hineinzoomen aus dem Speicher. Länderwahl über `WaterSummary.countries`.
+- **Slipanlagen und Marinas** sind je eine Karte mit Suchfeld und Länderwahl (`PlaceOverview` bzw. `PlaceOverviewScreen`). Die Karte startet mit Europa und zeigt bis Zoom 5 eine Blase je Land (`Countries.group`, Schwelle `Overview.countryMaxZoom` bzw. `COUNTRY_MAX_ZOOM` wie `COUNTRY_MAX_ZOOM` im Web), darunter Blasen mit der Anzahl (iOS: Raster in `Overview.clusters`, Android: `GeoJsonSource` mit `cluster`); ein Tipp darauf zoomt hinein. Unter iOS füllt die Karte den ganzen Bildschirm, Suchfeld, Länderwahl und Plus schweben darüber, eine Liste gibt es nicht: Ein Tipp auf einen Pin öffnet den Eintrag, eine Zeile unten zeigt Laden, Fehler und die Zahl der Treffer. Android zeigt unter der Karte noch eine Liste mit dem, was im Kartenausschnitt liegt (höchstens 250, sonst „Zoome hinein oder suche“), oder den Suchtreffern. Die Suche startet erst, wenn das Tippen kurz pausiert. Slipanlagen werden über die API gesucht, Marinas im Gerät.
+- **Auto-Zoom:** Die Karte bewegt sich nur, wenn jemand etwas verlangt: Steht der Suchbegriff, zeigt sie alle Treffer, bei einer Länderwahl das Land (ohne Ausreißer, `Overview.focus`). Beim Verschieben und Zoomen bewegt sie sich nie von selbst, und das Löschen der Suche lässt sie, wo sie ist. Liegen Treffer außerhalb des Ausschnitts, bietet iOS unten „Alle zeigen“ an (`Overview.anyOutside`).
+- **Gewässer** sind eine Karte mit Verläufen und Seen aus OpenStreetMap: im Kartenausschnitt geladen über `/api/waters/shapes?bbox=…&minExtent=…` (`ShapeArea`, gleiche Rasterung wie `shapeArea` im Web), bei einer Suche die der Treffer. Ein Tipp auf einen Verlauf zeigt das Gewässer mit „Öffnen“. Unter iOS ebenfalls als Vollbild-Karte ohne Liste; Suchtreffer bekommen dort zusätzlich einen Pin, damit auch kleine Gewässer antippbar sind. iOS zeichnet nur die Teile der Verläufe in und um den Kartenausschnitt (`Geometry.clipped`), sonst legt MapKit für jeden Fluss eine Zeichenfläche in voller Länge an und die App läuft beim Hineinzoomen aus dem Speicher. Länderwahl über `WaterSummary.countries`.
 - **Zoomstufen** zählen in den Client-Paketen wie im Web (Kacheln zu 256 Punkten). MapKit kennt keinen Zoom, iOS rechnet ihn aus Kartenausschnitt und Breite (`MapArea.zoom(width:)`); MapLibre zählt Kacheln zu 512, Android rechnet `+1` (`WEB_ZOOM_OFFSET`).
 - **Slipanlage**: dieselben Angaben wie im Web samt nächstem Pegel, „Route planen“ und „In Karten öffnen“. Werte von Nutzern gewinnen über die eigenen und zeigen „von Nutzern ergänzt, Stand MM.JJJJ“ (`SlipwayDetails.value`); dazu „Was gibt es dort?“ und Tipps.
 - **Marina** öffnet als Sheet (iOS) bzw. Bottom-Sheet (Android) aus der Karte, von der Slipanlage und vom Gewässer: Angaben (Nutzer vor eigenen vor „laut Webseite“, `MarinaDetails.value`), Slipanlagen der Marina, Tipps, nächster Pegel, „Route planen“.
@@ -32,7 +33,7 @@ Beide Apps haben die Tabs Slipanlagen, Marinas, Gewässer und Info und zeigen da
 Die Apps sind eigene Werke im Sinne der ODbL (§ 4.3), der Hinweis im Seitenfuß der Website gilt für sie nicht. Nach den [Attribution Guidelines der OSMF](https://osmfoundation.org/wiki/Licence/Attribution_Guidelines) steht „Daten © OpenStreetMap-Mitwirkende (ODbL)“ mit Link auf `https://www.openstreetmap.org/copyright`:
 
 - in der Ecke jeder Karte mit OSM-Einträgen oder Gewässerverlauf (iOS, als Text ohne Link, damit ein Tipp in die Karte nicht den Browser öffnet; MapKits „Rechtliches“ deckt OSM nicht ab; unter Android bringt der OpenFreeMap-Stil den Hinweis selbst mit),
-- unter Listen und Detailseiten mit OSM-Einträgen,
+- unter Listen (Android) und Detailseiten mit OSM-Einträgen,
 - vollständig auf der Info-Seite, zusammen mit PEGELONLINE (DL-DE->Zero-2.0), Impressum, Datenschutz und Support.
 
 Neue Ansichten mit OSM-Daten brauchen den Hinweis ebenfalls.
@@ -44,6 +45,15 @@ Die Info-Seite nennt außerdem die Lizenz des Codes (PolyForm Strict 1.0.0, sieh
 - Xcode 27 ist installiert, aber `xcode-select` zeigt auf die Command Line Tools. Für `xcodebuild` braucht es `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer` oder `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer` pro Aufruf.
 - XcodeGen: `brew install xcodegen`.
 - Die CI baut auf `macos-26` (`.github/workflows/ios.yml`) bzw. `ubuntu-latest` (`android.yml`).
+
+## TestFlight
+
+`.github/workflows/testflight.yml` archiviert die iOS-App bei jedem Push auf `master`, der `mobile/ios` ändert, und lädt sie zu TestFlight hoch. Von Hand: in GitHub unter Actions „TestFlight“ starten oder `gh workflow run testflight.yml`.
+
+- Das Archiv entsteht unsigniert. Erst der Export signiert, automatisch über einen App Store Connect API-Key (`-allowProvisioningUpdates`) mit dem von Apple verwalteten Verteilungszertifikat. So legt nicht jeder Lauf ein neues Entwicklungszertifikat an. Der Key braucht die Rolle „Admin“, damit Xcode das Verteilungszertifikat in der Cloud nutzen darf.
+- Die Secrets `APPLE_TEAM_ID`, `APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID` und `APP_STORE_CONNECT_KEY` (die .p8-Datei in Base64) trägt `mobile/ios/scripts/testflight-secrets.sh` ein; es fragt die Werte ab und braucht die GitHub CLI. Fehlen sie, überspringt der Workflow den Upload mit einer Warnung.
+- Die Build-Nummer ist der Zeitpunkt des Laufs (`yyyyMMddHHmm`, UTC), die Version (`MARKETING_VERSION`) steht in `project.yml`. Sie muss über der zuletzt im Store freigegebenen Version liegen; die alte Slipways-App war bei 1.3.0, der Neubau startet deshalb mit 2.0.0.
+- Die App muss in App Store Connect mit der Bundle-ID `com.b-velop.slipways` angelegt sein.
 
 ## Für die Stores offen
 
