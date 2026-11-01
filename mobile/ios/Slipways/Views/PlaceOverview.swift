@@ -34,10 +34,12 @@ struct PlaceOverview<Item: Place>: View {
     /// Counted over everything, so the choice keeps its numbers while a search narrows the map.
     @State private var countries: [CountryCount] = []
     @State private var country: String?
-    @State private var area = MapArea.start
+    @State private var area = LaunchState.area
     @State private var mapWidth = 390.0
-    @State private var position = MapCameraPosition.region(MKCoordinateRegion(MapArea.start))
+    @State private var position = MapCameraPosition.region(MKCoordinateRegion(LaunchState.area))
     @State private var selection: String?
+    /// Whether the place the screenshot test asked for (`LaunchState.open`) was opened already.
+    @State private var launchOpened = false
     @FocusState private var searchFocused: Bool
 
     private var searching: Bool { !query.isEmpty }
@@ -170,6 +172,10 @@ struct PlaceOverview<Item: Place>: View {
             countries = Countries.group(loaded, country: \.country) { ($0.latitude, $0.longitude) }
                 .map { CountryCount(code: $0.code, count: $0.items.count) }
             error = nil
+            if !launchOpened, let id = LaunchState.open, let item = loaded.first(where: { $0.id == id }) {
+                launchOpened = true
+                onSelect(item)
+            }
         } catch let error where error.isCancellation {
         } catch {
             self.error = error

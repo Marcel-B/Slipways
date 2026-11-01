@@ -55,6 +55,14 @@ Die Info-Seite nennt außerdem die Lizenz des Codes (PolyForm Strict 1.0.0, sieh
 - Die Build-Nummer ist der Zeitpunkt des Laufs (`yyyyMMddHHmm`, UTC), die Version (`MARKETING_VERSION`) steht in `project.yml`. Sie muss über der zuletzt im Store freigegebenen Version liegen; die alte Slipways-App war bei 1.3.0, der Neubau startet deshalb mit 2.0.0.
 - Die App muss in App Store Connect mit der Bundle-ID `com.b-velop.slipways` angelegt sein.
 
+## Screenshots für den App Store
+
+Der Workflow „App-Store-Screenshots“ (`.github/workflows/screenshots.yml`, von Hand starten oder `gh workflow run screenshots.yml`) nimmt die Bilder mit den echten Daten von slipways.de auf und legt sie als Artefakt `app-store-screenshots` am Lauf ab: je ein Ordner für das iPhone mit 6,9" (1320 × 2868) und das iPad mit 13" (2064 × 2752), so wie App Store Connect sie verlangt. Hochladen in App Store Connect geht von Hand (App > Version > „Vorschauen und Screenshots“, Bilder hineinziehen).
+
+- Lokal auf dem Mac: `mobile/ios/scripts/screenshots.sh` (braucht Xcode, XcodeGen und `jq`), Bilder unter `mobile/ios/build/screenshots`.
+- Die Szenen stehen im UI-Test `mobile/ios/SlipwaysScreenshots/ScreenshotTests.swift`: Europa, Mecklenburgische Seenplatte, Slipanlage Kelheim, Marinas in Kroatien, ACI Marina Rovinj, Mosel auf der Karte und mit Pegeln. Die App startet über Umgebungsvariablen (`LaunchState` in `SlipwaysApp.swift`) direkt im gewünschten Tab, Kartenausschnitt und Eintrag; ohne diese Variablen ändert sich nichts. Verschwindet ein Eintrag aus den Daten, die ID im Test austauschen.
+- Statusleiste 9:41 mit vollem Akku, helles Design, Sprache Deutsch.
+
 ## Für die Stores offen
 
 Steht in [`offene-punkte.md`](offene-punkte.md) unter „Mobile-Apps“.
