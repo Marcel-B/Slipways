@@ -124,7 +124,9 @@ struct PlaceOverview<Item: Place>: View {
         }
         .onGeometryChange(for: Double.self) { $0.size.width } action: { mapWidth = $0 }
         // Moving the map puts the keyboard away, so the whole screen is map again.
-        .simultaneousGesture(DragGesture(minimumDistance: 10).onChanged { _ in searchFocused = false })
+        .simultaneousGesture(DragGesture(minimumDistance: 10).onChanged { _ in
+            if searchFocused { searchFocused = false }
+        })
     }
 
     /// Loading, a failure, or how many hits the search found; nothing while the map simply shows everything.

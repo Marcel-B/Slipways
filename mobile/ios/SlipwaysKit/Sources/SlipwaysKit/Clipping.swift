@@ -10,6 +10,61 @@ extension MapArea {
             east: east + longitudeDelta * factor
         )
     }
+
+    /// True when `other` lies completely inside this area.
+    public func contains(_ other: MapArea) -> Bool {
+        other.south >= south && other.north <= north && other.west >= west && other.east <= east
+    }
+}
+
+/// Which part of the shapes the overview map draws, and how finely.
+///
+/// Every new clip makes MapKit throw away and rebuild all overlays, which shows as a stutter after each zoom or pan. So
+/// a clip reaches a full view beyond the visible area on every side and is kept as long as the view stays inside it and
+/// has not been zoomed in so far that the thinned points would show as corners.
+public struct ShapeClip: Hashable, Sendable {
+    public let area: MapArea
+    /// In degrees, about one point at the zoom the clip was made for.
+    public let resolution: Double
+
+    public init(area: MapArea, resolution: Double) {
+        self.area = area
+        self.resolution = resolution
+    }
+
+    /// A clip around a view `width` points wide.
+    public init(around view: MapArea, width: Double) {
+        self.init(area: view.expanded(by: 1), resolution: view.longitudeDelta / max(width, 1))
+    }
+
+    /// True while this clip still serves the view: the view lies inside it, and points thinned for this clip are at most
+    /// two points apart on screen.
+    public func serves(_ view: MapArea, width: Double) -> Bool {
+        area.contains(view) && resolution <= 2 * view.longitudeDelta / max(width, 1)
+    }
+}
+
+/// One line or area outline of a water shape as the map draws it.
+public struct ShapePart: Identifiable, Hashable, Sendable {
+    /// Stable for the same shape and piece, so the map can keep overlays that did not change.
+    public let id: String
+    public let shapeId: String
+    public let points: [Position]
+    public let isArea: Bool
+}
+
+extension WaterShape {
+    /// This shape cut to the clip, one part per line piece and area.
+    public func parts(in clip: ShapeClip) -> [ShapePart] {
+        let geometry = geometry.clipped(to: clip.area, resolution: clip.resolution)
+        let areas = geometry.polygons.enumerated().compactMap { index, rings in
+            rings.first.map { ShapePart(id: "\(id)/a\(index)", shapeId: id, points: $0, isArea: true) }
+        }
+        let lines = geometry.lines.enumerated().map { index, points in
+            ShapePart(id: "\(id)/l\(index)", shapeId: id, points: points, isArea: false)
+        }
+        return areas + lines
+    }
 }
 
 extension Geometry {
