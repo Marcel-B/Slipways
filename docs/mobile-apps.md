@@ -50,7 +50,7 @@ Die Info-Seite nennt außerdem die Lizenz des Codes (PolyForm Strict 1.0.0, sieh
 
 `.github/workflows/testflight.yml` archiviert die iOS-App bei jedem Push auf `master`, der `mobile/ios` ändert, und lädt sie zu TestFlight hoch. Von Hand: in GitHub unter Actions „TestFlight“ starten oder `gh workflow run testflight.yml`.
 
-- Signiert wird automatisch über einen App Store Connect API-Key (`-allowProvisioningUpdates`). Der Key braucht die Rolle „Admin“, damit Xcode das Verteilungszertifikat in der Cloud anlegen darf.
+- Das Archiv entsteht unsigniert. Erst der Export signiert, automatisch über einen App Store Connect API-Key (`-allowProvisioningUpdates`) mit dem von Apple verwalteten Verteilungszertifikat. So legt nicht jeder Lauf ein neues Entwicklungszertifikat an. Der Key braucht die Rolle „Admin“, damit Xcode das Verteilungszertifikat in der Cloud nutzen darf.
 - Die Secrets `APPLE_TEAM_ID`, `APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID` und `APP_STORE_CONNECT_KEY` (die .p8-Datei in Base64) trägt `mobile/ios/scripts/testflight-secrets.sh` ein; es fragt die Werte ab und braucht die GitHub CLI. Fehlen sie, überspringt der Workflow den Upload mit einer Warnung.
 - Die Build-Nummer ist der Zeitpunkt des Laufs (`yyyyMMddHHmm`, UTC), die Version (`MARKETING_VERSION`) steht in `project.yml`. Sie muss über der zuletzt im Store freigegebenen Version liegen; die alte Slipways-App war bei 1.3.0, der Neubau startet deshalb mit 2.0.0.
 - Die App muss in App Store Connect mit der Bundle-ID `com.b-velop.slipways` angelegt sein.
