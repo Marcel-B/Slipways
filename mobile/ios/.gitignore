@@ -4,3 +4,4 @@ Slipways.xcodeproj/
 .swiftpm/
 DerivedData/
 xcuserdata/
+build/
