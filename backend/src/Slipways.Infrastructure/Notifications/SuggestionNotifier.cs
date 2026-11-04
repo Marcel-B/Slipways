@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Slipways.Domain;
@@ -15,7 +17,7 @@ public sealed record NotificationResult(bool Due, int New, int Pending, bool Sen
 /// suggestions get <see cref="Suggestion.Notified"/>, and the last due check is kept in the <see cref="JobState"/> row
 /// of the job, so a restart neither repeats nor loses a message.
 /// </summary>
-public sealed class SuggestionNotifier(SlipwaysDbContext db, NtfyClient client, IOptions<NotificationOptions> options, TimeProvider time)
+public sealed class SuggestionNotifier(SlipwaysDbContext db, OnkelBummelClient client, IOptions<NotificationOptions> options, TimeProvider time)
 {
     /// <summary>Name of the job in <see cref="JobState"/> and the <c>task</c> label of its metrics.</summary>
     public const string JobName = "notifications";
@@ -38,7 +40,8 @@ public sealed class SuggestionNotifier(SlipwaysDbContext db, NtfyClient client, 
         {
             var kinds = fresh.GroupBy(s => s.Kind).ToDictionary(g => g.Key, g => g.Count());
             var url = Uri.TryCreate(options.Value.ModerationUrl, UriKind.Absolute, out var moderation) ? moderation : null;
-            await client.SendAsync(Compose(kinds, pending, url), cancellationToken);
+            var message = Compose(kinds, pending, url) with { IdempotencyKey = IdempotencyKey(fresh) };
+            await client.SendAsync(message, cancellationToken);
             foreach (var suggestion in fresh)
                 suggestion.Notified = now.UtcDateTime;
         }
@@ -48,7 +51,7 @@ public sealed class SuggestionNotifier(SlipwaysDbContext db, NtfyClient client, 
         return new NotificationResult(Due: true, New: fresh.Count, Pending: pending, Sent: fresh.Count > 0);
     }
 
-    public static NtfyMessage Compose(IReadOnlyDictionary<string, int> newByKind, int pending, Uri? moderationUrl)
+    public static OnkelBummelMessage Compose(IReadOnlyDictionary<string, int> newByKind, int pending, Uri? moderationUrl)
     {
         var total = newByKind.Values.Sum();
         var title = total == 1 ? "Slipways: 1 neuer Vorschlag" : $"Slipways: {total} neue Vorschläge";
@@ -57,7 +60,17 @@ public sealed class SuggestionNotifier(SlipwaysDbContext db, NtfyClient client, 
             .Select(kind => Describe(kind, newByKind[kind]))
             .Concat(newByKind.Keys.Except(SuggestionKinds.All).Select(kind => $"{newByKind[kind]} × {kind}"));
         var waiting = pending == 1 ? "Insgesamt wartet 1 Vorschlag." : $"Insgesamt warten {pending} Vorschläge.";
-        return new NtfyMessage(title, $"{string.Join(", ", parts)}. {waiting}", moderationUrl);
+        return new OnkelBummelMessage(title, $"{string.Join(", ", parts)}. {waiting}", moderationUrl);
+    }
+
+    /// <summary>
+    /// Derived from the reported suggestions: if the message went out but saving <see cref="Suggestion.Notified"/>
+    /// failed, the next check reports the same ones under the same key and Onkel Bummel does not store it twice.
+    /// </summary>
+    public static string IdempotencyKey(IEnumerable<Suggestion> reported)
+    {
+        var ids = string.Join(',', reported.Select(s => s.Id).Order());
+        return "slipways-suggestions-" + Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(ids)));
     }
 
     private static string Describe(string kind, int count) => (kind, count) switch

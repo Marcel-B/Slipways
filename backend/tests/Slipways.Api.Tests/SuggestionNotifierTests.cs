@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json.Nodes;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Slipways.Domain;
 using Slipways.Infrastructure.Notifications;
@@ -15,7 +16,7 @@ public sealed class SuggestionNotifierTests : IAsyncLifetime
     private static readonly DateTimeOffset Tuesday = new(2026, 10, 21, 9, 30, 0, TimeSpan.Zero);
 
     private readonly SqliteConnection _connection = new("DataSource=:memory:");
-    private readonly StubHandler _ntfy = new();
+    private readonly StubHandler _onkelBummel = new();
     private readonly MovableTime _time = new(Tuesday);
     private SlipwaysDbContext _db = null!;
 
@@ -41,22 +42,24 @@ public sealed class SuggestionNotifierTests : IAsyncLifetime
         var first = await RunAsync(new NotificationOptions { Topic = "slipways-test", ModerationUrl = "https://slipways-1.example.ts.net:9465/moderation" });
 
         Assert.Equal(new NotificationResult(Due: true, New: 3, Pending: 3, Sent: true), first);
-        var body = JsonNode.Parse(Assert.Single(_ntfy.Requests))!;
+        var body = JsonNode.Parse(Assert.Single(_onkelBummel.Requests))!;
         Assert.Equal("slipways-test", (string?)body["topic"]);
         Assert.Equal("Slipways: 3 neue Vorschläge", (string?)body["title"]);
         Assert.Equal("2 neue Slipanlagen, 1 Meldung. Insgesamt warten 3 Vorschläge.", (string?)body["message"]);
         Assert.Equal("https://slipways-1.example.ts.net:9465/moderation", (string?)body["click"]);
+        Assert.Equal(3, (int?)body["priority"]);
+        Assert.Equal("anchor", (string?)Assert.Single(body["tags"]!.AsArray()));
 
         _time.Advance(TimeSpan.FromMinutes(1));
         await AddAsync(SuggestionKinds.Tip);
         var second = await RunAsync(new NotificationOptions { Topic = "slipways-test" });
 
         Assert.Equal(new NotificationResult(Due: true, New: 1, Pending: 4, Sent: true), second);
-        Assert.Equal("1 Tipp. Insgesamt warten 4 Vorschläge.", (string?)JsonNode.Parse(_ntfy.Requests[1])!["message"]);
+        Assert.Equal("1 Tipp. Insgesamt warten 4 Vorschläge.", (string?)JsonNode.Parse(_onkelBummel.Requests[1])!["message"]);
 
         _time.Advance(TimeSpan.FromMinutes(1));
         Assert.False((await RunAsync(new NotificationOptions { Topic = "slipways-test" })).Sent);
-        Assert.Equal(2, _ntfy.Requests.Count);
+        Assert.Equal(2, _onkelBummel.Requests.Count);
     }
 
     [Fact]
@@ -78,21 +81,73 @@ public sealed class SuggestionNotifierTests : IAsyncLifetime
 
         Assert.Equal(new NotificationResult(Due: true, New: 2, Pending: 2, Sent: true), due);
         Assert.False(after.Due);
-        Assert.Equal("2 Änderungen. Insgesamt warten 2 Vorschläge.", (string?)JsonNode.Parse(Assert.Single(_ntfy.Requests))!["message"]);
+        Assert.Equal("2 Änderungen. Insgesamt warten 2 Vorschläge.", (string?)JsonNode.Parse(Assert.Single(_onkelBummel.Requests))!["message"]);
     }
 
     [Fact]
     public async Task Failed_send_reports_the_same_suggestions_on_the_next_check()
     {
         await AddAsync(SuggestionKinds.Report);
-        _ntfy.Status = HttpStatusCode.ServiceUnavailable;
+        _onkelBummel.Status = HttpStatusCode.ServiceUnavailable;
 
         await Assert.ThrowsAsync<HttpRequestException>(() => RunAsync(new NotificationOptions { Topic = "slipways-test" }));
 
-        _ntfy.Status = HttpStatusCode.OK;
+        _onkelBummel.Status = HttpStatusCode.Created;
         var retry = await RunAsync(new NotificationOptions { Topic = "slipways-test" });
         Assert.Equal(1, retry.New);
-        Assert.Equal("Slipways: 1 neuer Vorschlag", (string?)JsonNode.Parse(_ntfy.Requests[^1])!["title"]);
+        Assert.Equal("Slipways: 1 neuer Vorschlag", (string?)JsonNode.Parse(_onkelBummel.Requests[^1])!["title"]);
+        // The same suggestions go out under the same key, so a send that did arrive is not stored twice.
+        Assert.Equal(2, _onkelBummel.Keys.Count);
+        Assert.Equal(_onkelBummel.Keys[0], _onkelBummel.Keys[1]);
+    }
+
+    [Fact]
+    public async Task Sends_with_bearer_token_and_a_new_key_for_new_suggestions()
+    {
+        await AddAsync(SuggestionKinds.Tip);
+        await RunAsync(new NotificationOptions { Topic = "slipways-test" });
+        _time.Advance(TimeSpan.FromMinutes(1));
+        await AddAsync(SuggestionKinds.Tip);
+        await RunAsync(new NotificationOptions { Topic = "slipways-test" });
+
+        Assert.All(_onkelBummel.Authorizations, a => Assert.Equal("Bearer ob_test", a));
+        Assert.Equal(2, _onkelBummel.Keys.Distinct().Count());
+        Assert.All(_onkelBummel.Keys, k => Assert.StartsWith("slipways-suggestions-", k));
+    }
+
+    [Fact]
+    public async Task Rejected_send_names_the_problem()
+    {
+        await AddAsync(SuggestionKinds.Report);
+        _onkelBummel.Status = HttpStatusCode.Forbidden;
+        _onkelBummel.Problem = """{"type":"about:blank","title":"Topic nicht erlaubt","status":403,"detail":"Der Token darf nicht an slipways-test senden."}""";
+
+        var error = await Assert.ThrowsAsync<HttpRequestException>(() => RunAsync(new NotificationOptions { Topic = "slipways-test" }));
+
+        Assert.Equal(HttpStatusCode.Forbidden, error.StatusCode);
+        Assert.Contains("403", error.Message);
+        Assert.Contains("Der Token darf nicht an slipways-test senden.", error.Message);
+        Assert.DoesNotContain("ob_test", error.Message);
+    }
+
+    [Theory]
+    [InlineData("", "", false)]
+    [InlineData("https://onkel-bummel.example.ts.net", "", false)]
+    [InlineData("", "ob_test", false)]
+    [InlineData("https://onkel-bummel.example.ts.net", "ob_test", true)]
+    public void Is_off_without_server_or_token(string baseUrl, string token, bool configured)
+    {
+        // Empty values as they come from unset variables in deploy/compose.lxc.yaml.
+        var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Notifications:BaseUrl"] = baseUrl,
+            ["Notifications:Token"] = token,
+        }).Build();
+
+        var options = config.GetSection(NotificationOptions.SectionName).Get<NotificationOptions>() ?? new NotificationOptions();
+
+        Assert.Equal(configured, options.IsConfigured);
+        Assert.Equal("slipways", options.Topic);
     }
 
     [Theory]
@@ -135,26 +190,43 @@ public sealed class SuggestionNotifierTests : IAsyncLifetime
     {
         _db.ChangeTracker.Clear();
         Assert.True(NotificationSchedule.TryParse(options, out var schedule, out _));
-        var http = new HttpClient(_ntfy) { BaseAddress = new Uri("https://ntfy.test/") };
+        options.BaseUrl = new Uri("https://onkel-bummel.test/");
+        options.Token = "ob_test";
+        var http = new HttpClient(_onkelBummel) { BaseAddress = options.BaseUrl };
         var wrapped = Options.Create(options);
-        return new SuggestionNotifier(_db, new NtfyClient(http, wrapped), wrapped, _time).RunAsync(schedule, TestContext.Current.CancellationToken);
+        return new SuggestionNotifier(_db, new OnkelBummelClient(http, wrapped), wrapped, _time).RunAsync(schedule, TestContext.Current.CancellationToken);
     }
 
     private sealed class StubHandler : HttpMessageHandler
     {
+        /// <summary>Bodies of the messages Onkel Bummel stored.</summary>
         public List<string> Requests { get; } = [];
 
-        public HttpStatusCode Status { get; set; } = HttpStatusCode.OK;
+        /// <summary>Idempotency keys of every attempt, stored or not.</summary>
+        public List<string> Keys { get; } = [];
+
+        public List<string> Authorizations { get; } = [];
+
+        public HttpStatusCode Status { get; set; } = HttpStatusCode.Created;
+
+        public string? Problem { get; set; }
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            Assert.Equal("/", request.RequestUri!.AbsolutePath);
-            var body = await request.Content!.ReadAsStringAsync(cancellationToken);
+            Assert.Equal(HttpMethod.Post, request.Method);
+            Assert.Equal("/api/v1/messages", request.RequestUri!.AbsolutePath);
+            Assert.Equal("application/json", request.Content!.Headers.ContentType?.MediaType);
+            var body = await request.Content.ReadAsStringAsync(cancellationToken);
             // Nothing a user wrote leaves the server.
             Assert.DoesNotContain("geheim", body);
-            if (Status == HttpStatusCode.OK)
+            Authorizations.Add(request.Headers.Authorization?.ToString() ?? "");
+            Keys.Add(Assert.Single(request.Headers.GetValues("Idempotency-Key")));
+            if (Status == HttpStatusCode.Created)
                 Requests.Add(body);
-            return new HttpResponseMessage(Status);
+            var response = new HttpResponseMessage(Status);
+            if (Problem is not null)
+                response.Content = new StringContent(Problem, System.Text.Encoding.UTF8, "application/problem+json");
+            return response;
         }
     }
 

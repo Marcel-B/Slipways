@@ -1,16 +1,9 @@
-# Eigener ntfy-Server für Push-Nachrichten bei neuen Vorschlägen, ergänzt compose.yaml und deploy/compose.lxc.yaml
-# (siehe deploy/README.md, „Benachrichtigungen“). In der .env im Repo-Root z. B.:
-#   COMPOSE_FILE=compose.yaml:deploy/compose.lxc.yaml:deploy/compose.https.yaml:deploy/compose.ntfy.yaml
-#   SLIPWAYS_NTFY_BASE_URL=https://slipways-1.<tailnet>.ts.net:2586
-#   SLIPWAYS_NTFY_TOPIC=slipways-<zufall>
-# ntfy ist nur lokal auf 127.0.0.1:2586 erreichbar; ins Tailnet bringt es "tailscale serve" wie die Moderation.
+# AUSLAUFEND: Die API schickt ihre Meldungen an Onkel Bummel (siehe deploy/README.md, „Benachrichtigungen“), diesen
+# ntfy-Server braucht sie nicht mehr. Er bleibt nur, bis er auf slipways-1 abgeschaltet ist: dann die Datei aus
+# COMPOSE_FILE in der .env streichen, "docker compose up -d --remove-orphans" ausführen (räumt den Container ab), die
+# SLIPWAYS_NTFY_*-Zeilen löschen, "tailscale serve --https=2586 off" ausführen und diese Datei löschen.
+# Solange sie in COMPOSE_FILE steht, muss sie im Repo bleiben, sonst schlägt docker compose fehl.
 services:
-  api:
-    environment:
-      Notifications__BaseUrl: http://ntfy/
-    depends_on:
-      - ntfy
-
   ntfy:
     image: binwiederhier/ntfy:v2
     command: serve

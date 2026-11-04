@@ -110,9 +110,12 @@ public static class DependencyInjection
         services.AddScoped<SuggestionService>();
 
         services.AddOptions<NotificationOptions>().Bind(configuration.GetSection(NotificationOptions.SectionName));
-        services.AddHttpClient<NtfyClient>((sp, http) =>
+        services.AddHttpClient<OnkelBummelClient>((sp, http) =>
         {
-            http.BaseAddress = sp.GetRequiredService<IOptions<NotificationOptions>>().Value.BaseUrl;
+            // Unset means notifications are off and the worker never sends.
+            if (sp.GetRequiredService<IOptions<NotificationOptions>>().Value.BaseUrl is { IsAbsoluteUri: true } baseUrl)
+                // With a trailing slash, the messages path also goes below a server that lives under a path.
+                http.BaseAddress = baseUrl.AbsoluteUri.EndsWith('/') ? baseUrl : new Uri(baseUrl.AbsoluteUri + "/");
             http.Timeout = TimeSpan.FromSeconds(30);
             http.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgent);
         });
