@@ -9,6 +9,18 @@ data class MapArea(val south: Double, val west: Double, val north: Double, val e
 
     fun contains(latitude: Double, longitude: Double) = latitude in south..north && longitude in west..east
 
+    /**
+     * True when this view at [zoom] shows about the same as [other] at [otherZoom]: zoom levels a tenth apart at most
+     * and centres less than a fiftieth of the view apart. A map that only changes size keeps its view.
+     */
+    fun sameView(zoom: Double, other: MapArea, otherZoom: Double): Boolean {
+        if (kotlin.math.abs(zoom - otherZoom) > 0.1) return false
+        val width = kotlin.math.abs(other.east - other.west)
+        val height = kotlin.math.abs(other.north - other.south)
+        return kotlin.math.abs(centerLongitude - other.centerLongitude) <= width / 50 &&
+            kotlin.math.abs(centerLatitude - other.centerLatitude) <= height / 50
+    }
+
     companion object {
         /** Europe as the map shows it at start, one bubble per country like on the website. */
         val START = MapArea(south = 36.0, west = -10.0, north = 64.0, east = 25.0)

@@ -14,6 +14,7 @@ struct SlipwayOverviewView: View {
             plural: "Slipanlagen",
             systemImage: "sailboat",
             tint: .red,
+            type: .slipway,
             load: { try await api.slipways() },
             search: { term, _ in try await api.slipways(search: term) },
             onSelect: { selected = $0 },

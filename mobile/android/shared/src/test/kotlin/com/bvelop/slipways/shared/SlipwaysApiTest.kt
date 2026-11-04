@@ -284,4 +284,12 @@ class SlipwaysApiTest {
              {"field":"email","value":"info@example.org","source":"website","sourceUrl":"https://www.example.org","retrieved":"2026-10-20T12:00:00Z"},
              {"field":"opening_hours","value":"Mo–Fr 8–18 Uhr","source":"user","sourceUrl":null,"retrieved":"2026-10-21T12:00:00Z"}]}"""
     }
+
+    @Test
+    fun flagFromCountryCode() {
+        assertEquals("\uD83C\uDDE9\uD83C\uDDEA", Countries.flag("DE"))
+        assertEquals("\uD83C\uDDF3\uD83C\uDDF1", Countries.flag("nl"))
+        assertNull(Countries.flag("DEU"))
+        assertNull(Countries.flag("1A"))
+    }
 }

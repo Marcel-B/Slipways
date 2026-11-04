@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
@@ -45,6 +46,7 @@ import com.bvelop.slipways.ui.Centered
 import com.bvelop.slipways.ui.CountryMenu
 import com.bvelop.slipways.ui.LoadFailed
 import com.bvelop.slipways.ui.OsmAttribution
+import com.bvelop.slipways.ui.map.MapTarget
 import com.bvelop.slipways.ui.UiState
 import com.bvelop.slipways.ui.WaterLevelText
 import com.bvelop.slipways.ui.overview.Hint
@@ -88,9 +90,9 @@ fun WaterOverviewScreen(
     val selected = candidates.firstOrNull { it.id == selectedId }
 
     // A search moves the map to its hits, a chosen country to that country.
-    var fitTo by remember { mutableStateOf<MapArea?>(null) }
+    var fitTo by remember { mutableStateOf<MapTarget?>(null) }
     LaunchedEffect(results) {
-        if (results != null) MapArea.fitting(candidates.mapNotNull { it.position })?.let { fitTo = it }
+        if (results != null) MapArea.fitting(candidates.mapNotNull { it.position })?.let { fitTo = MapTarget(it) }
     }
     val chooseCountry = { code: String? ->
         viewModel.onCountryChange(code)
@@ -101,7 +103,24 @@ fun WaterOverviewScreen(
             code != null -> Countries.coreArea(points)
             else -> MapArea.START
         }
-        if (target != null) fitTo = target
+        // Back to Europe exactly as at start, so the map counts as unmoved again.
+        if (target != null) fitTo = MapTarget(target, padding = if (target == MapArea.START) 0 else 48)
+    }
+    // The first view the map reports is its start; any other view offers the reset button.
+    var start by remember { mutableStateOf<Pair<MapArea, Double>?>(null) }
+    var moved by remember { mutableStateOf(false) }
+    val onView = { visible: MapArea, zoom: Double ->
+        val first = start ?: (visible to zoom).also { start = it }
+        moved = !visible.sameView(zoom, first.first, first.second)
+    }
+    val canReset = text.isNotEmpty() || chosen != null || moved
+    // Back to how the screen opened: no search, all countries, Europe.
+    val reset = {
+        text = ""
+        viewModel.onQueryChange("")
+        viewModel.onCountryChange(null)
+        selectedId = null
+        fitTo = MapTarget(MapArea.START, padding = 0)
     }
 
     Scaffold(topBar = { TopAppBar(title = { Text("Gewässer") }) }) { padding ->
@@ -130,13 +149,19 @@ fun WaterOverviewScreen(
                     singleLine = true,
                 )
                 CountryMenu(countries, chosen, chooseCountry)
+                if (canReset) {
+                    IconButton(onClick = reset) { Icon(Icons.Filled.RestartAlt, contentDescription = "Zurücksetzen") }
+                }
             }
             Box(Modifier.fillMaxWidth().weight(1f)) {
                 WaterShapesMap(
                     geoJson = geoJson,
                     selectedId = selectedId,
                     fitTo = fitTo,
-                    onViewChange = viewModel::onViewChange,
+                    onViewChange = { visible, zoom ->
+                        viewModel.onViewChange(visible, zoom)
+                        onView(visible, zoom)
+                    },
                     onSelect = { selectedId = it },
                     modifier = Modifier.fillMaxSize(),
                 )

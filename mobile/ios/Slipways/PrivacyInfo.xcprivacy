@@ -25,7 +25,7 @@
 	<key>NSPrivacyAccessedAPITypes</key>
 	<array>
 		<dict>
-			<!-- The list of sent suggestions under Info › Meine Vorschläge. -->
+			<!-- The list of sent suggestions under Info › Meine Vorschläge and the favourites. -->
 			<key>NSPrivacyAccessedAPIType</key>
 			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
 			<key>NSPrivacyAccessedAPITypeReasons</key>

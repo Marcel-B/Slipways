@@ -5,6 +5,7 @@ import SwiftUI
 struct SlipwaysApp: App {
     private let api = SlipwaysAPI(baseURL: AppConfig.apiBaseURL)
     @State private var tab = LaunchState.tab ?? .slipways
+    @State private var favorites = Favorites()
 
     var body: some Scene {
         WindowGroup {
@@ -18,11 +19,15 @@ struct SlipwaysApp: App {
                 NavigationStack { WaterOverviewView().slipwaysDestinations() }
                     .tabItem { Label("Gewässer", systemImage: "water.waves") }
                     .tag(AppTab.waters)
+                NavigationStack { FavoritesView().slipwaysDestinations() }
+                    .tabItem { Label("Favoriten", systemImage: "star") }
+                    .tag(AppTab.favorites)
                 NavigationStack { InfoView() }
                     .tabItem { Label("Info", systemImage: "info.circle") }
                     .tag(AppTab.info)
             }
             .environment(\.api, api)
+            .environment(favorites)
         }
     }
 }
@@ -43,7 +48,7 @@ enum AppConfig {
 }
 
 enum AppTab: String {
-    case slipways, marinas, waters, info
+    case slipways, marinas, waters, favorites, info
 }
 
 /// Where the app starts when the screenshot UI test (`SlipwaysScreenshots`) launches it; nothing is set otherwise. The

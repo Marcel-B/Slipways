@@ -1,4 +1,5 @@
 import { divIcon, type DivIcon } from 'leaflet'
+import { countryFlag, supportsFlags } from './countries'
 import { markerColors, type MarkerKind } from './mapMarkers'
 
 // Leaflet wants the icons as HTML strings, so the Lucide glyphs (ISC) are inlined here.
@@ -49,14 +50,21 @@ export function clusterIcon(count: number): DivIcon {
   })
 }
 
-/** A bubble for a whole country, with its ISO code and the number of places in it. */
-export function countryIcon(code: string, count: number): DivIcon {
+/**
+ * A bubble for a whole country, with its flag and the number of places in it. Where the device has no flag
+ * emojis (Windows), the ISO code stands in for the flag.
+ */
+export function countryIcon(code: string, count: number, flags = supportsFlags()): DivIcon {
   const size = Math.round(Math.min(66, 34 + Math.log10(count) * 9))
+  const flag = flags ? countryFlag(code) : null
+  const top = flag
+    ? `<span class="map-country-flag" aria-hidden="true">${flag}</span>`
+    : `<span class="map-country-code">${code}</span>`
   return divIcon({
     className: 'map-pin-anchor',
     html:
       `<span class="map-country" style="--cluster-size:${size}px">` +
-      `<span class="map-country-code">${code}</span><span>${count.toLocaleString('de-DE')}</span></span>`,
+      `${top}<span>${count.toLocaleString('de-DE')}</span></span>`,
     iconSize: [size, size],
   })
 }

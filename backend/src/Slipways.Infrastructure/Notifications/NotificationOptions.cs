@@ -4,20 +4,24 @@ public sealed class NotificationOptions
 {
     public const string SectionName = "Notifications";
 
-    /// <summary>Turns notifications about new suggestions off; without a <see cref="Topic"/> they are off as well.</summary>
+    /// <summary>
+    /// Turns notifications about new suggestions off; without <see cref="BaseUrl"/>, <see cref="Topic"/> or
+    /// <see cref="Token"/> they are off as well.
+    /// </summary>
     public bool Enabled { get; set; } = true;
 
-    /// <summary>ntfy server; ntfy.sh is free and needs no account, a self-hosted one works the same.</summary>
-    public Uri BaseUrl { get; set; } = new("https://ntfy.sh/");
+    /// <summary>Own Onkel Bummel server, e.g. https://onkel-bummel.&lt;tailnet&gt;.ts.net.</summary>
+    public Uri? BaseUrl { get; set; }
 
-    /// <summary>
-    /// Topic the messages go to, subscribed to in the ntfy app. On ntfy.sh anyone who knows the name can read it, so it
-    /// should be long and random; the messages only hold counts anyway.
-    /// </summary>
-    public string? Topic { get; set; }
+    /// <summary>Topic the messages go to; the publish token must be allowed to use it.</summary>
+    public string? Topic { get; set; } = "slipways";
 
-    /// <summary>Access token for a server or topic that needs one; sent as bearer token.</summary>
+    /// <summary>Publish token (<c>ob_…</c>) created in Onkel Bummel for <see cref="Topic"/>; sent as bearer token.</summary>
     public string? Token { get; set; }
+
+    /// <summary>Whether everything needed to send is there.</summary>
+    public bool IsConfigured =>
+        Enabled && BaseUrl is { IsAbsoluteUri: true } && !string.IsNullOrWhiteSpace(Topic) && !string.IsNullOrWhiteSpace(Token);
 
     /// <summary>Address of the moderation page, opened when the message is tapped, e.g. in the tailnet.</summary>
     public string? ModerationUrl { get; set; }

@@ -13,6 +13,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.viewinterop.AndroidView
 import com.bvelop.slipways.shared.MapArea
 import com.bvelop.slipways.ui.map.PinColors
+import com.bvelop.slipways.ui.map.MapTarget
 import com.bvelop.slipways.ui.map.STYLE_URL
 import com.bvelop.slipways.ui.map.isArea
 import com.bvelop.slipways.ui.map.rememberMapView
@@ -48,7 +49,7 @@ private const val LINES = "water-lines"
 fun WaterShapesMap(
     geoJson: String,
     selectedId: String?,
-    fitTo: MapArea?,
+    fitTo: MapTarget?,
     onViewChange: (MapArea, Double) -> Unit,
     onSelect: (String?) -> Unit,
     modifier: Modifier = Modifier,
@@ -98,7 +99,7 @@ fun WaterShapesMap(
     }
     LaunchedEffect(map, fitTo) {
         val target = fitTo ?: return@LaunchedEffect
-        map?.animateCamera(CameraUpdateFactory.newLatLngBounds(target.toBounds(), 48))
+        map?.animateCamera(CameraUpdateFactory.newLatLngBounds(target.area.toBounds(), target.padding))
     }
 
     AndroidView(factory = { mapView }, modifier = modifier)

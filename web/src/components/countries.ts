@@ -7,6 +7,40 @@ export function countryName(code: string): string {
   return regionNames.of(code) ?? code
 }
 
+/** The flag emoji of a country, built from its ISO code ("DE" → 🇩🇪); null for anything that is not two letters. */
+export function countryFlag(code: string): string | null {
+  if (!/^[A-Za-z]{2}$/.test(code)) return null
+  return String.fromCodePoint(...[...code.toUpperCase()].map((letter) => 0x1f1e6 + letter.charCodeAt(0) - 65))
+}
+
+let flagSupport: boolean | undefined
+
+/**
+ * Whether this device draws flag emojis in colour. Windows has none and shows two plain letters instead,
+ * so the bubbles keep the ISO code there.
+ */
+export function supportsFlags(): boolean {
+  if (flagSupport !== undefined) return flagSupport
+  flagSupport = false
+  try {
+    const context = document.createElement('canvas').getContext('2d', { willReadFrequently: true })
+    if (context) {
+      context.canvas.width = context.canvas.height = 20
+      context.textBaseline = 'top'
+      context.font = '16px sans-serif'
+      context.fillText(countryFlag('DE')!, 0, 0)
+      const pixels = context.getImageData(0, 0, 20, 20).data
+      for (let i = 0; i < pixels.length && !flagSupport; i += 4) {
+        // A flag has colour; plain letters are grey.
+        flagSupport = pixels[i + 3] > 0 && (pixels[i] !== pixels[i + 1] || pixels[i + 1] !== pixels[i + 2])
+      }
+    }
+  } catch {
+    // No canvas (tests, very old browsers): keep the code.
+  }
+  return flagSupport
+}
+
 export interface CountryGroup<T> {
   code: string
   items: T[]

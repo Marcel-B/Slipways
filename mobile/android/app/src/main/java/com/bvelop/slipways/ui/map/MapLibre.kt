@@ -19,6 +19,12 @@ const val STYLE_URL = "https://tiles.openfreemap.org/styles/liberty"
 /** MapLibre counts tiles of 512 points; the website and the shared code count tiles of 256, one zoom level more. */
 const val WEB_ZOOM_OFFSET = 1.0
 
+/**
+ * A camera move the screen asks for. Every new object moves the map, even to the area of the last one, after the user
+ * has panned away. A [padding] of 0 shows exactly the start view again.
+ */
+class MapTarget(val area: MapArea, val padding: Int = 48)
+
 /** Colours of the pins, as on the website's map. */
 object PinColors {
     const val SLIPWAY = "#0B5394"

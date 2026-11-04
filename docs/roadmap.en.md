@@ -2,7 +2,7 @@
 
 [Deutsche Fassung](roadmap.md)
 
-Rough plan for Slipways. Open decisions and remaining work are tracked in more detail in [`offene-punkte.md`](offene-punkte.md) (German), data sources in [`datenquellen.md`](datenquellen.md) (German). As of 31 October 2026.
+Rough plan for Slipways. Open decisions and remaining work are tracked in more detail in [`offene-punkte.md`](offene-punkte.md) (German), data sources in [`datenquellen.md`](datenquellen.md) (German). As of 1 November 2026.
 
 ## Done
 
@@ -13,6 +13,7 @@ Rough plan for Slipways. Open decisions and remaining work are tracked in more d
 - **Web:** map with country bubbles and clusters, country selection, search, light/dark mode, pages for slipways, marinas and waters.
 - **Contributions without an account:** suggest corrections, facts, tips and new slipways; moderation with push notifications.
 - **iOS and Android apps** with the same features as the website.
+- **Favourites in the iOS app**, stored only on the device, shown as stars on the map and in their own tab.
 - **Search engines:** per-page metadata, sitemap, robots.txt.
 
 ## Next
@@ -28,6 +29,7 @@ Rough plan for Slipways. Open decisions and remaining work are tracked in more d
 - **Photos** of slipways and marinas, through moderation.
 - **Count confirmations** ("confirmed 3×") and edit suggestions before approving them.
 - **Calmer map style** (vector tiles).
+- **Favourites on the website and on Android.**
 - **More countries**, e.g. Finland and Greece.
 
 ## Ideas

@@ -150,24 +150,36 @@ Lokal mit `docker compose up` liegt die Moderation unter `http://localhost:9465/
 
 ## Benachrichtigungen
 
-Bei neuen Vorschlägen schickt die API eine Push-Nachricht über einen eigenen [ntfy](https://ntfy.sh)-Server auf slipways-1 (`deploy/compose.ntfy.yaml`). Wie Moderation und `/metrics` ist er nur lokal auf `127.0.0.1:2586` erreichbar und kommt per `tailscale serve` ins Tailnet; das Handy braucht also die Tailscale-App. Die Nachrichten enthalten nur Anzahlen, keine Inhalte der Vorschläge.
+Bei neuen Vorschlägen schickt die API eine Meldung an [Onkel Bummel](https://github.com/Marcel-B/onkel-bummel), den eigenen Benachrichtigungsdienst im Tailnet (`https://onkel-bummel.<tailnet>.ts.net`), der sie als Push an die iOS-App weitergibt. Die Meldungen enthalten nur Anzahlen, keine Inhalte der Vorschläge; ein Tipp darauf öffnet die Moderation.
 
-Einrichten mit einem Skript, sobald das Update mit den Benachrichtigungen läuft:
+Einrichten:
 
-```bash
-# auf slipways-1 als root; sofort benachrichtigen
-bash /opt/slipways/deploy/lxc/setup-ntfy.sh
-# oder gesammelt, z. B. montags und donnerstags um 18 Uhr
-NOTIFY_DAYS=Mo,Do NOTIFY_TIMES=18:00 bash /opt/slipways/deploy/lxc/setup-ntfy.sh
-```
+1. In Onkel Bummel einen Publish-Token für das Topic `slipways` anlegen, in der Web-Oberfläche unter Verwaltung → Publish-Tokens oder im Onkel-Bummel-LXC:
 
-Das Skript erzeugt ein zufälliges Topic (wer den Namen kennt und im Tailnet ist, kann mitlesen), ergänzt `COMPOSE_FILE` um `deploy/compose.ntfy.yaml`, trägt `SLIPWAYS_NTFY_BASE_URL`, `SLIPWAYS_NTFY_TOPIC`, `SLIPWAYS_MODERATION_URL`, `SLIPWAYS_NOTIFY_DAYS` und `SLIPWAYS_NOTIFY_TIMES` in `/opt/slipways/.env` ein, startet ntfy und die API, richtet `tailscale serve` für ntfy (2586) und die Moderation (9465) ein und schickt eine Testnachricht. Am Ende nennt es Topic und Server für die App. Erneut aufrufen behält das Topic und ersetzt den Zeitplan (ohne `NOTIFY_TIMES` also wieder sofort).
+   ```bash
+   cd /opt/onkel-bummel/deploy
+   docker compose exec onkel-bummel dotnet OnkelBummel.Api.dll --create-token slipways slipways
+   ```
 
-In der ntfy-App (iOS, Android) unter „Thema abonnieren“ das Topic eintragen, „Anderen Server verwenden“ wählen und `https://slipways-1.<tailnet>.ts.net:2586` angeben.
+   Der Token (`ob_…`) erscheint nur dieses eine Mal.
 
-iPhones bekommen Push nur über Apple; dafür reicht der eigene Server bei ntfy.sh eine Anfrage weiter, die nur einen Hash des Topics und die ID der Nachricht enthält (`NTFY_UPSTREAM_BASE_URL`). Den Inhalt holt die App danach vom eigenen Server. Android verbindet sich direkt.
+2. Auf slipways-1 in `/opt/slipways/.env` eintragen, den Token am besten ohne ihn auf den Bildschirm oder in die Shell-History zu bringen:
 
-Ohne eigenen Server geht es auch mit ntfy.sh: dann nur `SLIPWAYS_NTFY_TOPIC` setzen und `deploy/compose.ntfy.yaml` weglassen. Ob die Nachrichten rausgehen, zeigen das Log („Notified about … new suggestions“) und `slipways_notifications_sent_total`.
+   ```bash
+   # auf slipways-1 als root
+   cd /opt/slipways
+   read -rsp "Token: " token && echo
+   sed -i '/^SLIPWAYS_ONKELBUMMEL_/d' .env
+   printf 'SLIPWAYS_ONKELBUMMEL_URL=https://onkel-bummel.<tailnet>.ts.net\nSLIPWAYS_ONKELBUMMEL_TOKEN=%s\n' "$token" >> .env
+   unset token
+   docker compose up -d api
+   ```
+
+   Optional: `SLIPWAYS_ONKELBUMMEL_TOPIC` (Standard `slipways`), `SLIPWAYS_MODERATION_URL` (Ziel beim Tippen, z. B. `https://slipways-1.<tailnet>.ts.net:9465/moderation`) und gesammelte Meldungen mit `SLIPWAYS_NOTIFY_DAYS=Mo,Do` und `SLIPWAYS_NOTIFY_TIMES=18:00` (ohne Uhrzeiten sofort).
+
+3. In der Onkel-Bummel-App das Topic `slipways` abonnieren (neue Geräte haben ohnehin alle Topics).
+
+Ohne URL oder Token bleibt das aus. Ob die Meldungen rausgehen, zeigen das Log („Notified about … new suggestions“, bei Fehlern „Notification about new suggestions failed“ mit der Antwort von Onkel Bummel, z. B. `403` für ein Topic, das der Token nicht darf) und `slipways_notifications_sent_total`. Jede Meldung trägt einen `Idempotency-Key` aus den gemeldeten Vorschlägen, ein wiederholter Versuch ergibt also keine zweite Meldung.
 
 ## Auto-Update
 

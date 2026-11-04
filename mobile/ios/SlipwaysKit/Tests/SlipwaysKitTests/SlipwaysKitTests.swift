@@ -486,3 +486,38 @@ private func p(_ latitude: Double, _ longitude: Double) -> Position { Position(l
     #expect(thinned.lines == [[p(0, 0), p(0, 1), p(0, 1.0001)]])
     #expect(MapArea(south: 0, west: 0, north: 2, east: 4).expanded(by: 0.5) == MapArea(south: -1, west: -2, north: 3, east: 6))
 }
+
+@Test func remembersFavorites() throws {
+    let defaults = try #require(UserDefaults(suiteName: "slipways-tests-\(UUID())"))
+    let store = FavoriteStore(defaults: defaults)
+    let added = Date(timeIntervalSince1970: 1_000)
+    store.add(Favorite(type: .slipway, placeId: "1", name: "Kelheim", latitude: 48.9, longitude: 11.9, added: added))
+    store.add(Favorite(type: .marina, placeId: "1", name: "Bodensee", latitude: 47.6, longitude: 9.4))
+    store.add(Favorite(type: .slipway, placeId: "2", name: "Nonnensteg", latitude: 52.4, longitude: 13.0, source: .osm))
+
+    #expect(store.all().map(\.name) == ["Bodensee", "Kelheim", "Nonnensteg"])
+    #expect(store.contains(.slipway, "1"))
+    #expect(store.contains(.marina, "1"))
+    #expect(!store.contains(.marina, "2"))
+
+    // Adding again updates the entry but keeps when it was first marked.
+    store.add(Favorite(type: .slipway, placeId: "1", name: "Am Jachthafen, Kelheim", latitude: 48.9, longitude: 11.9))
+    let kelheim = try #require(store.all().first { $0.id == "slipway/1" })
+    #expect(kelheim.name == "Am Jachthafen, Kelheim")
+    #expect(kelheim.added == added)
+    #expect(store.all().count == 3)
+
+    store.remove(.slipway, "1")
+    #expect(!store.contains(.slipway, "1"))
+    #expect(store.contains(.marina, "1"))
+
+    let summary = SlipwaySummary(try #require(store.all().first { $0.placeId == "2" }))
+    #expect(summary.id == "2" && summary.source == .osm && summary.water == nil)
+}
+
+@Test func flagFromCountryCode() {
+    #expect(Countries.flag("DE") == "🇩🇪")
+    #expect(Countries.flag("nl") == "🇳🇱")
+    #expect(Countries.flag("DEU") == nil)
+    #expect(Countries.flag("1A") == nil)
+}

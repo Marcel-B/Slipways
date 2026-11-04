@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -44,6 +45,7 @@ import com.bvelop.slipways.ui.Centered
 import com.bvelop.slipways.ui.CountryMenu
 import com.bvelop.slipways.ui.LoadFailed
 import com.bvelop.slipways.ui.OsmAttribution
+import com.bvelop.slipways.ui.map.MapTarget
 import com.bvelop.slipways.ui.UiState
 
 /**
@@ -101,9 +103,9 @@ fun <T : Any> PlaceOverviewScreen(
         }
     }
     // A finished search moves the map to its hits, a chosen country to that country.
-    var fitTo by remember { mutableStateOf<MapArea?>(null) }
+    var fitTo by remember { mutableStateOf<MapTarget?>(null) }
     LaunchedEffect(results) {
-        if (results != null) MapArea.fitting(candidates.map(position))?.let { fitTo = it }
+        if (results != null) MapArea.fitting(candidates.map(position))?.let { fitTo = MapTarget(it) }
     }
     val chooseCountry = { code: String? ->
         viewModel.onCountryChange(code)
@@ -114,7 +116,23 @@ fun <T : Any> PlaceOverviewScreen(
             code != null -> Countries.coreArea(points)
             else -> MapArea.START
         }
-        if (target != null) fitTo = target
+        // Back to Europe exactly as at start, so the map counts as unmoved again.
+        if (target != null) fitTo = MapTarget(target, padding = if (target == MapArea.START) 0 else 48)
+    }
+    // The first view the map reports is its start; any other view offers the reset button.
+    var start by remember { mutableStateOf<Pair<MapArea, Double>?>(null) }
+    var moved by remember { mutableStateOf(false) }
+    val onView = { visible: MapArea, zoom: Double ->
+        val first = start ?: (visible to zoom).also { start = it }
+        moved = !visible.sameView(zoom, first.first, first.second)
+    }
+    val canReset = text.isNotEmpty() || chosen != null || moved
+    // Back to how the screen opened: no search, all countries, Europe.
+    val reset = {
+        text = ""
+        viewModel.onQueryChange("")
+        viewModel.onCountryChange(null)
+        fitTo = MapTarget(MapArea.START, padding = 0)
     }
 
     Scaffold(
@@ -154,13 +172,19 @@ fun <T : Any> PlaceOverviewScreen(
                     singleLine = true,
                 )
                 CountryMenu(countries, chosen, chooseCountry)
+                if (canReset) {
+                    IconButton(onClick = reset) { Icon(Icons.Filled.RestartAlt, contentDescription = "Zurücksetzen") }
+                }
             }
             OverviewMap(
                 pins = pins,
                 countries = bubbles,
                 color = color,
                 fitTo = fitTo,
-                onAreaChange = { visible, _ -> viewModel.onAreaChange(visible) },
+                onAreaChange = { visible, zoom ->
+                    viewModel.onAreaChange(visible)
+                    onView(visible, zoom)
+                },
                 onPinClick = { pinId -> candidates.firstOrNull { id(it) == pinId }?.let(onSelect) },
                 modifier = Modifier.fillMaxWidth().weight(1f),
             )

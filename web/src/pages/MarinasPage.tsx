@@ -9,9 +9,11 @@ import { ListSkeleton } from '../components/ListSkeleton'
 import { byCountry, coreBounds } from '../components/countries'
 import { CountrySelect } from '../components/CountrySelect'
 import { marinaMarker } from '../components/mapMarkers'
-import { boundsOf, listedInView, type MapView } from '../components/mapView'
+import { boundsOf, listedInView } from '../components/mapView'
 import { Overview } from '../components/Overview'
+import { ResetButton } from '../components/ResetButton'
 import { SearchField } from '../components/SearchField'
+import { useMapHome } from '../components/useMapHome'
 import { ZoomHint } from '../components/ZoomHint'
 import { count } from './count'
 import { useQueryParams } from './searchParams'
@@ -20,7 +22,7 @@ import { useQueryParams } from './searchParams'
 const EUROPE: [number, number] = [50, 5]
 
 export function MarinasPage() {
-  const [params, setParam] = useQueryParams()
+  const [params, setParam, clearParams] = useQueryParams()
   const search = params.get('q') ?? ''
   const country = params.get('land')
   const deferredSearch = useDeferredValue(search.trim())
@@ -42,7 +44,7 @@ export function MarinasPage() {
   )
   const markers = useMemo(() => (shown ?? []).map(marinaMarker), [shown])
   const [hoveredId, setHoveredId] = useState<string | null>(null)
-  const [view, setView] = useState<MapView | null>(null)
+  const { view, onViewChange, moved, home, goHome } = useMapHome()
   // While a new search loads, the previous results stand in; they only count as hits once they belong to it.
   const searching = deferredSearch !== '' && !isPlaceholderData
   const listed = useMemo(() => shown && listedInView(shown, view, searching), [shown, view, searching])
@@ -51,6 +53,12 @@ export function MarinasPage() {
     () => (shown && searching ? boundsOf(shown) : shown && country ? coreBounds(shown) : null),
     [shown, searching, country],
   )
+
+  // Back to how the page opened: no search, all countries, Europe.
+  const reset = () => {
+    clearParams('q', 'land')
+    goHome()
+  }
 
   return (
     <>
@@ -68,6 +76,7 @@ export function MarinasPage() {
           value={country}
           onChange={(code) => setParam('land', code)}
         />
+        <ResetButton visible={search !== '' || country !== null || moved} onReset={reset} />
       </section>
       <Overview
         list={
@@ -102,7 +111,8 @@ export function MarinasPage() {
             zoom={4}
             cluster
             highlightedId={hoveredId}
-            onViewChange={setView}
+            onViewChange={onViewChange}
+            home={home}
             focus={focus}
           />
         }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { byCountry, coreBounds, countryName } from './countries'
+import { byCountry, coreBounds, countryFlag, countryName } from './countries'
 
 const place = (latitude: number, longitude: number, country: string | null) => ({ latitude, longitude, country })
 
@@ -31,5 +31,18 @@ describe('coreBounds', () => {
 describe('countryName', () => {
   it('names countries in German', () => {
     expect(countryName('NL')).toBe('Niederlande')
+  })
+})
+
+describe('countryFlag', () => {
+  it('builds the flag emoji from the ISO code', () => {
+    expect(countryFlag('DE')).toBe('🇩🇪')
+    expect(countryFlag('nl')).toBe('🇳🇱')
+  })
+
+  it('gives nothing for codes that are not two letters', () => {
+    expect(countryFlag('')).toBeNull()
+    expect(countryFlag('DEU')).toBeNull()
+    expect(countryFlag('1A')).toBeNull()
   })
 })

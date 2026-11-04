@@ -74,6 +74,11 @@ export function DatenschutzPage() {
         Die Apps benötigen nur den Internetzugang, um Slipanlagen und Pegelstände zu laden und Vorschläge zu senden. Sie fragen
         weder Ihren Standort noch Kontakte, Fotos oder andere Daten auf Ihrem Gerät ab.
       </p>
+      <p>
+        Slipanlagen und Marinas, die Sie in der iOS-App als Favoriten markieren, speichert die App nur auf Ihrem Gerät
+        (UserDefaults). Diese Liste wird nicht an uns übertragen; sie verschwindet, wenn Sie die Favoriten entfernen oder die App
+        löschen.
+      </p>
 
       <h2>App Store und Google Play</h2>
       <p>
