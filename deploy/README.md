@@ -181,8 +181,6 @@ Einrichten:
 
 Ohne URL oder Token bleibt das aus. Ob die Meldungen rausgehen, zeigen das Log („Notified about … new suggestions“, bei Fehlern „Notification about new suggestions failed“ mit der Antwort von Onkel Bummel, z. B. `403` für ein Topic, das der Token nicht darf) und `slipways_notifications_sent_total`. Jede Meldung trägt einen `Idempotency-Key` aus den gemeldeten Vorschlägen, ein wiederholter Versuch ergibt also keine zweite Meldung.
 
-Früher lief dafür ein eigener ntfy-Server auf slipways-1 (`deploy/compose.ntfy.yaml`). Die API braucht ihn nicht mehr; wie er abgeschaltet wird, steht oben in der Datei.
-
 ## Auto-Update
 
 Der systemd-Timer `slipways-update.timer` startet alle 5 Minuten `lxc/slipways-update.sh`. Gibt es auf dem Branch neue Commits, holt das Skript sie, baut die Images neu (mit frischen Basis-Images), sichert die Datenbank lokal nach `/var/lib/slipways/backups/pre-update.db` und startet den Stack neu. Die API spielt Migrationen beim Start selbst ein.
