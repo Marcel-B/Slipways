@@ -15,7 +15,7 @@ public sealed class SuggestionNotifierWorker(
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        if (!options.Value.Enabled || string.IsNullOrWhiteSpace(options.Value.Topic))
+        if (!options.Value.IsConfigured)
             return;
 
         if (!NotificationSchedule.TryParse(options.Value, out var schedule, out var error))
