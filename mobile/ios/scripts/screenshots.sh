@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Takes the App Store screenshots in the two simulators Apple asks for: an iPhone with a 6.9" display
-# (1320 x 2868) and an iPad with a 13" display (2064 x 2752). The UI test SlipwaysScreenshots opens each scene with
+# Takes the App Store screenshots in the simulators Apple asks for: iPhones with a 6.9" display (1320 x 2868) and a
+# 6.3" display (1206 x 2622), and an iPad with a 13" display (2064 x 2752). The UI test SlipwaysScreenshots opens each scene with
 # the live data from slipways.de; the images land in one folder per device.
 #
 #   mobile/ios/scripts/screenshots.sh [output folder]     (default: mobile/ios/build/screenshots)
@@ -15,7 +15,7 @@ out="$(cd "$out" && pwd)"
 derived="$PWD/build/DerivedData"
 
 # The newest iOS runtime and, of the devices it supports, the first of a fixed list with exactly Apple's sizes:
-# iPhone 6.9" 1320 x 2868, iPad 13" 2064 x 2752. The runtime's own order is not by age (it once picked the
+# see the list below. The runtime's own order is not by age (it once picked the
 # iPhone 11 Pro Max, 6.5"), so the names are listed by hand; a newer model goes on its list once its size is checked.
 runtimes="$(xcrun simctl list runtimes -j)"
 runtime="$(jq -r '[.runtimes[] | select(.platform == "iOS" and .isAvailable)] | last | .identifier // empty' <<<"$runtimes")"
@@ -28,10 +28,17 @@ devicetype() {
     if [ -n "$id" ]; then echo "$id"; return; fi
   done
 }
-iphone="$(devicetype "iPhone 17 Pro Max" "iPhone 16 Pro Max")"
-ipad="$(devicetype "iPad Pro 13-inch (M5)" "iPad Pro 13-inch (M4)")"
-if [ -z "$runtime" ] || [ -z "$iphone" ] || [ -z "$ipad" ]; then
-  echo "No iOS runtime or none of the listed iPhone / iPad simulators found; add the current models to the lists above" >&2
+
+# Folder, size App Store Connect expects, and the simulators that have it, best first.
+devices=(
+  "iPhone-6.9|1320x2868|iPhone 17 Pro Max|iPhone 16 Pro Max"
+  "iPhone-6.3|1206x2622|iPhone 17 Pro|iPhone 16 Pro"
+  "iPad-13|2064x2752|iPad Pro 13-inch (M5)|iPad Pro 13-inch (M4)"
+)
+# SCREENSHOT_DEVICES picks some of the folders, e.g. "iPhone-6.3"; the CI runs one per job.
+wanted="${SCREENSHOT_DEVICES:-iPhone-6.9 iPhone-6.3 iPad-13}"
+if [ -z "$runtime" ]; then
+  echo "No iOS runtime found" >&2
   exit 1
 fi
 
@@ -93,8 +100,17 @@ shoot() {
 }
 
 rm -rf "$out"/*.xcresult
-shoot "iPhone-6.9" "$iphone" 1320x2868
-shoot "iPad-13" "$ipad" 2064x2752
+for device in "${devices[@]}"; do
+  IFS='|' read -r folder size names <<<"$device"
+  case " $wanted " in *" $folder "*) ;; *) continue ;; esac
+  IFS='|' read -r -a candidates <<<"$names"
+  type="$(devicetype "${candidates[@]}")"
+  if [ -z "$type" ]; then
+    echo "None of the simulators for $folder found (${candidates[*]}); add the current model to the list above" >&2
+    exit 1
+  fi
+  shoot "$folder" "$type" "$size"
+done
 
 echo "Screenshots in $out:"
 find "$out" -name '*.png' | sort

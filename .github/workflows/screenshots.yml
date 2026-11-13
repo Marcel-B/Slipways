@@ -9,6 +9,12 @@ on:
 
 jobs:
   screenshots:
+    # One job per device, side by side, so a run takes as long as one device.
+    strategy:
+      fail-fast: false
+      matrix:
+        device: [iPhone-6.3, iPhone-6.9, iPad-13]
+    name: screenshots (${{ matrix.device }})
     runs-on: macos-26
     timeout-minutes: 60
     defaults:
@@ -21,6 +27,8 @@ jobs:
           brew install xcodegen
           xcodegen generate
       - name: Take screenshots
+        env:
+          SCREENSHOT_DEVICES: ${{ matrix.device }}
         run: scripts/screenshots.sh "$RUNNER_TEMP/screenshots"
       - name: Summary
         if: always()
@@ -34,12 +42,12 @@ jobs:
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: app-store-screenshots
+          name: app-store-screenshots-${{ matrix.device }}
           path: |
             ${{ runner.temp }}/screenshots/**/*.png
           if-no-files-found: warn
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
-          name: screenshots-xcresult
+          name: screenshots-xcresult-${{ matrix.device }}
           path: ${{ runner.temp }}/screenshots/*.xcresult
