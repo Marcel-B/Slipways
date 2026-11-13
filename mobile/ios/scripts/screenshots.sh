@@ -14,19 +14,24 @@ mkdir -p "$out"
 out="$(cd "$out" && pwd)"
 derived="$PWD/build/DerivedData"
 
-# The newest iOS runtime and the newest device types of each kind it supports; Apple's sizes stay the same within a
-# kind. Memory variants such as "iPad Pro 13-inch (M4) (16GB)" are left out, xcodebuild does not offer them.
+# The newest iOS runtime and, of the devices it supports, the first of a fixed list with exactly Apple's sizes:
+# iPhone 6.9" 1320 x 2868, iPad 13" 2064 x 2752. The runtime's own order is not by age (it once picked the
+# iPhone 11 Pro Max, 6.5"), so the names are listed by hand; a newer model goes on its list once its size is checked.
 runtimes="$(xcrun simctl list runtimes -j)"
 runtime="$(jq -r '[.runtimes[] | select(.platform == "iOS" and .isAvailable)] | last | .identifier // empty' <<<"$runtimes")"
 devicetype() {
-  jq -r --arg runtime "$runtime" --arg pattern "$1" \
-    '[.runtimes[] | select(.identifier == $runtime) | .supportedDeviceTypes[] | select(.name | test($pattern))] | last | .identifier // empty' \
-    <<<"$runtimes"
+  local name id
+  for name in "$@"; do
+    id="$(jq -r --arg runtime "$runtime" --arg name "$name" \
+      '[.runtimes[] | select(.identifier == $runtime) | .supportedDeviceTypes[] | select(.name == $name)] | first | .identifier // empty' \
+      <<<"$runtimes")"
+    if [ -n "$id" ]; then echo "$id"; return; fi
+  done
 }
-iphone="$(devicetype '^iPhone [0-9]+ Pro Max$')"
-ipad="$(devicetype '^iPad Pro 13-inch \(M[0-9]+\)$')"
+iphone="$(devicetype "iPhone 17 Pro Max" "iPhone 16 Pro Max")"
+ipad="$(devicetype "iPad Pro 13-inch (M5)" "iPad Pro 13-inch (M4)")"
 if [ -z "$runtime" ] || [ -z "$iphone" ] || [ -z "$ipad" ]; then
-  echo "No iOS runtime or no simulator for iPhone Pro Max / iPad Pro 13-inch found" >&2
+  echo "No iOS runtime or none of the listed iPhone / iPad simulators found; add the current models to the lists above" >&2
   exit 1
 fi
 
@@ -65,6 +70,8 @@ shoot() {
 
   echo "Taking screenshots on $folder ($type)"
   rm -rf "$out/$folder"
+  # The size App Store Connect expects for this device, checked once the images are there.
+  local expected="$3"
   TEST_RUNNER_SCREENSHOT_DIR="$out/$folder" xcodebuild test-without-building \
     -project Slipways.xcodeproj \
     -scheme Slipways \
@@ -72,11 +79,22 @@ shoot() {
     -derivedDataPath "$derived" \
     -resultBundlePath "$out/$folder.xcresult" \
     -quiet
+
+  local file size failed=0
+  for file in "$out/$folder"/*.png; do
+    size="$(sips -g pixelWidth -g pixelHeight "$file" | awk '/pixelWidth/ {w=$2} /pixelHeight/ {h=$2} END {print w "x" h}')"
+    echo "$folder/$(basename "$file"): $size"
+    if [ "$size" != "$expected" ]; then
+      echo "::error::$folder/$(basename "$file") is $size, App Store Connect expects $expected" >&2
+      failed=1
+    fi
+  done
+  return "$failed"
 }
 
 rm -rf "$out"/*.xcresult
-shoot "iPhone-6.9" "$iphone"
-shoot "iPad-13" "$ipad"
+shoot "iPhone-6.9" "$iphone" 1320x2868
+shoot "iPad-13" "$ipad" 2064x2752
 
 echo "Screenshots in $out:"
 find "$out" -name '*.png' | sort
