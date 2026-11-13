@@ -19,6 +19,8 @@ targets:
     sources: [Slipways]
     dependencies:
       - package: SlipwaysKit
+    scheme:
+      testTargets: [SlipwaysScreenshots]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.b-velop.slipways
@@ -37,3 +39,16 @@ targets:
         # Debug builds use production too; for the local docker compose API set the environment variable
         # SLIPWAYS_API_BASE_URL=http://localhost:5080 in the scheme (Product > Scheme > Edit Scheme > Run).
         SLIPWAYS_API_BASE_URL: https://slipways.de
+  # Takes the App Store screenshots, run by scripts/screenshots.sh.
+  SlipwaysScreenshots:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [SlipwaysScreenshots]
+    dependencies:
+      - target: Slipways
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.b-velop.slipways.screenshots
+        TARGETED_DEVICE_FAMILY: "1,2"
+        GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGN_STYLE: Automatic
