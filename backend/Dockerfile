@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:11.0 AS build
 WORKDIR /src
 
 COPY global.json Directory.Build.props Directory.Packages.props ./
@@ -10,7 +10,7 @@ RUN dotnet restore src/Slipways.Api/Slipways.Api.csproj
 COPY src/ src/
 RUN dotnet publish src/Slipways.Api/Slipways.Api.csproj -c Release -o /app --no-restore
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:11.0 AS final
 WORKDIR /app
 COPY --from=build /app .
 # Volume mount points for the SQLite database and data protection keys, writable by the non-root app user.
